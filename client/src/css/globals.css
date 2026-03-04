@@ -1,0 +1,460 @@
+@import "tailwindcss";
+
+/* Hotel Management Theme */
+:root {
+  --hotel-primary: #1a3a52;      /* Deep Navy Blue */
+  --hotel-secondary: #d4af37;    /* Luxury Gold */
+  --hotel-accent: #8b7355;       /* Warm Bronze */
+  --hotel-light: #f5f1e8;        /* Soft Cream */
+  --hotel-border: #c4b5a0;       /* Taupe Border */
+}
+
+body {
+  background: linear-gradient(135deg, #f5f1e8 0%, #faf8f4 100%);
+  color: #1a3a52;
+}
+
+/* Custom Hotel Theme Classes */
+.hotel-primary-bg {
+  background-color: var(--hotel-primary);
+}
+
+.hotel-secondary-bg {
+  background-color: var(--hotel-secondary);
+}
+
+.hotel-accent-bg {
+  background-color: var(--hotel-accent);
+}
+
+.hotel-light-bg {
+  background-color: var(--hotel-light);
+}
+
+.hotel-gradient {
+  background: linear-gradient(135deg, var(--hotel-primary) 0%, #2d5a7b 100%);
+}
+
+/* Haunted Auth Page Animations */
+@keyframes ghostFloat {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-15px) translateX(10px);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-30px) translateX(-5px);
+    opacity: 0.15;
+  }
+  75% {
+    transform: translateY(-15px) translateX(8px);
+    opacity: 0.2;
+  }
+}
+
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(139, 0, 0, 0.8), 0 0 20px rgba(139, 0, 0, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    text-shadow: 0 0 5px rgba(139, 0, 0, 0.4), 0 0 10px rgba(139, 0, 0, 0.2);
+  }
+}
+
+@keyframes spookySway {
+  0%, 100% {
+    transform: rotateZ(-1deg) translateY(0px);
+  }
+  50% {
+    transform: rotateZ(1deg) translateY(-8px);
+  }
+}
+
+@keyframes crimsonGlow {
+  from {
+    box-shadow: 0 0 0 0 rgba(139, 0, 0, 0);
+  }
+  to {
+    box-shadow: 0 0 20px 5px rgba(139, 0, 0, 0.4);
+  }
+}
+
+@keyframes blooddrip {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fogMove {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes eeriePulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slideUpScary {
+  from {
+    opacity: 0;
+    transform: translateY(50px) rotateZ(-2deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateZ(0deg);
+  }
+}
+
+@keyframes hauntedInput {
+  0%, 100% {
+    border-color: rgba(139, 0, 0, 0.5);
+    box-shadow: inset 0 0 5px rgba(139, 0, 0, 0.1);
+  }
+  50% {
+    border-color: rgba(139, 0, 0, 0.8);
+    box-shadow: inset 0 0 15px rgba(139, 0, 0, 0.3), 0 0 10px rgba(139, 0, 0, 0.2);
+  }
+}
+
+@keyframes batFly1 {
+  0% {
+    left: -10%;
+    top: 10%;
+    opacity: 0.5;
+  }
+  25% {
+    left: 25%;
+    top: -5%;
+    opacity: 0.8;
+  }
+  50% {
+    left: 50%;
+    top: 20%;
+    opacity: 1;
+  }
+  75% {
+    left: 75%;
+    top: 5%;
+    opacity: 0.8;
+  }
+  100% {
+    left: 110%;
+    top: 15%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes batFly2 {
+  0% {
+    right: -10%;
+    top: 30%;
+    opacity: 0.5;
+  }
+  25% {
+    right: 20%;
+    top: 10%;
+    opacity: 0.8;
+  }
+  50% {
+    right: 45%;
+    top: 40%;
+    opacity: 1;
+  }
+  75% {
+    right: 70%;
+    top: 20%;
+    opacity: 0.8;
+  }
+  100% {
+    right: 110%;
+    top: 35%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes batFly3 {
+  0% {
+    left: -5%;
+    top: 60%;
+    opacity: 0.5;
+  }
+  25% {
+    left: 30%;
+    top: 40%;
+    opacity: 0.8;
+  }
+  50% {
+    left: 50%;
+    top: 70%;
+    opacity: 1;
+  }
+  75% {
+    left: 70%;
+    top: 50%;
+    opacity: 0.8;
+  }
+  100% {
+    left: 115%;
+    top: 65%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes batFly4 {
+  0% {
+    right: -8%;
+    top: 50%;
+    opacity: 0.5;
+  }
+  25% {
+    right: 25%;
+    top: 30%;
+    opacity: 0.8;
+  }
+  50% {
+    right: 48%;
+    top: 60%;
+    opacity: 1;
+  }
+  75% {
+    right: 75%;
+    top: 40%;
+    opacity: 0.8;
+  }
+  100% {
+    right: 112%;
+    top: 55%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes batWing {
+  0%, 100% {
+    transform: scaleY(1) rotateZ(-5deg);
+  }
+  50% {
+    transform: scaleY(0.7) rotateZ(5deg);
+  }
+}
+
+.bat {
+  position: fixed;
+  font-size: 3rem;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 5px rgba(139, 0, 0, 0.7));
+  animation: batWing 0.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.bat-1 {
+  animation: batFly1 12s infinite linear, batWing 0.4s ease-in-out infinite;
+}
+
+.bat-2 {
+  animation: batFly2 14s infinite linear, batWing 0.38s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.bat-3 {
+  animation: batFly3 15s infinite linear, batWing 0.42s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.bat-4 {
+  animation: batFly4 13s infinite linear, batWing 0.4s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+/* Haunted Auth Styles */
+.haunted-background {
+  background: linear-gradient(135deg, #0f0f1e 0%, #1a0a2e 50%, #16213e 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.haunted-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(139, 0, 0, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(75, 0, 130, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.haunted-card {
+  animation: slideUpScary 0.8s ease-out forwards;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(139, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  border: 2px solid rgba(139, 0, 0, 0.6);
+}
+
+.haunted-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(139, 0, 0, 0.05) 0%, transparent 50%, rgba(75, 0, 130, 0.05) 100%);
+  pointer-events: none;
+  border-radius: 0.75rem;
+}
+
+.haunted-title {
+  animation: flicker 3s infinite;
+  color: #8b0000;
+  text-shadow: 
+    0 0 10px rgba(139, 0, 0, 0.8),
+    0 0 20px rgba(139, 0, 0, 0.5),
+    2px 2px 4px rgba(0, 0, 0, 0.9);
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.haunted-subtitle {
+  color: #c0c0c0;
+  text-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+  font-style: italic;
+}
+
+.haunted-form-group {
+  animation: slideUpScary 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.haunted-form-group:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.haunted-form-group:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.haunted-form-group:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+.haunted-form-group:nth-child(4) {
+  animation-delay: 0.65s;
+}
+
+.haunted-message {
+  animation: slideUpScary 0.4s ease-out;
+}
+
+.haunted-input {
+  background: rgba(20, 20, 40, 0.8) !important;
+  border: 2px solid rgba(139, 0, 0, 0.5) !important;
+  color: #e0e0e0 !important;
+  transition: all 0.3s ease;
+  animation: hauntedInput 4s ease-in-out infinite;
+}
+
+.haunted-input::placeholder {
+  color: rgba(192, 192, 192, 0.5) !important;
+}
+
+.haunted-input:focus {
+  background: rgba(20, 20, 40, 0.95) !important;
+  border-color: rgba(139, 0, 0, 0.9) !important;
+  animation: crimsonGlow 0.5s ease-out forwards;
+}
+
+.haunted-button {
+  background: linear-gradient(135deg, #8b0000 0%, #660000 100%) !important;
+  color: #fff !important;
+  border: 2px solid rgba(139, 0, 0, 0.8) !important;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.haunted-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.haunted-button:hover::before {
+  left: 100%;
+}
+
+.haunted-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 0 20px rgba(139, 0, 0, 0.7),
+    0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.haunted-button:active {
+  transform: translateY(-1px);
+}
+
+.haunted-label {
+  color: #d0d0d0;
+  text-shadow: 0 0 5px rgba(139, 0, 0, 0.3);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.haunted-link {
+  color: #ff6b6b;
+  text-shadow: 0 0 5px rgba(255, 107, 107, 0.3);
+  transition: all 0.3s ease;
+}
+
+.haunted-link:hover {
+  color: #ff8888;
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+}
+
+.ghost-float {
+  animation: ghostFloat 8s ease-in-out infinite;
+}
+
+.haunted-accent {
+  color: #ff6b6b;
+  text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}  
