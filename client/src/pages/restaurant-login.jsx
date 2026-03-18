@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle, AlertCircle, ChefHat } from 'lucide-react'
-import { mockAuthService } from '../services/mockData'
+import axios from 'axios';
 
 function RestaurantLogin() {
 	const navigate = useNavigate();
@@ -45,12 +45,13 @@ function RestaurantLogin() {
 		setMessage('');
 
 		try {
-			// Sign in to restaurant account
-			await new Promise(resolve => setTimeout(resolve, 500));
+			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+			const response = await axios.post(`${baseURL}/api/owner/login`, {
+				username: email.trim(), // Can be email or username
+				password: password
+			}, { withCredentials: true });
 			
-			const result = mockAuthService.restaurantLogin(email.trim(), password);
-			
-			if (result.success) {
+			if (response.data.success) {
 				setMessage('Login successful! Redirecting...');
 				setMessageType('success');
 				if (rememberMe) {
@@ -59,15 +60,14 @@ function RestaurantLogin() {
 					}));
 				}
 				setTimeout(() => {
-					navigate('/home');
+					navigate('/owner/dashboard');
 				}, 800);
-			}
-			else {
-				setMessage(result.message || 'Login failed');
+			} else {
+				setMessage(response.data.message || 'Login failed');
 				setMessageType('error');
 			}
 		} catch (error) {
-			setMessage(error.message || 'An error occurred during login');
+			setMessage(error.response?.data?.message || error.message || 'An error occurred during login');
 			setMessageType('error');
 		} finally {
 			setIsLoading(false);

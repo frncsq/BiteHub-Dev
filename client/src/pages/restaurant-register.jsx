@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, Phone, Building2, FileText, User, CheckCircle, AlertCircle, ArrowRight, Upload, X } from 'lucide-react'
-import { mockAuthService } from '../services/mockData'
+import axios from 'axios';
 
 function RestaurantRegister() {
 	const navigate = useNavigate();
@@ -116,9 +116,6 @@ function RestaurantRegister() {
 		if (!formData.permitNumber.trim()) {
 			newErrors.permitNumber = 'Business permit number is required';
 		}
-		if (!formData.permitDocument) {
-			newErrors.permitDocument = 'Business permit document is required';
-		}
 
 		// Owner Information
 		if (!formData.ownerName.trim()) {
@@ -177,30 +174,33 @@ function RestaurantRegister() {
 		setMessage('');
 
 		try {
-			// Register new restaurant account
-			await new Promise(resolve => setTimeout(resolve, 500));
+			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+			const response = await axios.post(`${baseURL}/api/owner/register`, {
+				businessName: formData.businessName.trim(),
+				businessAddress: formData.businessAddress.trim(),
+				city: formData.city.trim(),
+				province: formData.province.trim(),
+				permitNumber: formData.permitNumber.trim(),
+				taxId: formData.taxId.trim(),
+				ownerName: formData.ownerName.trim(),
+				ownerPhone: formData.ownerPhone.trim(),
+				businessEmail: formData.businessEmail.trim(),
+				username: formData.username.trim(),
+				password: formData.password
+			}, { withCredentials: true });
 			
-			const result = mockAuthService.restaurantRegister(
-				formData.businessName.trim(),
-				formData.businessEmail.trim(),
-				formData.password,
-				[],
-				formData.businessAddress.trim(),
-				formData.ownerPhone.trim()
-			);
-			
-			if (result.success) {
-				setMessage('Registration successful! Redirecting to home...');
+			if (response.data.success) {
+				setMessage('Registration successful! Redirecting to dashboard...');
 				setMessageType('success');
 				setTimeout(() => {
-					navigate('/home');
+					navigate('/owner/dashboard');
 				}, 2000);
 			} else {
-				setMessage(result.message || 'Registration failed');
+				setMessage(response.data.message || 'Registration failed');
 				setMessageType('error');
 			}
 		} catch (error) {
-			setMessage(error.message || 'An error occurred during registration');
+			setMessage(error.response?.data?.message || error.message || 'An error occurred during registration');
 			setMessageType('error');
 		} finally {
 			setIsLoading(false);
@@ -399,7 +399,7 @@ function RestaurantRegister() {
 							{/* Document Upload */}
 							<div>
 								<label className="block text-sm font-semibold text-gray-900 mb-2">
-									Upload Business Permit Document <span className="text-red-600">*</span>
+									Upload Business Permit Document <span className="text-gray-500">(Optional for testing)</span>
 								</label>
 								<div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 text-center ${
 									errors.permitDocument

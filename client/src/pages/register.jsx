@@ -235,11 +235,11 @@ function Register() {
 										}`}
 									>
 										<option value="">Select...</option>
-										<option value="cse">Computer Science</option>
-										<option value="ece">Electronics</option>
-										<option value="me">Mechanical</option>
-										<option value="ce">Civil</option>
-										<option value="ee">Electrical</option>
+										<option value="cse">College of Mathematics and Computing Sciences</option>
+										<option value="ece">College of Teacher Education</option>
+										<option value="me">College of Agriculture, Forestry and Cooperatives</option>
+										<option value="ce">Home Technology</option>
+										<option value="ee">Administration</option>
 									</select>
 									{errors.department && <p className="text-sm text-red-600 flex items-center gap-1"><span>•</span> Required</p>}
 								</div>
@@ -257,7 +257,7 @@ function Register() {
 											setCourse(e.target.value);
 											if (errors.course) setErrors({...errors, course: ''});
 										}}
-										placeholder="B.Tech, M.Tech" 
+										placeholder="BSIT, BS MATH" 
 										aria-label="Course"
 										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${
 											errors.course 

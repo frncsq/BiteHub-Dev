@@ -26,6 +26,7 @@ CREATE TABLE users (
     address VARCHAR(500),
     city VARCHAR(100),
     postal_code VARCHAR(20),
+    remember_me_token VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

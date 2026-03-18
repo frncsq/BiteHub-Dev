@@ -10,6 +10,13 @@ import Cart from "./pages/cart.jsx";
 import Orders from "./pages/orders.jsx";
 import Contact from "./pages/contact.jsx";
 import Profile from "./pages/profile.jsx";
+import OwnerLayout from "./components/OwnerLayout.jsx";
+import OwnerDashboard from "./pages/owner/dashboard.jsx";
+import OwnerMenu from "./pages/owner/menu.jsx";
+import OwnerOrders from "./pages/owner/orders.jsx";
+import OwnerInventory from "./pages/owner/inventory.jsx";
+import OwnerAnalytics from "./pages/owner/analytics.jsx";
+import OwnerSettings from "./pages/owner/settings.jsx";
 
 function App() {
   return (
@@ -32,6 +39,16 @@ function App() {
         <Route path="/orders" element={<Orders />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/profile" element={<Profile />} />
+        
+        {/* Owner Dashboard */}
+        <Route path="/owner" element={<OwnerLayout />}>
+          <Route path="dashboard" element={<OwnerDashboard />} />
+          <Route path="menu" element={<OwnerMenu />} />
+          <Route path="orders" element={<OwnerOrders />} />
+          <Route path="inventory" element={<OwnerInventory />} />
+          <Route path="analytics" element={<OwnerAnalytics />} />
+          <Route path="settings" element={<OwnerSettings />} />
+        </Route>
       </Routes>
     </ThemeProvider>
   );

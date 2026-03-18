@@ -12,10 +12,10 @@ import {
 } from './mockData'
 
 // Check if we're in mock mode with fallback data support
-const MOCK_MODE_ENABLED = true; // Set to false to use real backend API
+const MOCK_MODE_ENABLED = false; // Set to false to use real backend API
 
 export const createApiClient = () => {
-	const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+	const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 	
 	const client = axios.create({
 		baseURL,
