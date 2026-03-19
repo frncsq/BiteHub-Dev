@@ -158,23 +158,37 @@ function StartUp() {
 				</div>
 
 				{/* Footer Section */}
-				<div className="text-center">
-					<p className="text-gray-600">
-						Already have an account? Go to{' '}
+				<div className="text-center space-y-4">
+					<p className="text-gray-600 flex flex-wrap justify-center gap-2 items-center">
+						New customer?{' '}
+						<button
+							onClick={() => navigate('/register')}
+							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors underline"
+						>
+							Sign up
+						</button>
+						{' '}|{' '}
 						<button
 							onClick={() => navigate('/login')}
-							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors underline"
 						>
-							login
+							Log in
 						</button>
 					</p>
-					<p className="text-gray-600">
-						Already have an owner account? Go to{' '}
+					<p className="text-gray-600 flex flex-wrap justify-center gap-2 items-center">
+						New restaurant owner?{' '}
+						<button
+							onClick={() => navigate('/restaurant-register')}
+							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors underline"
+						>
+							Register
+						</button>
+						{' '}|{' '}
 						<button
 							onClick={() => navigate('/restaurant-login')}
-							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors underline"
 						>
-							restaurant login
+							Log in
 						</button>
 					</p>
 				</div>

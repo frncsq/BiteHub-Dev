@@ -37,90 +37,130 @@ function OwnerAnalytics() {
   const maxRevenue = Math.max(...analytics.map(day => parseFloat(day.daily_revenue || 0)), 1); // Avoid division by 0
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
-        <p className="text-gray-500 mt-1">Track your restaurant's performance over the last 30 days.</p>
+    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Analytics & Reports</h1>
+          <p className="text-gray-500 mt-1 font-medium">Deep-dive into your restaurant's performance metrics.</p>
+        </div>
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+          <Calendar size={18} className="text-orange-500" />
+          <span className="font-semibold text-sm text-gray-700">Last 30 Days</span>
+        </div>
       </div>
 
-      {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl">{error}</div>}
+      {error && <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl font-medium shadow-sm">{error}</div>}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
-          <div className="p-3 bg-green-100 text-green-600 rounded-xl">
-            <DollarSign size={24} />
+        <div className="relative overflow-hidden p-6 rounded-3xl shadow-lg border border-gray-100 bg-white group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-gray-400 text-sm font-bold tracking-wide uppercase">30-Day Revenue</p>
+              <h3 className="text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">${totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2})}</h3>
+            </div>
+            <div className="p-4 bg-green-50 text-green-600 rounded-2xl shadow-inner border border-green-100/50">
+              <DollarSign size={28} />
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium">30-Day Revenue</p>
-            <h3 className="text-3xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</h3>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-            <Activity size={24} />
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium">30-Day Orders</p>
-            <h3 className="text-3xl font-bold text-gray-900">{totalOrders}</h3>
+          <div className="mt-6 flex items-center gap-2">
+            <span className="flex items-center gap-1 text-sm font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+              <TrendingUp size={14} /> Peak
+            </span>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4">
-          <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
-            <TrendingUp size={24} />
+        <div className="relative overflow-hidden p-6 rounded-3xl shadow-lg border border-gray-100 bg-white group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-gray-400 text-sm font-bold tracking-wide uppercase">30-Day Orders</p>
+              <h3 className="text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">{totalOrders}</h3>
+            </div>
+            <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl shadow-inner border border-blue-100/50">
+              <Activity size={28} />
+            </div>
           </div>
-          <div>
-            <p className="text-gray-500 text-sm font-medium">Average Order Value</p>
-            <h3 className="text-3xl font-bold text-gray-900">${avgOrderValue.toFixed(2)}</h3>
+          <div className="mt-6 flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-blue-500 block"></span> Verified Transactions
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden p-6 rounded-3xl shadow-lg border border-gray-100 bg-white group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-700"></div>
+          <div className="flex justify-between items-start relative z-10">
+            <div>
+              <p className="text-gray-400 text-sm font-bold tracking-wide uppercase">Avg Order Value</p>
+              <h3 className="text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">${avgOrderValue.toFixed(2)}</h3>
+            </div>
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl shadow-inner border border-purple-100/50">
+              <TrendingUp size={28} />
+            </div>
+          </div>
+          <div className="mt-6 flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-purple-500 block"></span> Per Customer Average
           </div>
         </div>
       </div>
 
-      {/* Revenue Chart (Simple CSS Bars) */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Daily Revenue Trend</h2>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Calendar size={16} /> Last 30 Days
+      {/* Revenue Chart (Modern CSS Bars) */}
+      <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-8 backdrop-blur-sm relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50/50 pointer-events-none"></div>
+        <div className="relative z-10">
+          <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
+            <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Daily Revenue Trend</h2>
+            <div className="text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100">
+              Visual Timeline
+            </div>
           </div>
+          
+          {analytics.length === 0 ? (
+            <div className="text-center py-24 text-gray-400">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 inner-shadow">
+                <Activity size={32} className="text-gray-300" />
+              </div>
+              <p className="font-semibold text-lg">Not enough data to map trends.</p>
+              <p className="text-sm mt-1">Check back after your first few orders arrive.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {analytics.map((day, index) => {
+                const revenue = parseFloat(day.daily_revenue || 0);
+                const percentage = Math.max((revenue / maxRevenue) * 100, 1);
+                const dateObj = new Date(day.date);
+                
+                return (
+                  <div key={index} className="flex items-center gap-6 group">
+                    <div className="w-24 text-sm font-bold text-gray-500 uppercase tracking-widest text-right">
+                      {dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </div>
+                    <div className="flex-1 h-10 bg-gray-50/80 rounded-2xl overflow-hidden flex items-center relative border border-gray-100/50">
+                      <div 
+                        className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl relative shadow-sm"
+                        style={{ width: `${percentage}%`, animation: `growWidth 1s ease-out forwards`, animationDelay: `${index * 50}ms`, transformOrigin: 'left', opacity: 0 }}
+                      >
+                         <style jsx>{`
+                            @keyframes growWidth {
+                              from { transform: scaleX(0); opacity: 0; }
+                              to { transform: scaleX(1); opacity: 1; }
+                            }
+                         `}</style>
+                      </div>
+                      <span className="absolute left-4 text-sm font-extrabold text-white mix-blend-difference drop-shadow-md z-10 transition-transform group-hover:scale-110 origin-left">
+                        ${revenue.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                      </span>
+                    </div>
+                    <div className="w-28 text-left">
+                      <p className="text-sm font-bold text-gray-700">{day.daily_orders}</p>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Orders</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-        
-        {analytics.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <Activity size={32} className="mx-auto text-gray-300 mb-3" />
-            <p>Not enough data to display analytics.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {analytics.map((day, index) => {
-              const revenue = parseFloat(day.daily_revenue || 0);
-              const percentage = Math.max((revenue / maxRevenue) * 100, 1);
-              const dateObj = new Date(day.date);
-              
-              return (
-                <div key={index} className="flex items-center gap-4 group">
-                  <div className="w-24 text-sm font-medium text-gray-600">
-                    {dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </div>
-                  <div className="flex-1 h-8 bg-gray-50 rounded-lg overflow-hidden flex items-center relative">
-                    <div 
-                      className="h-full bg-orange-200 group-hover:bg-orange-300 transition-colors duration-300 rounded-lg"
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                    <span className="absolute left-3 text-sm font-bold text-orange-900">
-                      ${revenue.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="w-20 text-right text-sm text-gray-500">
-                    {day.daily_orders} orders
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

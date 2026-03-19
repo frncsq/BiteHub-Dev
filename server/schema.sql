@@ -4,7 +4,7 @@
 -- ============================================
 -- ENUM TYPES
 -- ============================================
-CREATE TYPE order_status_enum AS ENUM ('pending', 'confirmed', 'preparing', 'ready', 'on_the_way', 'delivered', 'cancelled');
+CREATE TYPE order_status_enum AS ENUM ('pending', 'accepted', 'confirmed', 'preparing', 'prepared', 'ready', 'out_for_delivery', 'on_the_way', 'delivered', 'cancelled');
 CREATE TYPE payment_status_enum AS ENUM ('pending', 'completed', 'failed');
 CREATE TYPE contact_status_enum AS ENUM ('new', 'read', 'replied', 'closed');
 CREATE TYPE delivery_status_enum AS ENUM ('assigned', 'picked_up', 'in_transit', 'delivered');
@@ -19,20 +19,19 @@ CREATE TABLE users (
     department VARCHAR(100),
     course VARCHAR(100),
     year INT,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255),
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     profile_picture_url VARCHAR(500),
     address VARCHAR(500),
     city VARCHAR(100),
     postal_code VARCHAR(20),
-    remember_me_token VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_full_name ON users(full_name);
 CREATE INDEX idx_users_created_at ON users(created_at);
 
 -- ============================================
@@ -59,12 +58,12 @@ CREATE TABLE restaurants (
     is_open BOOLEAN DEFAULT TRUE,
     rating NUMERIC(3, 2) DEFAULT 0,
     is_verified BOOLEAN DEFAULT FALSE,
-    remember_me_token VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_restaurants_business_email ON restaurants(business_email);
+CREATE INDEX idx_restaurants_username ON restaurants(username);
 CREATE INDEX idx_restaurants_city ON restaurants(city);
 CREATE INDEX idx_restaurants_is_open ON restaurants(is_open);
 
@@ -77,9 +76,10 @@ CREATE TABLE menu_items (
     item_name VARCHAR(255) NOT NULL,
     description TEXT,
     price NUMERIC(10, 2) NOT NULL,
+    half_price NUMERIC(10, 2) DEFAULT NULL,
     cost_to_produce NUMERIC(10, 2) DEFAULT 0,
     category VARCHAR(100),
-    image_url VARCHAR(500),
+    image_url TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     out_of_stock_auto BOOLEAN DEFAULT FALSE,
     inventory_count INT DEFAULT -1,

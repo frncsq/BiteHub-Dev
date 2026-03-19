@@ -1,14 +1,16 @@
 import Header from "../components/header"
 import { useState } from "react"
+import axios from "axios"
 import { useTheme } from "../context/ThemeContext"
-import { mockContactService } from "../services/mockData"
 
 function Contact() {
 	const { colors } = useTheme()
 	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
+		phone: "",
 		subject: "",
+		message: ""
 	})
 	const [loading, setLoading] = useState(false)
 	const [message, setMessage] = useState("")
@@ -66,7 +68,7 @@ function Contact() {
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 
-		if (!formData.name || !formData.email || !formData.subject) {
+		if (!formData.name || !formData.email || !formData.subject || !formData.message) {
 			setMessage("Please fill in all fields")
 			setMessageType("error")
 			return
@@ -74,32 +76,33 @@ function Contact() {
 
 		try {
 			setLoading(true)
-			// Simulate API call delay
-			await new Promise(resolve => setTimeout(resolve, 300))
-			
-			const result = mockContactService.submitContact(
-				formData.name,
-				formData.email,
-				formData.subject,
-				formData.subject
-			)
+			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+			const response = await axios.post(`${baseURL}/api/contact/submit`, {
+				name: formData.name.trim(),
+				email: formData.email.trim(),
+				phone: formData.phone?.trim() || null,
+				subject: formData.subject.trim(),
+				message: formData.message.trim()
+			})
 
-			if (result.success) {
-				setMessage("Thank you! We'll get back to you soon.")
+			if (response.data.success) {
+				setMessage(response.data.message || "Thank you! We'll get back to you soon.")
 				setMessageType("success")
 				setFormData({
 					name: "",
 					email: "",
-					subject: ""
+					phone: "",
+					subject: "",
+					message: ""
 				})
 				setTimeout(() => setMessage(""), 3000)
 			} else {
-				setMessage(result.message || "Failed to send message")
+				setMessage(response.data.message || "Failed to send message")
 				setMessageType("error")
 			}
 		} catch (error) {
 			console.error("Error sending message:", error)
-			setMessage("Error sending message. Please try again.")
+			setMessage(error.response?.data?.message || error.message || "Error sending message. Please try again.")
 			setMessageType("error")
 		} finally {
 			setLoading(false)

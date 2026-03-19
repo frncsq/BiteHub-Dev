@@ -1,10 +1,14 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, User, Building2, BookOpen, Calendar, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
-import { mockAuthService } from '../services/mockData'
+import { Eye, EyeOff, Mail, Lock, User, Building2, BookOpen, Calendar, CheckCircle, AlertCircle, ArrowRight, Phone, MapPin } from 'lucide-react'
+import axios from 'axios'
 
 function Register() {
 	const [fullName, setFullName] = useState('');
+	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
+	const [address, setAddress] = useState('');
+	const [city, setCity] = useState('');
 	const [department, setDepartment] = useState('');
 	const [course, setCourse] = useState('');
 	const [year, setYear] = useState('');
@@ -24,14 +28,8 @@ function Register() {
 		if (!fullName.trim()) {
 			newErrors.fullName = 'Full name is required';
 		}
-		if (!department) {
-			newErrors.department = 'Department is required';
-		}
-		if (!course) {
-			newErrors.course = 'Course is required';
-		}
-		if (!year) {
-			newErrors.year = 'Year is required';
+		if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+			newErrors.email = 'Valid email is required';
 		}
 		if (!password) {
 			newErrors.password = 'Password is required';
@@ -69,30 +67,32 @@ function Register() {
 		setMessage('');
 
 		try {
-			// Simulate API delay for demo
-			await new Promise(resolve => setTimeout(resolve, 500));
-			
-			const result = mockAuthService.register(
-				fullName.trim(),
+			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+			const response = await axios.post(`${baseURL}/api/customer/register`, {
+				full_name: fullName.trim(),
+				email: email.trim(),
+				phone: phone.trim(),
+				address: address.trim(),
+				city: city.trim(),
 				department,
 				course,
-				year,
+				year: Number(year),
 				password
-			);
+			}, { withCredentials: true });
 			
-			if (result.success) {
-				setMessage('Registration successful! Redirecting to home...');
+			if (response.data.success) {
+				setMessage('Registration successful! Redirecting to login...');
 				setMessageType('success');
 				setTimeout(() => {
-					navigate('/home');
+					navigate('/login');
 				}, 2000);
 			}
 			else {
-				setMessage(result.message || 'Registration failed');
+				setMessage(response.data.message || 'Registration failed');
 				setMessageType('error');
 			}
 		} catch (error) {
-			setMessage(error.message || 'An error occurred during registration');
+			setMessage(error.response?.data?.message || error.message || 'An error occurred during registration');
 			setMessageType('error');
 		} finally {
 			setIsLoading(false);
@@ -211,6 +211,59 @@ function Register() {
 									{errors.fullName && <AlertCircle size={20} className="absolute right-3 top-3 text-red-500" />}
 								</div>
 								{errors.fullName && <p className="text-sm text-red-600 flex items-center gap-1"><span>•</span> {errors.fullName}</p>}
+							</div>
+
+							{/* Contact Info Row */}
+							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<label htmlFor="email" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+										<Mail size={18} className="text-orange-600" /> Email
+									</label>
+									<input 
+										id="email" type="email" value={email} 
+										onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors({...errors, email: ''}); }}
+										placeholder="john@example.com" 
+										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 focus:outline-none ${errors.email ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-orange-500'}`}
+									/>
+									{errors.email && <p className="text-sm text-red-600"><span>•</span> {errors.email}</p>}
+								</div>
+								<div className="space-y-2">
+									<label htmlFor="phone" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+										<Phone size={18} className="text-orange-600" /> Phone
+									</label>
+									<input 
+										id="phone" type="tel" value={phone} 
+										onChange={(e) => setPhone(e.target.value)}
+										placeholder="+1 234..." 
+										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 focus:outline-none border-gray-200 focus:border-orange-500`}
+									/>
+								</div>
+							</div>
+
+							{/* Address Info Row */}
+							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<label htmlFor="address" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+										<MapPin size={18} className="text-orange-600" /> Address
+									</label>
+									<input 
+										id="address" type="text" value={address} 
+										onChange={(e) => setAddress(e.target.value)}
+										placeholder="123 Campus St" 
+										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 focus:outline-none border-gray-200 focus:border-orange-500`}
+									/>
+								</div>
+								<div className="space-y-2">
+									<label htmlFor="city" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+										<Building2 size={18} className="text-orange-600" /> City
+									</label>
+									<input 
+										id="city" type="text" value={city} 
+										onChange={(e) => setCity(e.target.value)}
+										placeholder="Campus City" 
+										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 focus:outline-none border-gray-200 focus:border-orange-500`}
+									/>
+								</div>
 							</div>
 
 							{/* Row 2: Department & Course */}
@@ -523,6 +576,58 @@ function Register() {
 										}`}
 									/>
 									{errors.fullName && <p className="text-sm text-red-600">• {errors.fullName}</p>}
+								</div>
+
+								{/* Mobile - Local Contact Grouping */}
+								<div className="grid grid-cols-2 gap-3">
+									<div className="space-y-2">
+										<label htmlFor="m-email" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+											<Mail size={16} className="text-orange-600" /> Email
+										</label>
+										<input 
+											id="m-email" type="email" value={email} 
+											onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors({...errors, email: ''}); }}
+											placeholder="john@..." 
+											className={`w-full px-3 py-3 bg-white border-2 rounded-xl transition-all outline-none ${errors.email ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-orange-500'}`}
+										/>
+										{errors.email && <p className="text-sm text-red-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[150px]" title={errors.email}>• Req</p>}
+									</div>
+									<div className="space-y-2">
+										<label htmlFor="m-phone" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+											<Phone size={16} className="text-orange-600" /> Phone
+										</label>
+										<input 
+											id="m-phone" type="tel" value={phone} 
+											onChange={(e) => setPhone(e.target.value)}
+											placeholder="+1..." 
+											className={`w-full px-3 py-3 bg-white border-2 rounded-xl transition-all outline-none border-gray-200 focus:border-orange-500`}
+										/>
+									</div>
+								</div>
+
+								<div className="grid grid-cols-2 gap-3">
+									<div className="space-y-2">
+										<label htmlFor="m-address" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+											<MapPin size={16} className="text-orange-600" /> Addr
+										</label>
+										<input 
+											id="m-address" type="text" value={address} 
+											onChange={(e) => setAddress(e.target.value)}
+											placeholder="Apt 2B..." 
+											className={`w-full px-3 py-3 bg-white border-2 rounded-xl transition-all outline-none border-gray-200 focus:border-orange-500`}
+										/>
+									</div>
+									<div className="space-y-2">
+										<label htmlFor="m-city" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+											<Building2 size={16} className="text-orange-600" /> City
+										</label>
+										<input 
+											id="m-city" type="text" value={city} 
+											onChange={(e) => setCity(e.target.value)}
+											placeholder="City..." 
+											className={`w-full px-3 py-3 bg-white border-2 rounded-xl transition-all outline-none border-gray-200 focus:border-orange-500`}
+										/>
+									</div>
 								</div>
 
 								{/* Department */}

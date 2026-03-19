@@ -56,7 +56,7 @@ function OwnerOrders() {
       case 'pending': return ['accepted', 'cancelled'];
       case 'accepted': return ['preparing', 'cancelled'];
       case 'preparing': return ['ready'];
-      case 'ready': return ['completed'];
+      case 'ready': return ['delivered'];
       default: return [];
     }
   };

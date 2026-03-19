@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import StartUp from "./pages/startup.jsx";
 import Login from "./login.jsx";
@@ -6,6 +6,7 @@ import Register from "./pages/register.jsx";
 import RestaurantLogin from "./pages/restaurant-login.jsx";
 import RestaurantRegister from "./pages/restaurant-register.jsx";
 import Home from "./pages/home.jsx";
+import Rooms from "./pages/rooms.jsx";
 import Cart from "./pages/cart.jsx";
 import Orders from "./pages/orders.jsx";
 import Contact from "./pages/contact.jsx";
@@ -35,6 +36,7 @@ function App() {
         
         {/* Customer Pages */}
         <Route path="/home" element={<Home />} />
+        <Route path="/rooms" element={<Rooms />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/contact" element={<Contact />} />
@@ -49,6 +51,9 @@ function App() {
           <Route path="analytics" element={<OwnerAnalytics />} />
           <Route path="settings" element={<OwnerSettings />} />
         </Route>
+
+        {/* Catch-all route - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>
   );

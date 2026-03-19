@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, Menu as MenuIcon } from 'lucide-react';
 
 function OwnerMenu() {
   const [items, setItems] = useState([]);
@@ -13,6 +13,7 @@ function OwnerMenu() {
     name: '',
     description: '',
     price: '',
+    half_price: '',
     category: '',
     isAvailable: true,
     image_url: '',
@@ -45,6 +46,7 @@ function OwnerMenu() {
         name: item.item_name,
         description: item.description || '',
         price: item.price,
+        half_price: item.half_price || '',
         category: item.category || '',
         isAvailable: item.is_available,
         image_url: item.image_url || '',
@@ -53,7 +55,7 @@ function OwnerMenu() {
     } else {
       setEditingItem(null);
       setFormData({
-        name: '', description: '', price: '', category: '', isAvailable: true, image_url: '', inventory_count: -1
+        name: '', description: '', price: '', half_price: '', category: '', isAvailable: true, image_url: '', inventory_count: -1
       });
     }
     setIsModalOpen(true);
@@ -76,7 +78,12 @@ function OwnerMenu() {
     e.preventDefault();
     try {
       const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const payload = { ...formData, price: parseFloat(formData.price), inventory_count: parseInt(formData.inventory_count) };
+      const payload = { 
+        ...formData, 
+        price: parseFloat(formData.price), 
+        half_price: formData.half_price ? parseFloat(formData.half_price) : null,
+        inventory_count: parseInt(formData.inventory_count) 
+      };
       
       if (editingItem) {
         await axios.put(`${baseURL}/api/owner/menu/${editingItem.id}`, payload, { withCredentials: true });
@@ -151,7 +158,10 @@ function OwnerMenu() {
             <div className="p-5">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.item_name}</h3>
-                <span className="font-bold text-orange-600">${parseFloat(item.price).toFixed(2)}</span>
+                <div className="text-right">
+                  <span className="font-bold text-orange-600 block">${parseFloat(item.price).toFixed(2)}</span>
+                  {item.half_price && <span className="font-semibold text-xs text-orange-400 block tracking-tight">Half: ${parseFloat(item.half_price).toFixed(2)}</span>}
+                </div>
               </div>
               
               <div className="flex items-center gap-2 mb-3">
@@ -194,14 +204,14 @@ function OwnerMenu() {
       {/* Item Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-slide-up">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] animate-slide-up">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50 shrink-0">
               <h2 className="text-xl font-bold text-gray-900">{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-700 transition p-1 rounded-lg hover:bg-gray-100">
+              <button type="button" onClick={handleCloseModal} className="text-gray-400 hover:text-gray-700 transition p-1 rounded-lg hover:bg-gray-100">
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
@@ -209,10 +219,14 @@ function OwnerMenu() {
                     <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-1">Price ($) *</label>
+                    <label className="block text-sm font-semibold text-gray-900 mb-1">Full Price ($) *</label>
                     <input required min="0" step="0.01" type="number" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                   </div>
                   <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-1">Half Price ($) [Optional]</label>
+                    <input min="0" step="0.01" type="number" name="half_price" value={formData.half_price} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                  </div>
+                  <div className="col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Category</label>
                     <input type="text" name="category" placeholder="e.g. Mains, Drinks" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                   </div>
@@ -221,8 +235,43 @@ function OwnerMenu() {
                     <textarea rows="3" name="description" value={formData.description} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition resize-none"></textarea>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-semibold text-gray-900 mb-1">Image URL</label>
-                    <input type="url" name="image_url" placeholder="https://" value={formData.image_url} onChange={handleChange} className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                    <label className="block text-sm font-semibold text-gray-900 mb-1">Menu Photo</label>
+                    <div className="flex items-center gap-4">
+                      {formData.image_url ? (
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 shrink-0">
+                          <img src={formData.image_url} alt="Menu preview" className="w-full h-full object-cover" />
+                          <button 
+                            type="button" 
+                            onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+                            className="absolute top-1 right-1 bg-white/90 p-1 rounded-md text-red-600 hover:bg-red-50 transition"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center shrink-0 bg-gray-50">
+                          <ImageIcon className="text-gray-400" size={24} />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setFormData(prev => ({ ...prev, image_url: reader.result }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="w-full block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer" 
+                        />
+                        <p className="text-xs text-gray-500 mt-2">Maximum file size: 5MB. Suggested format: JPEG/PNG.</p>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Limit Stock (-1 for unlimited)</label>
