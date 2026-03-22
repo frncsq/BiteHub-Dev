@@ -12,13 +12,9 @@ const pool = new Pool({
 async function fixDB() {
   try {
     console.log('Connecting to BiteHub database...');
-    // Attempt to add column
-    await pool.query('ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS half_price NUMERIC(10, 2) DEFAULT NULL;');
-    console.log('✅ Added half_price column successfully.');
-    
-    // Attempt to alter image_url type
-    await pool.query('ALTER TABLE menu_items ALTER COLUMN image_url TYPE TEXT;');
-    console.log('✅ Altered image_url to TEXT successfully.');
+    // Drop tax_id column
+    await pool.query('ALTER TABLE restaurants DROP COLUMN IF EXISTS tax_id;');
+    console.log('✅ Dropped tax_id column successfully.');
   } catch (error) {
     console.error('Error modifying schema:', error);
   } finally {

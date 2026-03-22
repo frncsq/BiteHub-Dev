@@ -288,11 +288,11 @@ function Register() {
 										}`}
 									>
 										<option value="">Select...</option>
-										<option value="cse">College of Mathematics and Computing Sciences</option>
-										<option value="ece">College of Teacher Education</option>
-										<option value="me">College of Agriculture, Forestry and Cooperatives</option>
-										<option value="ce">Home Technology</option>
-										<option value="ee">Administration</option>
+										<option value="College of Mathematics and Computing Sciences">College of Mathematics and Computing Sciences</option>
+										<option value="College of Teacher Education">College of Teacher Education</option>
+										<option value="College of Agriculture, Forestry and Cooperatives">College of Agriculture, Forestry and Cooperatives</option>
+										<option value="Home Technology">Home Technology</option>
+										<option value="Administration">Administration</option>
 									</select>
 									{errors.department && <p className="text-sm text-red-600 flex items-center gap-1"><span>•</span> Required</p>}
 								</div>
@@ -650,11 +650,11 @@ function Register() {
 										}`}
 									>
 										<option value="">Select...</option>
-										<option value="cse">Computer Science</option>
-										<option value="ece">Electronics</option>
-										<option value="me">Mechanical</option>
-										<option value="ce">Civil</option>
-										<option value="ee">Electrical</option>
+										<option value="College of Mathematics and Computing Sciences">College of Mathematics and Computing Sciences</option>
+										<option value="College of Teacher Education">College of Teacher Education</option>
+										<option value="College of Agriculture, Forestry and Cooperatives">College of Agriculture, Forestry and Cooperatives</option>
+										<option value="Home Technology">Home Technology</option>
+										<option value="Administration">Administration</option>
 									</select>
 									{errors.department && <p className="text-sm text-red-600">• Required</p>}
 								</div>

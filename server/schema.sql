@@ -45,7 +45,6 @@ CREATE TABLE restaurants (
     province VARCHAR(100) NOT NULL,
     postal_code VARCHAR(20),
     permit_number VARCHAR(100) UNIQUE NOT NULL,
-    tax_id VARCHAR(100) UNIQUE NOT NULL,
     permit_document_url VARCHAR(500),
     owner_name VARCHAR(255) NOT NULL,
     owner_phone VARCHAR(20) NOT NULL,
@@ -76,13 +75,16 @@ CREATE TABLE menu_items (
     item_name VARCHAR(255) NOT NULL,
     description TEXT,
     price NUMERIC(10, 2) NOT NULL,
-    half_price NUMERIC(10, 2) DEFAULT NULL,
+    half_price NUMERIC(10, 2) DEFAULT NULL,    -- Small size price for Drinks
+    large_price NUMERIC(10, 2) DEFAULT NULL,   -- Large size price for Drinks
     cost_to_produce NUMERIC(10, 2) DEFAULT 0,
     category VARCHAR(100),
     image_url TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     out_of_stock_auto BOOLEAN DEFAULT FALSE,
-    inventory_count INT DEFAULT -1,
+    inventory_count INT DEFAULT -1,            -- Legacy: use daily_stock instead
+    daily_stock INT DEFAULT NULL,              -- The fixed daily quota (NULL = unlimited)
+    current_stock INT DEFAULT NULL,            -- Remaining stock today (auto-reset at midnight)
     preparation_time INT,
     is_vegan BOOLEAN DEFAULT FALSE,
     is_vegetarian BOOLEAN DEFAULT FALSE,
@@ -97,6 +99,8 @@ CREATE INDEX idx_menu_items_category ON menu_items(category);
 CREATE INDEX idx_menu_items_is_available ON menu_items(is_available);
 
 COMMENT ON COLUMN menu_items.preparation_time IS 'in minutes';
+COMMENT ON COLUMN menu_items.daily_stock IS 'Fresh daily quota set by owner. Never decremented by orders.';
+COMMENT ON COLUMN menu_items.current_stock IS 'Remaining stock for today. Decremented on order. Auto-reset to daily_stock at midnight.';
 
 -- ============================================
 -- ORDERS TABLE
@@ -151,10 +155,11 @@ CREATE TABLE cart (
     restaurant_id INT NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
     menu_item_id INT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
     quantity INT NOT NULL DEFAULT 1,
+    size VARCHAR(20) DEFAULT NULL,             -- Size for drinks: Small, Medium, Large
     special_instructions TEXT,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, menu_item_id)
+    UNIQUE(user_id, menu_item_id, size)        -- Allow same item in different sizes
 );
 
 CREATE INDEX idx_cart_user_id ON cart(user_id);

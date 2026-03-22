@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle, AlertCircle, ChefHat } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle, AlertCircle, ChefHat, Clock } from 'lucide-react'
 import axios from 'axios';
 
 function RestaurantLogin() {
@@ -13,6 +13,7 @@ function RestaurantLogin() {
 	const [message, setMessage] = useState('');
 	const [messageType, setMessageType] = useState('');
 	const [errors, setErrors] = useState({});
+	const [approvalStatus, setApprovalStatus] = useState(null); // 'pending' | 'rejected' | null
 
 	const validateForm = () => {
 		const newErrors = {};
@@ -47,28 +48,33 @@ function RestaurantLogin() {
 		try {
 			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 			const response = await axios.post(`${baseURL}/api/owner/login`, {
-				username: email.trim(), // Can be email or username
+				username: email.trim(),
 				password: password
 			}, { withCredentials: true });
-			
+
 			if (response.data.success) {
-				setMessage('Login successful! Redirecting...');
-				setMessageType('success');
+				// Both pending and approved: redirect to dashboard
+				// Pending accounts will see the status banner inside the dashboard
 				if (rememberMe) {
-					localStorage.setItem('rememberMe', JSON.stringify({
-						email: email.trim()
-					}));
+					localStorage.setItem('rememberMe', JSON.stringify({ email: email.trim() }));
 				}
-				setTimeout(() => {
-					navigate('/owner/dashboard');
-				}, 800);
+				navigate('/owner/dashboard');
 			} else {
 				setMessage(response.data.message || 'Login failed');
 				setMessageType('error');
 			}
 		} catch (error) {
-			setMessage(error.response?.data?.message || error.message || 'An error occurred during login');
-			setMessageType('error');
+			const errData = error.response?.data;
+			if (errData?.approvalStatus === 'rejected') {
+				// Hard block: only rejected accounts are blocked at login
+				setApprovalStatus('rejected');
+				setMessage(errData.message);
+				setMessageType('error');
+			} else {
+				setApprovalStatus(null);
+				setMessage(errData?.message || error.message || 'An error occurred during login');
+				setMessageType('error');
+			}
 		} finally {
 			setIsLoading(false);
 		}
@@ -111,12 +117,15 @@ function RestaurantLogin() {
 								<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 animate-fade-in ${
 									messageType === 'success' 
 										? 'bg-emerald-50 border-emerald-500 text-emerald-800' 
+										: messageType === 'warning'
+										? 'bg-amber-50 border-amber-500 text-amber-800'
 										: messageType === 'error'
 										? 'bg-red-50 border-red-500 text-red-800'
 										: 'bg-blue-50 border-blue-500 text-blue-800'
 								}`}>
-									<div className="mt-0.5">
+									<div className="mt-0.5 shrink-0">
 										{messageType === 'success' && <CheckCircle size={20} />}
+										{messageType === 'warning' && <Clock size={20} />}
 										{messageType === 'error' && <AlertCircle size={20} />}
 										{messageType === 'info' && <Mail size={20} />}
 									</div>
@@ -324,12 +333,15 @@ function RestaurantLogin() {
 								<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 animate-fade-in ${
 									messageType === 'success' 
 										? 'bg-emerald-50 border-emerald-500 text-emerald-800' 
+										: messageType === 'warning'
+										? 'bg-amber-50 border-amber-500 text-amber-800'
 										: messageType === 'error'
 										? 'bg-red-50 border-red-500 text-red-800'
 										: 'bg-blue-50 border-blue-500 text-blue-800'
 								}`}>
-									<div className="mt-0.5">
+									<div className="mt-0.5 shrink-0">
 										{messageType === 'success' && <CheckCircle size={20} />}
+										{messageType === 'warning' && <Clock size={20} />}
 										{messageType === 'error' && <AlertCircle size={20} />}
 										{messageType === 'info' && <Mail size={20} />}
 									</div>

@@ -12,8 +12,8 @@ function RestaurantRegister() {
 		city: '',
 		province: '',
 		permitNumber: '',
-		taxId: '',
 		permitDocument: null,
+		restaurantLogoUrl: '',
 		// Owner Information
 		ownerName: '',
 		ownerPhone: '',
@@ -86,6 +86,25 @@ function RestaurantRegister() {
 					permitDocument: ''
 				}));
 			}
+		}
+	};
+
+	const handlePhotoUpload = (e) => {
+		const file = e.target.files?.[0];
+		if (file) {
+			if (file.size > 2 * 1024 * 1024) {
+				setMessage('Logo file size should be less than 2MB');
+				setMessageType('error');
+				return;
+			}
+			const reader = new FileReader();
+			reader.onload = (event) => {
+				setFormData(prev => ({
+					...prev,
+					restaurantLogoUrl: event.target?.result
+				}));
+			};
+			reader.readAsDataURL(file);
 		}
 	};
 
@@ -181,20 +200,26 @@ function RestaurantRegister() {
 				city: formData.city.trim(),
 				province: formData.province.trim(),
 				permitNumber: formData.permitNumber.trim(),
-				taxId: formData.taxId.trim(),
 				ownerName: formData.ownerName.trim(),
 				ownerPhone: formData.ownerPhone.trim(),
 				businessEmail: formData.businessEmail.trim(),
 				username: formData.username.trim(),
-				password: formData.password
+				password: formData.password,
+				restaurant_logo_url: formData.restaurantLogoUrl.trim()
 			}, { withCredentials: true });
 			
-			if (response.data.success) {
-				setMessage('Registration successful! Redirecting to dashboard...');
-				setMessageType('success');
-				setTimeout(() => {
-					navigate('/owner/dashboard');
-				}, 2000);
+		if (response.data.success) {
+				if (response.data.pending) {
+					// Account created but pending approval — do NOT redirect
+					setMessage('✅ Registration submitted! Your account is pending admin approval. You will be notified once approved. You may close this page.');
+					setMessageType('success');
+				} else {
+					setMessage('Registration successful! Redirecting to dashboard...');
+					setMessageType('success');
+					setTimeout(() => {
+						navigate('/owner/dashboard');
+					}, 2000);
+				}
 			} else {
 				setMessage(response.data.message || 'Registration failed');
 				setMessageType('error');
@@ -357,9 +382,9 @@ function RestaurantRegister() {
 								</div>
 							</div>
 
-							{/* Permit & Tax ID */}
+							{/* Permit Number */}
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
+								<div className="md:col-span-2">
 									<label className="block text-sm font-semibold text-gray-900 mb-2">
 										Business Permit Number <span className="text-red-600">*</span>
 									</label>
@@ -381,18 +406,26 @@ function RestaurantRegister() {
 										</p>
 									)}
 								</div>
-								<div>
+							</div>
+
+							{/* Restaurant Logo URL */}
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="md:col-span-2">
 									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										Tax ID <span className="text-gray-500">(Optional)</span>
+										Restaurant Logo / Cover Photo <span className="text-gray-500">(Optional)</span>
 									</label>
 									<input
-										type="text"
-										name="taxId"
-										value={formData.taxId}
-										onChange={handleInputChange}
-										placeholder="Tax ID"
-										className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+										type="file"
+										accept="image/*"
+										onChange={handlePhotoUpload}
+										className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
 									/>
+									{formData.restaurantLogoUrl && (
+										<div className="mt-4">
+											<p className="text-sm text-gray-500 font-medium mb-2">Preview:</p>
+											<img src={formData.restaurantLogoUrl} alt="Logo preview" className="h-24 w-24 object-cover rounded-xl border border-gray-200 shadow-sm" onError={(e) => { e.target.style.display = 'none'; }} />
+										</div>
+									)}
 								</div>
 							</div>
 

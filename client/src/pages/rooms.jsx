@@ -234,7 +234,7 @@ function Rooms() {
 
                                         <div className="border-t pt-3" style={{borderColor: 'rgba(139, 0, 0, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                                             <span className="text-2xl font-bold" style={{color: '#ff6b6b'}}>
-                                                ${room.pricePerNight || room.price}
+                                                ₱{room.pricePerNight || room.price}
                                             </span>
                                             {room.available !== false && (
                                                 <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{backgroundColor: 'rgba(76, 175, 80, 0.2)', color: '#4caf50'}}>

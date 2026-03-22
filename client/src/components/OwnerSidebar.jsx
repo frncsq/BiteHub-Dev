@@ -27,14 +27,17 @@ function OwnerSidebar() {
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col shadow-sm z-10">
-      <div className="p-6 border-b border-gray-200 flex items-center gap-3">
-        <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+    <div className="w-64 bg-white/60 backdrop-blur-2xl border-r border-white/50 h-screen fixed left-0 top-0 flex flex-col shadow-[8px_0_32px_rgba(0,0,0,0.03)] z-50 transition-all duration-300 ease-in-out">
+      {/* Decorative top gradient */}
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/60 to-transparent pointer-events-none -z-10" />
+      
+      <div className="p-6 border-b border-white/40 flex items-center gap-3 relative z-20">
+        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-500/30 transform transition-transform hover:scale-105 duration-300 ring-1 ring-white/50">
           B
         </div>
-        <span className="text-xl font-bold font-sans text-gray-900 tracking-tight">Owner Portal</span>
+        <span className="text-xl font-bold font-sans tracking-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Owner Portal</span>
       </div>
-      <div className="flex-1 py-6 flex flex-col gap-2 px-4">
+      <div className="flex-1 py-6 flex flex-col gap-2 px-4 overflow-y-auto">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = location.pathname.startsWith(link.path);
@@ -42,25 +45,36 @@ function OwnerSidebar() {
             <Link
               key={link.name}
               to={link.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium overflow-hidden group ${
                 isActive
-                  ? 'bg-orange-50 text-orange-600'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-white/80 shadow-sm text-orange-600 border border-white/60'
+                  : 'text-gray-600 hover:bg-white/50 hover:shadow-sm hover:text-gray-900 border border-transparent hover:-translate-y-0.5'
               }`}
             >
-              <Icon size={20} className={isActive ? 'text-orange-600' : 'text-gray-400'} />
-              {link.name}
+              {isActive && (
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-100/40 to-transparent pointer-events-none" />
+              )}
+              <Icon 
+                size={20} 
+                className={`transition-all duration-300 group-hover:scale-110 ${
+                  isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-orange-500'
+                }`}
+              />
+              <span className="relative z-10 translate-x-0 group-hover:translate-x-1 transition-transform duration-300">
+                {link.name}
+              </span>
             </Link>
           );
         })}
       </div>
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-white/40 mb-4 relative z-20">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-red-600 hover:bg-red-50 transition-colors font-medium"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-red-600 hover:bg-white/60 hover:shadow-sm border border-transparent hover:border-white/60 transition-all duration-300 font-medium group relative overflow-hidden hover:-translate-y-0.5"
         >
-          <LogOut size={20} />
-          Logout
+          <div className="absolute inset-0 bg-red-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <LogOut size={20} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110 text-red-500" />
+          <span className="transition-transform duration-300 group-hover:translate-x-1">Logout</span>
         </button>
       </div>
     </div>

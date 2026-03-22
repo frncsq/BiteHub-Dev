@@ -10,7 +10,8 @@ function OwnerSettings() {
     owner_name: '',
     owner_phone: '',
     business_email: '',
-    description: ''
+    description: '',
+    restaurant_logo_url: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +31,8 @@ function OwnerSettings() {
           owner_name: response.data.settings.owner_name || '',
           owner_phone: response.data.settings.owner_phone || '',
           business_email: response.data.settings.business_email || '', // Usually read-only
-          description: response.data.settings.description || ''
+          description: response.data.settings.description || '',
+          restaurant_logo_url: response.data.settings.restaurant_logo_url || ''
         });
       }
     } catch (err) {
@@ -48,6 +50,42 @@ function OwnerSettings() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+         setMessage('File size should be less than 5MB');
+         setMessageType('error');
+         return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result;
+        // Compress large images using a canvas to keep base64 size manageable
+        const img = new Image();
+        img.onload = () => {
+          const MAX_SIDE = 1200;
+          let { width, height } = img;
+          if (width > MAX_SIDE || height > MAX_SIDE) {
+            const ratio = Math.min(MAX_SIDE / width, MAX_SIDE / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          setFormData(prev => ({ ...prev, restaurant_logo_url: compressed }));
+          setMessage('Photo selected – click "Save Changes" to apply.');
+          setMessageType('success');
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -109,6 +147,16 @@ function OwnerSettings() {
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-semibold text-gray-900 mb-2">Full Business Address</label>
               <input required type="text" name="business_address" value={formData.business_address} onChange={handleChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 transition" />
+            </div>
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Restaurant Photo / Logo</label>
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 transition file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer" />
+              {formData.restaurant_logo_url && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-500 mb-2">Preview:</p>
+                  <img src={formData.restaurant_logo_url} alt="Restaurant Logo" className="h-32 w-32 object-cover rounded-xl shadow border border-gray-100" onError={(e) => { e.target.style.display = 'none'; }} />
+                </div>
+              )}
             </div>
           </div>
         </div>

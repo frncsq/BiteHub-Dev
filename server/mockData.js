@@ -159,6 +159,19 @@ export const mockFoodItems = {
 			discount: 0,
 			image: 'https://images.unsplash.com/photo-1585238341710-4abb8fca7d1b?w=400&h=400&fit=crop',
 			restaurant: 'Burger Barn'
+		},
+		{
+			id: 205,
+			name: 'Fresh Iced Tea',
+			price: 35.00,
+			half_price: 25.00,
+			large_price: 45.00,
+			category: 'Drinks',
+			rating: 4.9,
+			reviews: 120,
+			discount: 0,
+			image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&h=400&fit=crop',
+			restaurant: 'Burger Barn'
 		}
 	],
 	3: [ 

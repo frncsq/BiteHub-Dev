@@ -101,6 +101,21 @@ export const mockRestaurantsData = [
 		cuisines: ['Indian', 'Curry'],
 		address: '654 Maple Dr',
 		phone: '+1 234 567 8904'
+	},
+	{
+		id: 6,
+		name: 'Drinks Corner',
+		type: 'drinks',
+		description: 'Refreshing beverages in small, medium, and large sizes',
+		pricePerNight: 8,
+		rating: 4.9,
+		reviews: 312,
+		image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=300&h=200&fit=crop',
+		distance: 0.5,
+		deliveryTime: '10-20 min',
+		cuisines: ['Drinks', 'Beverages'],
+		address: '10 Campus Lane',
+		phone: '+63 912 345 6789'
 	}
 ];
 
@@ -283,7 +298,8 @@ export const mockFoodItems = {
 			reviews: 167,
 			discount: 10,
 			image: 'https://images.unsplash.com/photo-1565959454675-338e1b0d92d6?w=400&h=400&fit=crop',
-			restaurant: 'Curry House'
+			restaurant: 'Curry House',
+			category: 'Main Course'
 		},
 		{
 			id: 502,
@@ -293,7 +309,8 @@ export const mockFoodItems = {
 			reviews: 142,
 			discount: 0,
 			image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
-			restaurant: 'Curry House'
+			restaurant: 'Curry House',
+			category: 'Main Course'
 		},
 		{
 			id: 503,
@@ -303,7 +320,8 @@ export const mockFoodItems = {
 			reviews: 98,
 			discount: 18,
 			image: 'https://images.unsplash.com/photo-1517621707268-085fbf2f93ff?w=400&h=400&fit=crop',
-			restaurant: 'Curry House'
+			restaurant: 'Curry House',
+			category: 'Main Course'
 		},
 		{
 			id: 504,
@@ -313,7 +331,62 @@ export const mockFoodItems = {
 			reviews: 134,
 			discount: 0,
 			image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=400&fit=crop',
-			restaurant: 'Curry House'
+			restaurant: 'Curry House',
+			category: 'Snack'
+		}
+	],
+	6: [ // Drinks Corner
+		{
+			id: 601,
+			name: 'Fresh Mango Shake',
+			price: 79,          // Medium
+			half_price: 59,     // Small
+			large_price: 99,    // Large
+			rating: 4.9,
+			reviews: 214,
+			discount: 0,
+			image: 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=400&h=400&fit=crop',
+			restaurant: 'Drinks Corner',
+			category: 'Drinks'
+		},
+		{
+			id: 602,
+			name: 'Iced Coffee Latte',
+			price: 89,          // Medium
+			half_price: 69,     // Small
+			large_price: 109,   // Large
+			rating: 4.8,
+			reviews: 187,
+			discount: 0,
+			image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=400&h=400&fit=crop',
+			restaurant: 'Drinks Corner',
+			category: 'Drinks'
+		},
+		{
+			id: 603,
+			name: 'Strawberry Milkshake',
+			price: 85,          // Medium
+			half_price: 65,     // Small
+			large_price: 105,   // Large
+			rating: 4.7,
+			reviews: 156,
+			discount: 10,
+			image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=400&h=400&fit=crop',
+			restaurant: 'Drinks Corner',
+			category: 'Drinks'
+		},
+		{
+			id: 604,
+			name: 'Classic Lemonade',
+			price: 55,          // Medium
+			half_price: 40,     // Small
+			large_price: 70,    // Large
+			rating: 4.6,
+			reviews: 124,
+			discount: 0,
+			image: 'https://images.unsplash.com/photo-1523677011781-c91d1bbe2f9e?w=400&h=400&fit=crop',
+			restaurant: 'Drinks Corner',
+			category: 'Drinks'
 		}
 	]
 };

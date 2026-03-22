@@ -18,6 +18,13 @@ import OwnerOrders from "./pages/owner/orders.jsx";
 import OwnerInventory from "./pages/owner/inventory.jsx";
 import OwnerAnalytics from "./pages/owner/analytics.jsx";
 import OwnerSettings from "./pages/owner/settings.jsx";
+import AdminLogin from "./pages/admin-login.jsx";
+import AdminLayout from "./components/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/dashboard.jsx";
+import AdminRestaurants from "./pages/admin/restaurants.jsx";
+import AdminUsers from "./pages/admin/users.jsx";
+import AdminOrders from "./pages/admin/orders.jsx";
+import AdminPayments from "./pages/admin/payments.jsx";
 
 function App() {
   return (
@@ -50,6 +57,19 @@ function App() {
           <Route path="inventory" element={<OwnerInventory />} />
           <Route path="analytics" element={<OwnerAnalytics />} />
           <Route path="settings" element={<OwnerSettings />} />
+        </Route>
+
+        {/* Admin Portal */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+           <Route path="dashboard" element={<AdminDashboard />} />
+           <Route path="restaurants" element={<AdminRestaurants />} />
+           <Route path="users" element={<AdminUsers />} />
+           <Route path="orders" element={<AdminOrders />} />
+           <Route path="payments" element={<AdminPayments />} />
+           <Route path="analytics" element={<AdminDashboard />} /> {/* Maps to dashboard for now */}
+           {/* Fallback internal redirect */}
+           <Route index element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
 
         {/* Catch-all route - redirect to home */}

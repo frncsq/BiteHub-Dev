@@ -45,7 +45,6 @@ CREATE TABLE restaurants (
     province VARCHAR(100) NOT NULL,
     postal_code VARCHAR(20),
     permit_number VARCHAR(100) UNIQUE NOT NULL,
-    tax_id VARCHAR(100) UNIQUE NOT NULL,
     permit_document_url VARCHAR(500),
     owner_name VARCHAR(255) NOT NULL,
     owner_phone VARCHAR(20) NOT NULL,
