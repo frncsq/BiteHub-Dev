@@ -117,8 +117,8 @@ function EditStockModal({ item, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
-        <div className="flex justify-between items-center p-5 border-b border-gray-100">
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-2xl w-full max-w-md animate-slide-up">
+        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/70">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Edit Stock — {item.item_name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">{item.category} · ID #{item.id}</p>
@@ -150,7 +150,7 @@ function EditStockModal({ item, onClose, onSave }) {
               <button
                 type="button"
                 onClick={() => setDailyStock('')}
-                className="px-3 py-2.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition flex items-center gap-1"
+                className="px-3 py-2.5 text-xs font-semibold text-blue-700 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all duration-200 flex items-center gap-1"
               >
                 <Infinity size={14} /> Unlimited
               </button>
@@ -160,7 +160,7 @@ function EditStockModal({ item, onClose, onSave }) {
 
           {/* Sync toggle */}
           {!isUnlimited && (
-            <label className="flex items-start gap-3 p-3.5 bg-orange-50 rounded-xl border border-orange-100 cursor-pointer">
+            <label className="flex items-start gap-3 p-3.5 bg-orange-50/80 rounded-xl border border-orange-100 cursor-pointer">
               <input
                 type="checkbox"
                 checked={syncCurrent}
@@ -204,13 +204,13 @@ function EditStockModal({ item, onClose, onSave }) {
         </div>
 
         <div className="flex gap-3 p-5 pt-0">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition text-sm">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 text-sm">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold rounded-xl transition shadow-md text-sm disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md text-sm disabled:opacity-60"
           >
             {isSaving ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
             {isSaving ? 'Saving...' : 'Save Changes'}
@@ -361,11 +361,11 @@ function OwnerInventory() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 md:space-y-8 max-w-[1400px] mx-auto">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
             <Package size={28} className="text-orange-500" />
             Inventory Management
           </h1>
@@ -376,7 +376,7 @@ function OwnerInventory() {
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={fetchInventory}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm text-sm"
           >
             <RefreshCw size={16} />
             Refresh
@@ -384,7 +384,7 @@ function OwnerInventory() {
           <button
             onClick={handleResetAll}
             disabled={isResettingAll}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl transition shadow-md text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md text-sm"
           >
             {isResettingAll ? <RefreshCw size={16} className="animate-spin" /> : <RotateCcw size={16} />}
             Reset All Stock
@@ -415,7 +415,7 @@ function OwnerInventory() {
           { label: 'Low Stock', value: lowStock, icon: TrendingDown, color: 'bg-yellow-50 text-yellow-600', border: 'border-yellow-100', sub: '≤25% remaining' },
           { label: 'Out of Stock', value: outOfStock, icon: X, color: 'bg-red-50 text-red-600', border: 'border-red-100', sub: 'needs immediate restock' },
         ].map(({ label, value, icon: Icon, color, border, sub }) => (
-          <div key={label} className={`bg-white rounded-2xl p-4 border ${border} shadow-sm`}>
+          <div key={label} className={`bg-white rounded-2xl p-4 border ${border} shadow-sm hover:shadow-md transition-all duration-200`}>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
               <div className={`p-1.5 rounded-lg ${color}`}>
@@ -429,7 +429,7 @@ function OwnerInventory() {
       </div>
 
       {/* ── Scheduler Notice ── */}
-      <div className="flex items-center gap-3 p-3.5 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100">
+      <div className="flex items-center gap-3 p-3.5 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100 shadow-sm">
         <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600 flex-shrink-0">
           <Clock size={16} />
         </div>
@@ -451,19 +451,19 @@ function OwnerInventory() {
           placeholder="Search items..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition"
+          className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition"
         />
         <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-100 outline-none"
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-100 outline-none bg-white"
         >
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-100 outline-none"
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-100 outline-none bg-white"
         >
           {['All', 'In Stock', 'Low Stock', 'Out of Stock', 'Unlimited'].map(s => (
             <option key={s} value={s}>{s}</option>
@@ -499,7 +499,7 @@ function OwnerInventory() {
                   <th className="py-4 px-5 font-semibold text-gray-500 text-xs uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100">
                 {filtered.map(item => {
                   const isTracked = item.daily_stock !== null && item.daily_stock >= 0;
                   const isOOS = isTracked && item.current_stock !== null && item.current_stock === 0;
@@ -507,7 +507,7 @@ function OwnerInventory() {
                   return (
                     <tr
                       key={item.id}
-                      className={`hover:bg-gray-50/60 transition duration-150 ${isOOS ? 'bg-red-50/30' : ''}`}
+                      className={`hover:bg-gray-50/70 transition duration-200 ${isOOS ? 'bg-red-50/30' : ''}`}
                     >
                       {/* Item Name */}
                       <td className="py-4 px-5">
@@ -516,16 +516,16 @@ function OwnerInventory() {
                             <img
                               src={item.image_url}
                               alt={item.item_name}
-                              className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-gray-100"
+                              className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-gray-100 shadow-sm"
                               onError={e => e.target.style.display = 'none'}
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 border border-gray-100">
                               <Package size={16} className="text-gray-400" />
                             </div>
                           )}
                           <div>
-                            <p className="font-bold text-gray-900 text-sm leading-tight">{item.item_name}</p>
+                            <p className="font-semibold text-gray-900 text-sm leading-tight">{item.item_name}</p>
                             <p className="text-xs text-gray-400">₱{Number(item.price).toFixed(2)}</p>
                           </div>
                         </div>
@@ -533,7 +533,7 @@ function OwnerInventory() {
 
                       {/* Category */}
                       <td className="py-4 px-5">
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold">
+                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold">
                           {item.category || 'Uncategorized'}
                         </span>
                       </td>
@@ -593,14 +593,14 @@ function OwnerInventory() {
                             <button
                               onClick={() => handleResetItem(item)}
                               title="Reset current stock to daily quota"
-                              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition border border-blue-100"
+                              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all duration-200 border border-blue-100"
                             >
                               <RotateCcw size={12} /> Reset
                             </button>
                           )}
                           <button
                             onClick={() => setEditingItem(item)}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition border border-orange-100"
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg transition-all duration-200 border border-orange-100"
                           >
                             <Edit3 size={12} /> Edit
                           </button>
