@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../../services/apiClient';
 import {
   TrendingUp, TrendingDown, Calendar, Banknote, Activity,
   ShoppingBag, Users, ArrowUpRight, ArrowDownRight, BarChart3,
@@ -7,7 +7,7 @@ import {
   Zap, Target
 } from 'lucide-react';
 
-const BASE_URL = () => import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 // ── Utility: format currency ─────────────────────────────────────────────────
 const fmt = (n) => Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -142,7 +142,8 @@ function OwnerAnalytics() {
   const fetchAnalytics = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL()}/api/owner/analytics`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const response = await apiClient.get('/owner/analytics');
       if (response.data.success) {
         setAnalytics(response.data.analytics || []);
         setPeriods(response.data.periods || {});

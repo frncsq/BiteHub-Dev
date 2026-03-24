@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../../services/apiClient';
 import {
   PackageOpen, Save, RefreshCw, RotateCcw, AlertTriangle,
   CheckCircle, Package, TrendingDown, Infinity, Edit3, X,
   BarChart3, Clock, Zap
 } from 'lucide-react';
 
-const BASE_URL = () => import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Centralized API Client will handle base URL and headers automatically
 
 // ─── Stock Status Badge ──────────────────────────────────────────────────────
 function StockBadge({ currentStock, dailyStock }) {
@@ -242,11 +242,13 @@ function OwnerInventory() {
     try {
       setIsLoading(true);
       setError('');
-      const res = await axios.get(`${BASE_URL()}/api/owner/inventory`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const res = await apiClient.get('/owner/inventory');
       if (res.data.success) {
         setItems(res.data.items);
       }
     } catch (err) {
+      console.error("Inventory fetch error:", err);
       setError(err.response?.data?.message || 'Failed to load inventory');
     } finally {
       setIsLoading(false);
@@ -261,19 +263,18 @@ function OwnerInventory() {
   }, [fetchInventory]);
 
   const handleSaveStock = async (itemId, { daily_stock, sync_current, current_stock_override }) => {
+    const apiClient = createApiClient();
     // Update daily_stock (and optionally sync current_stock)
-    await axios.put(
-      `${BASE_URL()}/api/owner/inventory/${itemId}`,
-      { daily_stock, sync_current },
-      { withCredentials: true }
+    await apiClient.put(
+      `/owner/inventory/${itemId}`,
+      { daily_stock, sync_current }
     );
 
     // If not syncing and a specific current_stock override was given, apply it separately
     if (!sync_current && current_stock_override !== null && current_stock_override !== undefined) {
-      await axios.patch(
-        `${BASE_URL()}/api/owner/inventory/${itemId}/current`,
-        { current_stock: current_stock_override },
-        { withCredentials: true }
+      await apiClient.patch(
+        `/owner/inventory/${itemId}/current`,
+        { current_stock: current_stock_override }
       );
     }
 
@@ -283,10 +284,10 @@ function OwnerInventory() {
 
   const handleToggleAvailability = async (item) => {
     try {
-      await axios.put(
-        `${BASE_URL()}/api/owner/inventory/${item.id}`,
-        { is_available: !item.is_available },
-        { withCredentials: true }
+      const apiClient = createApiClient();
+      await apiClient.put(
+        `/owner/inventory/${item.id}`,
+        { is_available: !item.is_available }
       );
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_available: !i.is_available } : i));
       showSuccess(`"${item.item_name}" is now ${!item.is_available ? 'available' : 'hidden'}`);
@@ -297,10 +298,10 @@ function OwnerInventory() {
 
   const handleResetItem = async (item) => {
     try {
-      const res = await axios.post(
-        `${BASE_URL()}/api/owner/inventory/reset`,
-        { item_id: item.id },
-        { withCredentials: true }
+      const apiClient = createApiClient();
+      const res = await apiClient.post(
+        '/owner/inventory/reset',
+        { item_id: item.id }
       );
       if (res.data.success) {
         await fetchInventory();
@@ -315,10 +316,10 @@ function OwnerInventory() {
     if (!window.confirm('Reset current stock to daily quota for ALL items? This cannot be undone.')) return;
     setIsResettingAll(true);
     try {
-      const res = await axios.post(
-        `${BASE_URL()}/api/owner/inventory/reset`,
-        {},
-        { withCredentials: true }
+      const apiClient = createApiClient();
+      const res = await apiClient.post(
+        '/owner/inventory/reset',
+        {}
       );
       if (res.data.success) {
         await fetchInventory();

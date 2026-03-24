@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../../services/apiClient';
 import { Save, Building2, User, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 
 function OwnerSettings() {
@@ -21,8 +21,8 @@ function OwnerSettings() {
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await axios.get(`${baseURL}/api/owner/settings`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const response = await apiClient.get('/owner/settings');
       if (response.data.success && response.data.settings) {
         setFormData({
           business_name: response.data.settings.business_name || '',
@@ -93,8 +93,8 @@ function OwnerSettings() {
     try {
       setIsSaving(true);
       setMessage('');
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      await axios.put(`${baseURL}/api/owner/settings`, formData, { withCredentials: true });
+      const apiClient = createApiClient();
+      await apiClient.put('/owner/settings', formData);
       setMessage('Settings updated successfully');
       setMessageType('success');
     } catch (err) {

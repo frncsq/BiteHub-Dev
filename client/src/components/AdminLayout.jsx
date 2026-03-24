@@ -1,6 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../services/apiClient.js';
 import AdminSidebar from './AdminSidebar';
 
 function AdminLayout() {
@@ -11,10 +11,11 @@ function AdminLayout() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        await axios.get(`${baseURL}/api/admin/me`, { withCredentials: true });
+        const apiClient = createApiClient();
+        await apiClient.get('/admin/me');
         setIsAuthenticated(true);
       } catch (err) {
+        console.warn("🔐 Admin session invalid or expired.");
         navigate('/admin-login');
       } finally {
         setIsChecking(false);

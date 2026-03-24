@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../../services/apiClient';
 import { Package, Clock, CheckCircle2, ChevronRight, AlertCircle, Truck, TrendingUp } from 'lucide-react';
 
 function OwnerOrders() {
@@ -11,8 +11,8 @@ function OwnerOrders() {
   const fetchOrders = async (showLoading = true) => {
     try {
       if (showLoading) setIsLoading(true);
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await axios.get(`${baseURL}/api/owner/orders`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const response = await apiClient.get('/owner/orders');
       if (response.data.success) {
         setOrders(response.data.orders);
       }
@@ -33,8 +33,8 @@ function OwnerOrders() {
 
   const updateOrderStatus = async (id, newStatus) => {
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      await axios.put(`${baseURL}/api/owner/orders/${id}/status`, { status: newStatus }, { withCredentials: true });
+      const apiClient = createApiClient();
+      await apiClient.put(`/owner/orders/${id}/status`, { status: newStatus });
       fetchOrders();
     } catch (err) {
       alert(err.response?.data?.message || 'Error updating order status');

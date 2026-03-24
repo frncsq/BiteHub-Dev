@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { createApiClient } from '../../services/apiClient';
 import { Users, Store, ClipboardList, TrendingUp, DollarSign, ArrowRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState({
     totalUsers: 0,
     totalRestaurants: 0,
@@ -14,10 +16,17 @@ function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.warn("Unauthorized Admin Access attempt.");
+      navigate('/admin-login');
+      return;
+    }
+
     const fetchData = async () => {
       try {
-        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await axios.get(`${baseURL}/api/admin/analytics`, { withCredentials: true });
+        const apiClient = createApiClient();
+        const res = await apiClient.get('/admin/analytics');
         if (res.data.success) {
           setData(res.data.analytics);
         }

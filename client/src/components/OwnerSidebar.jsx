@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Package, BarChart3, Settings, LogOut } from 'lucide-react';
-import axios from 'axios';
+import { createApiClient } from '../services/apiClient';
 import { useNavigate } from 'react-router-dom';
+import biteLogo from '../assets/bite.png';
 
 function OwnerSidebar() {
   const location = useLocation();
@@ -18,11 +19,16 @@ function OwnerSidebar() {
 
   const handleLogout = async () => {
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      await axios.post(`${baseURL}/api/owner/logout`, {}, { withCredentials: true });
+      const apiClient = createApiClient();
+      await apiClient.post('/owner/logout');
+      localStorage.removeItem('authToken');
+      console.log("✅ Auth token cleared on logout");
       navigate('/restaurant-login');
     } catch (err) {
-      console.error(err);
+      console.error("Logout failed:", err);
+      // Even if API fails, clear local token and navigate
+      localStorage.removeItem('authToken');
+      navigate('/restaurant-login');
     }
   };
 
@@ -32,8 +38,8 @@ function OwnerSidebar() {
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/60 to-transparent pointer-events-none -z-10" />
       
       <div className="p-6 border-b border-white/40 flex items-center gap-3 relative z-20">
-        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-500/30 transform transition-transform hover:scale-105 duration-300 ring-1 ring-white/50">
-          B
+        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transform transition-transform hover:scale-105 duration-300">
+          <img src={biteLogo} alt="BiteHub Logo" className="w-full h-full object-contain" />
         </div>
         <span className="text-xl font-bold font-sans tracking-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Owner Portal</span>
       </div>

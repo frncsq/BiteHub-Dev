@@ -25,7 +25,7 @@ const mockRestaurants = [
 	}
 ];
 
-// Mock Restaurants/Rooms
+// Mock Restaurants
 export const mockRestaurantsData = [
 	{
 		id: 1,
@@ -632,43 +632,6 @@ export const mockCartService = {
 	}
 };
 
-// Bookings/Reservations (for rooms page)
-export const mockBookingService = {
-	// Get user bookings
-	getBookings: () => {
-		const bookings = localStorage.getItem('bookings');
-		if (bookings) {
-			return { success: true, bookings: JSON.parse(bookings) };
-		}
-		return { success: true, bookings: [] };
-	},
-
-	// Create booking
-	createBooking: (roomId, checkIn, checkOut) => {
-		const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-		const room = mockRestaurantsData.find(r => r.id === roomId);
-		
-		if (!room) {
-			return { success: false, message: 'Room not found' };
-		}
-
-		const newBooking = {
-			id: bookings.length + 1,
-			roomId,
-			roomName: room.name,
-			checkIn,
-			checkOut,
-			status: 'confirmed',
-			price: room.pricePerNight,
-			createdAt: new Date().toISOString()
-		};
-
-		bookings.push(newBooking);
-		localStorage.setItem('bookings', JSON.stringify(bookings));
-		return { success: true, booking: newBooking };
-	}
-};
-
 // Profile Service
 export const mockProfileService = {
 	// Get user profile
@@ -692,34 +655,12 @@ export const mockProfileService = {
 	}
 };
 
-// Contact/Support Service
-export const mockContactService = {
-	// Submit contact form
-	submitContact: (name, email, subject, message) => {
-		const contact = {
-			id: Date.now(),
-			name,
-			email,
-			subject,
-			message,
-			submittedAt: new Date().toISOString()
-		};
-		
-		// Store in localStorage as if it was sent to backend
-		const contacts = JSON.parse(localStorage.getItem('contacts') || '[]');
-		contacts.push(contact);
-		localStorage.setItem('contacts', JSON.stringify(contacts));
-		
-		return { success: true, message: 'Your message has been sent successfully' };
-	}
-};
+// Contact/Support Service removed
 
 export default {
 	mockAuthService,
 	mockFoodService,
 	mockOrderService,
 	mockCartService,
-	mockBookingService,
-	mockProfileService,
-	mockContactService
+	mockProfileService
 };

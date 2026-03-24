@@ -1,15 +1,37 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 import { hashPassword, comparePassword } from '../components/hash.js';
 
 const router = express.Router();
 
-// Middleware to check if owner is authenticated
+// Middleware to check if owner is authenticated via JWT
+// Note: index.js already calls verifyToken, so req.userId and req.user are populated.
+// Middleware to check if owner is authenticated via JWT
 const requireOwner = (req, res, next) => {
-  if (!req.session || !req.session.restaurantId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+  if (!token) {
+    console.log("[OWNER AUTH] ❌ No token found");
+    return res.status(401).json({ success: false, message: 'Unauthorized. Owner token missing.' });
   }
-  next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super-secret-key-123');
+    req.userId = decoded.id;
+    req.user = decoded;
+    
+    // Legacy session support
+    if (req.session) {
+      req.session.restaurantId = decoded.id;
+    }
+    
+    next();
+  } catch (err) {
+    console.error("[OWNER AUTH] ❌ Token invalid:", err.message);
+    return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+  }
 };
 
 // ==========================================
@@ -107,15 +129,28 @@ router.post('/login', async (req, res) => {
     // Pending is allowed to log in — they'll see the pending banner inside the dashboard
     // ───────────────────────────────────────────────────────────────
     
-    req.session.restaurantId = restaurant.id;
-    req.session.restaurantName = restaurant.business_name;
-    req.session.userRole = 'owner';
-    req.session.approvalStatus = restaurant.approval_status;
+    req.userId = restaurant.id;
+    if (req.session) {
+      req.session.restaurantId = restaurant.id;
+      req.session.restaurantName = restaurant.business_name;
+      req.session.userRole = 'owner';
+      req.session.approvalStatus = restaurant.approval_status;
+    }
     
+    // Issue JWT Token (minimal payload: id, email)
+    const token = jwt.sign(
+      { id: restaurant.id, email: restaurant.business_email, role: 'owner' },
+      process.env.JWT_SECRET || 'super-secret-key-123',
+      { expiresIn: '7d' }
+    );
+
+    console.log(`[OWNER LOGIN] Token generated for ${restaurant.business_email}`);
+
     res.status(200).json({
       success: true,
       message: "Login successful",
       user: { id: restaurant.id, name: restaurant.business_name, email: restaurant.business_email },
+      token,
       approvalStatus: restaurant.approval_status
     });
   } catch (error) {
@@ -124,33 +159,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/session', async (req, res) => {
-  if (req.session.restaurantId) {
-    try {
-      // Always fetch fresh approval_status from DB so stale sessions don't break anything
-      const r = await pool.query('SELECT approval_status FROM restaurants WHERE id=$1', [req.session.restaurantId]);
-      const approvalStatus = r.rows[0]?.approval_status || 'approved';
-      // Update session cache so login check is current
-      req.session.approvalStatus = approvalStatus;
-      res.status(200).json({
-        session: true,
-        restaurantId: req.session.restaurantId,
-        name: req.session.restaurantName,
-        approvalStatus
-      });
-    } catch (_) {
-      // If DB query fails, fall back to cached session value
-      res.status(200).json({
-        session: true,
-        restaurantId: req.session.restaurantId,
-        name: req.session.restaurantName,
-        approvalStatus: req.session.approvalStatus || 'approved'
-      });
-    }
-  } else {
-    res.status(200).json({ session: false });
-  }
-});
 
 router.post('/logout', (req, res) => {
   req.session.destroy((err) => {
@@ -163,6 +171,35 @@ router.post('/logout', (req, res) => {
 // PROTECTED ROUTES (Require Owner Login)
 // ==========================================
 router.use(requireOwner);
+
+router.get('/session', async (req, res) => {
+  // Now requireOwner has run, so req.userId is populated if a valid JWT was provided.
+  const restaurantId = req.userId || (req.userId || req.session.restaurantId);
+  
+  if (restaurantId) {
+    try {
+      // Always fetch fresh approval_status from DB so stale sessions don't break anything
+      const result = await pool.query('SELECT id, business_name, approval_status FROM restaurants WHERE id = $1', [restaurantId]);
+      if (result.rows.length === 0) {
+        return res.status(200).json({ session: false });
+      }
+      const r = result.rows[0];
+      const approvalStatus = r.approvalStatus || r.approval_status || 'approved';
+      
+      res.status(200).json({
+        session: true,
+        restaurantId: r.id,
+        name: r.business_name,
+        approvalStatus
+      });
+    } catch (err) {
+      console.error("[SESSION] Error fetching restaurant:", err);
+      res.status(200).json({ session: false });
+    }
+  } else {
+    res.status(200).json({ session: false });
+  }
+});
 
 // Middleware: blocks write actions if account is not yet approved
 const requireApproved = (req, res, next) => {
@@ -178,7 +215,7 @@ const requireApproved = (req, res, next) => {
 };
 
 router.get('/dashboard', async (req, res) => {
-  const rId = req.session.restaurantId;
+  const rId = (req.userId || req.session.restaurantId);
   try {
     // Basic metrics
     const ordersRes = await pool.query("SELECT COUNT(*) FROM orders WHERE restaurant_id = $1", [rId]);
@@ -280,7 +317,7 @@ router.get('/dashboard', async (req, res) => {
 // Menu Management
 router.get('/menu', async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM menu_items WHERE restaurant_id = $1 ORDER BY id DESC", [req.session.restaurantId]);
+    const result = await pool.query("SELECT * FROM menu_items WHERE restaurant_id = $1 ORDER BY id DESC", [(req.userId || req.session.restaurantId)]);
     res.status(200).json({ success: true, items: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -296,7 +333,7 @@ router.post('/menu', requireApproved, async (req, res) => {
       `INSERT INTO menu_items 
         (restaurant_id, item_name, description, price, half_price, large_price, category, is_available, image_url, inventory_count, daily_stock, current_stock) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-      [req.session.restaurantId, name, description, price, half_price || null, large_price || null, category, isAvailable ?? true, image_url, inventory_count ?? -1, ds, ds]
+      [(req.userId || req.session.restaurantId), name, description, price, half_price || null, large_price || null, category, isAvailable ?? true, image_url, inventory_count ?? -1, ds, ds]
     );
     res.status(201).json({ success: true, message: 'Item added', id: result.rows[0].id });
   } catch (err) {
@@ -315,7 +352,7 @@ router.put('/menu/:id', requireApproved, async (req, res) => {
            is_available=$7, image_url=$8, inventory_count=$9,
            daily_stock = COALESCE($10, daily_stock)
        WHERE id=$11 AND restaurant_id=$12`,
-      [name, description, price, half_price || null, large_price || null, category, isAvailable, image_url, inventory_count, ds, req.params.id, req.session.restaurantId]
+      [name, description, price, half_price || null, large_price || null, category, isAvailable, image_url, inventory_count, ds, req.params.id, (req.userId || req.session.restaurantId)]
     );
     res.status(200).json({ success: true, message: 'Item updated' });
   } catch (err) {
@@ -325,7 +362,7 @@ router.put('/menu/:id', requireApproved, async (req, res) => {
 
 router.delete('/menu/:id', requireApproved, async (req, res) => {
   try {
-    await pool.query("DELETE FROM menu_items WHERE id=$1 AND restaurant_id=$2", [req.params.id, req.session.restaurantId]);
+    await pool.query("DELETE FROM menu_items WHERE id=$1 AND restaurant_id=$2", [req.params.id, (req.userId || req.session.restaurantId)]);
     res.status(200).json({ success: true, message: 'Item deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -343,7 +380,7 @@ router.get('/menu/:menuItemId/combinations', async (req, res) => {
     // Verify ownership
     const ownerCheck = await pool.query(
       'SELECT id FROM menu_items WHERE id=$1 AND restaurant_id=$2',
-      [menuItemId, req.session.restaurantId]
+      [menuItemId, (req.userId || req.session.restaurantId)]
     );
     if (!ownerCheck.rows.length) return res.status(404).json({ success: false, message: 'Menu item not found' });
 
@@ -389,7 +426,7 @@ router.post('/menu/:menuItemId/combinations', requireApproved, async (req, res) 
     // Verify ownership
     const ownerCheck = await pool.query(
       'SELECT id FROM menu_items WHERE id=$1 AND restaurant_id=$2',
-      [menuItemId, req.session.restaurantId]
+      [menuItemId, (req.userId || req.session.restaurantId)]
     );
     if (!ownerCheck.rows.length) return res.status(404).json({ success: false, message: 'Menu item not found' });
 
@@ -425,7 +462,7 @@ router.delete('/menu/:menuItemId/combinations/:combinationId', async (req, res) 
       `SELECT bmc.id FROM budget_meal_combinations bmc
        JOIN menu_items mi ON bmc.menu_item_id = mi.id
        WHERE bmc.id=$1 AND mi.restaurant_id=$2`,
-      [combinationId, req.session.restaurantId]
+      [combinationId, (req.userId || req.session.restaurantId)]
     );
     if (!ownerCheck.rows.length) return res.status(404).json({ success: false, message: 'Combination not found' });
     await pool.query('DELETE FROM budget_meal_combinations WHERE id=$1', [combinationId]);
@@ -446,7 +483,7 @@ router.put('/menu/:menuItemId/combinations', async (req, res) => {
   try {
     const ownerCheck = await pool.query(
       'SELECT id FROM menu_items WHERE id=$1 AND restaurant_id=$2',
-      [menuItemId, req.session.restaurantId]
+      [menuItemId, (req.userId || req.session.restaurantId)]
     );
     if (!ownerCheck.rows.length) return res.status(404).json({ success: false, message: 'Menu item not found' });
 
@@ -492,7 +529,7 @@ router.get('/orders', async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE o.restaurant_id = $1
       ORDER BY o.created_at DESC
-    `, [req.session.restaurantId]);
+    `, [(req.userId || req.session.restaurantId)]);
     
     res.status(200).json({ success: true, orders: result.rows });
   } catch (err) {
@@ -503,7 +540,7 @@ router.get('/orders', async (req, res) => {
 router.put('/orders/:id/status', async (req, res) => {
   const { status } = req.body;
   try {
-    await pool.query("UPDATE orders SET order_status = $1 WHERE id = $2 AND restaurant_id = $3", [status, req.params.id, req.session.restaurantId]);
+    await pool.query("UPDATE orders SET order_status = $1 WHERE id = $2 AND restaurant_id = $3", [status, req.params.id, (req.userId || req.session.restaurantId)]);
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -512,7 +549,7 @@ router.put('/orders/:id/status', async (req, res) => {
 
 // Analytics – enriched
 router.get('/analytics', async (req, res) => {
-  const rid = req.session.restaurantId;
+  const rid = (req.userId || req.session.restaurantId);
   try {
     // 1. Daily revenue + orders for last 30 days
     const dailyRes = await pool.query(`
@@ -595,7 +632,7 @@ router.get('/analytics', async (req, res) => {
 // Settings
 router.get('/settings', async (req, res) => {
   try {
-    const result = await pool.query("SELECT business_name, business_address, city, owner_name, owner_phone, business_email, description, restaurant_logo_url FROM restaurants WHERE id = $1", [req.session.restaurantId]);
+    const result = await pool.query("SELECT business_name, business_address, city, owner_name, owner_phone, business_email, description, restaurant_logo_url FROM restaurants WHERE id = $1", [(req.userId || req.session.restaurantId)]);
     res.status(200).json({ success: true, settings: result.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -608,7 +645,7 @@ router.put('/settings', async (req, res) => {
     await pool.query(`
       UPDATE restaurants SET business_name=$1, business_address=$2, city=$3, owner_name=$4, owner_phone=$5, description=$6, restaurant_logo_url=$7
       WHERE id=$8
-    `, [business_name, business_address, city, owner_name, owner_phone, description, restaurant_logo_url, req.session.restaurantId]);
+    `, [business_name, business_address, city, owner_name, owner_phone, description, restaurant_logo_url, (req.userId || req.session.restaurantId)]);
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -632,7 +669,7 @@ router.get('/inventory', async (req, res) => {
        FROM menu_items
        WHERE restaurant_id = $1
        ORDER BY category, item_name`,
-      [req.session.restaurantId]
+      [(req.userId || req.session.restaurantId)]
     );
     res.status(200).json({ success: true, items: result.rows });
   } catch (err) {
@@ -656,7 +693,7 @@ router.put('/inventory/:id', async (req, res) => {
     // Verify ownership
     const ownerCheck = await pool.query(
       'SELECT id FROM menu_items WHERE id = $1 AND restaurant_id = $2',
-      [itemId, req.session.restaurantId]
+      [itemId, (req.userId || req.session.restaurantId)]
     );
     if (!ownerCheck.rows.length) {
       return res.status(404).json({ success: false, message: 'Menu item not found' });
@@ -724,7 +761,7 @@ router.patch('/inventory/:id/current', async (req, res) => {
   try {
     const ownerCheck = await pool.query(
       'SELECT id, daily_stock FROM menu_items WHERE id = $1 AND restaurant_id = $2',
-      [itemId, req.session.restaurantId]
+      [itemId, (req.userId || req.session.restaurantId)]
     );
     if (!ownerCheck.rows.length) {
       return res.status(404).json({ success: false, message: 'Menu item not found' });
@@ -763,7 +800,7 @@ router.patch('/inventory/:id/current', async (req, res) => {
  */
 router.post('/inventory/reset', async (req, res) => {
   const { item_id } = req.body || {};
-  const restaurantId = req.session.restaurantId;
+  const restaurantId = (req.userId || req.session.restaurantId);
 
   try {
     let result;

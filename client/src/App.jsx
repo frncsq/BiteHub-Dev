@@ -6,10 +6,8 @@ import Register from "./pages/register.jsx";
 import RestaurantLogin from "./pages/restaurant-login.jsx";
 import RestaurantRegister from "./pages/restaurant-register.jsx";
 import Home from "./pages/home.jsx";
-import Rooms from "./pages/rooms.jsx";
 import Cart from "./pages/cart.jsx";
 import Orders from "./pages/orders.jsx";
-import Contact from "./pages/contact.jsx";
 import Profile from "./pages/profile.jsx";
 import OwnerLayout from "./components/OwnerLayout.jsx";
 import OwnerDashboard from "./pages/owner/dashboard.jsx";
@@ -43,10 +41,8 @@ function App() {
         
         {/* Customer Pages */}
         <Route path="/home" element={<Home />} />
-        <Route path="/rooms" element={<Rooms />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/contact" element={<Contact />} />
         <Route path="/profile" element={<Profile />} />
         
         {/* Owner Dashboard */}

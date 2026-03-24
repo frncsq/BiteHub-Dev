@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, Phone, Building2, FileText, User, CheckCircle, AlertCircle, ArrowRight, Upload, X } from 'lucide-react'
 import axios from 'axios';
+import { getApiBaseUrl } from '../services/apiClient';
 
 function RestaurantRegister() {
 	const navigate = useNavigate();
@@ -48,7 +49,7 @@ function RestaurantRegister() {
 	const handleInputChange = (e) => {
 		const { name, value, type, checked } = e.target;
 		const newValue = type === 'checkbox' ? checked : value;
-		
+
 		setFormData(prev => ({
 			...prev,
 			[name]: newValue
@@ -73,7 +74,7 @@ function RestaurantRegister() {
 				...prev,
 				permitDocument: file
 			}));
-			
+
 			const reader = new FileReader();
 			reader.onload = (event) => {
 				setPermitPreview(event.target?.result);
@@ -181,7 +182,7 @@ function RestaurantRegister() {
 	const handleRegister = async (e) => {
 		e.preventDefault();
 		const newErrors = validateForm();
-		
+
 		if (Object.keys(newErrors).length > 0) {
 			setErrors(newErrors);
 			setMessage('Please fill in all fields correctly');
@@ -193,7 +194,7 @@ function RestaurantRegister() {
 		setMessage('');
 
 		try {
-			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+			const baseURL = getApiBaseUrl();
 			const response = await axios.post(`${baseURL}/api/owner/register`, {
 				businessName: formData.businessName.trim(),
 				businessAddress: formData.businessAddress.trim(),
@@ -207,8 +208,8 @@ function RestaurantRegister() {
 				password: formData.password,
 				restaurant_logo_url: formData.restaurantLogoUrl.trim()
 			}, { withCredentials: true });
-			
-		if (response.data.success) {
+
+			if (response.data.success) {
 				if (response.data.pending) {
 					// Account created but pending approval — do NOT redirect
 					setMessage('✅ Registration submitted! Your account is pending admin approval. You will be notified once approved. You may close this page.');
@@ -247,481 +248,379 @@ function RestaurantRegister() {
 			{/* Animated Background */}
 			<div className="absolute top-0 right-0 w-96 h-96 bg-orange-100/30 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
 
-			<div className="w-full max-w-5xl relative z-10">
+			<div className="w-full max-w-3xl relative z-10 px-4">
 				{/* Header */}
-				<div className="mb-8">
+				<div className="mb-6">
 					<button
 						onClick={handleBackToRoles}
-						className="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors mb-6"
+						className="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors mb-4 text-sm"
 					>
 						← Back to role selection
 					</button>
-					<h1 className="text-4xl font-bold text-gray-900 mb-2">Register Your Restaurant</h1>
-					<p className="text-lg text-gray-600">Complete information to join BiteHub and start receiving orders</p>
+					<h1 className="text-3xl font-bold text-gray-900 mb-1">Register Your Restaurant</h1>
+					<p className="text-gray-600 text-sm">Join BiteHub and start receiving orders</p>
 				</div>
 
 				{/* Status Messages */}
 				{message && (
-					<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 mb-8 animate-fade-in ${
-						messageType === 'success' 
-							? 'bg-emerald-50 border-emerald-500 text-emerald-800' 
-							: messageType === 'error'
+					<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 mb-6 animate-fade-in ${messageType === 'success'
+						? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+						: messageType === 'error'
 							? 'bg-red-50 border-red-500 text-red-800'
 							: 'bg-blue-50 border-blue-500 text-blue-800'
-					}`}>
-						<div className="mt-0.5">
-							{messageType === 'success' && <CheckCircle size={20} />}
-							{messageType === 'error' && <AlertCircle size={20} />}
-						</div>
+						}`}>
 						<p className="text-sm font-medium">{message}</p>
 					</div>
 				)}
 
-				<form onSubmit={handleRegister} className="space-y-8">
-					{/* Business Information Section */}
-					<div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-gray-200">
-						<div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-orange-200">
-							<Building2 size={24} className="text-orange-600" />
-							<h2 className="text-2xl font-bold text-gray-900">Business Information</h2>
-						</div>
-
-						<div className="space-y-5">
-							{/* Business Name */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2">
-									Business Name <span className="text-red-600">*</span>
-								</label>
-								<input
-									type="text"
-									name="businessName"
-									value={formData.businessName}
-									onChange={handleInputChange}
-									placeholder="Your Restaurant Name"
-									className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-										errors.businessName
-											? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-									}`}
-								/>
-								{errors.businessName && (
-									<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-										<span>•</span> {errors.businessName}
-									</p>
-								)}
-							</div>
-
-							{/* Business Address */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2">
-									Business Address <span className="text-red-600">*</span>
-								</label>
-								<input
-									type="text"
-									name="businessAddress"
-									value={formData.businessAddress}
-									onChange={handleInputChange}
-									placeholder="Street address"
-									className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-										errors.businessAddress
-											? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-									}`}
-								/>
-								{errors.businessAddress && (
-									<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-										<span>•</span> {errors.businessAddress}
-									</p>
-								)}
-							</div>
-
-							{/* City & Province */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
-									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										City <span className="text-red-600">*</span>
-									</label>
-									<input
-										type="text"
-										name="city"
-										value={formData.city}
-										onChange={handleInputChange}
-										placeholder="City"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-											errors.city
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									{errors.city && (
-										<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-											<span>•</span> {errors.city}
-										</p>
-									)}
+				<form onSubmit={handleRegister} className="space-y-6">
+					{/* Combined Registration Form Container */}
+					<div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-2xl border border-white/20 space-y-8">
+						{/* Grid for Business & Owner Info */}
+						<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+							{/* Business Information Section (Left) */}
+							<section className="space-y-4">
+								<div className="flex items-center gap-3 mb-4 pb-3 border-b border-orange-100">
+									<div className="p-1.5 bg-orange-100 rounded-lg">
+										<Building2 size={20} className="text-orange-600" />
+									</div>
+									<h2 className="text-xl font-bold text-gray-900">Business Information</h2>
 								</div>
-								<div>
-									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										Province/State <span className="text-red-600">*</span>
-									</label>
-									<input
-										type="text"
-										name="province"
-										value={formData.province}
-										onChange={handleInputChange}
-										placeholder="Province or State"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-											errors.province
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									{errors.province && (
-										<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-											<span>•</span> {errors.province}
-										</p>
-									)}
-								</div>
-							</div>
 
-							{/* Permit Number */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="md:col-span-2">
-									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										Business Permit Number <span className="text-red-600">*</span>
-									</label>
-									<input
-										type="text"
-										name="permitNumber"
-										value={formData.permitNumber}
-										onChange={handleInputChange}
-										placeholder="Permit #123456"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-											errors.permitNumber
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									{errors.permitNumber && (
-										<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-											<span>•</span> {errors.permitNumber}
-										</p>
-									)}
-								</div>
-							</div>
-
-							{/* Restaurant Logo URL */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div className="md:col-span-2">
-									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										Restaurant Logo / Cover Photo <span className="text-gray-500">(Optional)</span>
-									</label>
-									<input
-										type="file"
-										accept="image/*"
-										onChange={handlePhotoUpload}
-										className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
-									/>
-									{formData.restaurantLogoUrl && (
-										<div className="mt-4">
-											<p className="text-sm text-gray-500 font-medium mb-2">Preview:</p>
-											<img src={formData.restaurantLogoUrl} alt="Logo preview" className="h-24 w-24 object-cover rounded-xl border border-gray-200 shadow-sm" onError={(e) => { e.target.style.display = 'none'; }} />
-										</div>
-									)}
-								</div>
-							</div>
-
-							{/* Document Upload */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2">
-									Upload Business Permit Document <span className="text-gray-500">(Optional for testing)</span>
-								</label>
-								<div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 text-center ${
-									errors.permitDocument
-										? 'border-red-400 bg-red-50'
-										: permitPreview
-										? 'border-orange-400 bg-orange-50'
-										: 'border-gray-300 hover:border-orange-400'
-								}`}>
-									{permitPreview ? (
-										<div className="space-y-3">
-											<img src={permitPreview} alt="Document preview" className="max-h-40 mx-auto rounded-lg" />
-											<button
-												type="button"
-												onClick={removePermitDocument}
-												className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-											>
-												<X size={16} />
-												Remove Document
-											</button>
-										</div>
-									) : (
-										<label className="cursor-pointer block space-y-2">
-											<Upload size={32} className="mx-auto text-orange-600" />
-											<p className="font-semibold text-gray-900">Click to upload or drag and drop</p>
-											<p className="text-sm text-gray-600">PNG, JPG, PDF up to 10MB</p>
-											<input
-												type="file"
-												name="permitDocument"
-												onChange={handleFileUpload}
-												accept=".pdf,.jpg,.jpeg,.png"
-												className="hidden"
-											/>
+								<div className="space-y-4">
+									{/* Business Name */}
+									<div>
+										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+											Business Name <span className="text-red-600">*</span>
 										</label>
-									)}
+										<input
+											type="text"
+											name="businessName"
+											value={formData.businessName}
+											onChange={handleInputChange}
+											placeholder="Your Restaurant Name"
+											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.businessName
+												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
+										/>
+									</div>
+
+									{/* Business Address */}
+									<div>
+										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+											Business Address <span className="text-red-600">*</span>
+										</label>
+										<input
+											type="text"
+											name="businessAddress"
+											value={formData.businessAddress}
+											onChange={handleInputChange}
+											placeholder="Street address"
+											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.businessAddress
+												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
+										/>
+									</div>
+
+									{/* City & Province */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+										<div>
+											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+												City <span className="text-red-600">*</span>
+											</label>
+											<input
+												type="text"
+												name="city"
+												value={formData.city}
+												onChange={handleInputChange}
+												placeholder="City"
+												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.city
+													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+													}`}
+											/>
+										</div>
+										<div>
+											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+												Province/State <span className="text-red-600">*</span>
+											</label>
+											<input
+												type="text"
+												name="province"
+												value={formData.province}
+												onChange={handleInputChange}
+												placeholder="Province"
+												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.province
+													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+													}`}
+											/>
+										</div>
+									</div>
+
+									{/* Restaurant Logo URL */}
+									<div>
+										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+											Restaurant Logo / Cover Photo
+										</label>
+										<input
+											type="file"
+											accept="image/*"
+											onChange={handlePhotoUpload}
+											className="w-full px-3.5 py-2 bg-white border-2 border-gray-100 rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+										/>
+									</div>
 								</div>
-								{errors.permitDocument && (
-									<p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-										<span>•</span> {errors.permitDocument}
-									</p>
-								)}
-							</div>
+							</section>
+
+							{/* Owner & Permit Information Section (Right) */}
+							<section className="space-y-4">
+								<div className="flex items-center gap-3 mb-4 pb-3 border-b border-orange-100">
+									<div className="p-1.5 bg-orange-100 rounded-lg">
+										<User size={20} className="text-orange-600" />
+									</div>
+									<h2 className="text-xl font-bold text-gray-900">Owner & Permit Information</h2>
+								</div>
+
+								<div className="space-y-4">
+									{/* Row for Owner Name & Detail */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+										<div>
+											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+												Owner Full Name <span className="text-red-600">*</span>
+											</label>
+											<input
+												type="text"
+												name="ownerName"
+												value={formData.ownerName}
+												onChange={handleInputChange}
+												placeholder="Full Name"
+												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.ownerName
+													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+													}`}
+											/>
+										</div>
+										<div>
+											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+												Contact Number <span className="text-red-600">*</span>
+											</label>
+											<input
+												type="tel"
+												name="ownerPhone"
+												value={formData.ownerPhone}
+												onChange={handleInputChange}
+												placeholder="Phone"
+												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.ownerPhone
+													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+													}`}
+											/>
+										</div>
+									</div>
+
+									{/* Business Email */}
+									<div>
+										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+											Business Email <span className="text-red-600">*</span>
+										</label>
+										<input
+											type="email"
+											name="businessEmail"
+											value={formData.businessEmail}
+											onChange={handleInputChange}
+											placeholder="admin@restaurant.com"
+											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.businessEmail
+												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
+										/>
+									</div>
+
+									{/* Permit Number */}
+									<div className="pt-3 border-t border-orange-50">
+										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+											Permit Number <span className="text-red-600">*</span>
+										</label>
+										<input
+											type="text"
+											name="permitNumber"
+											value={formData.permitNumber}
+											onChange={handleInputChange}
+											placeholder="Permit #123456"
+											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.permitNumber
+												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
+										/>
+									</div>
+
+									{/* Document Upload */}
+									<div className="pt-1">
+										<div className={`border-2 border-dashed rounded-xl p-4 transition-all duration-200 text-center ${errors.permitDocument ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-orange-300'}`}>
+											<label className="cursor-pointer block space-y-1">
+												<Upload size={20} className="mx-auto text-orange-600" />
+												<p className="text-[10px] font-bold text-gray-600">Upload Business Permit</p>
+												<input type="file" name="permitDocument" onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" className="hidden" />
+											</label>
+										</div>
+									</div>
+								</div>
+							</section>
 						</div>
-					</div>
 
-					{/* Owner Information Section */}
-					<div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-gray-200">
-						<div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-orange-200">
-							<User size={24} className="text-orange-600" />
-							<h2 className="text-2xl font-bold text-gray-900">Owner Information</h2>
-						</div>
-
-						<div className="space-y-5">
-							{/* Owner Name */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2">
-									Owner Full Name <span className="text-red-600">*</span>
-								</label>
-								<input
-									type="text"
-									name="ownerName"
-									value={formData.ownerName}
-									onChange={handleInputChange}
-									placeholder="Your Full Name"
-									className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-										errors.ownerName
-											? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-									}`}
-								/>
-								{errors.ownerName && (
-									<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-										<span>•</span> {errors.ownerName}
-									</p>
-								)}
+						{/* Account Credentials Section (Bottom) */}
+						<section className="pt-6 border-t border-orange-100">
+							<div className="flex items-center gap-3 mb-4 pb-3 border-b border-orange-100">
+								<div className="p-1.5 bg-orange-100 rounded-lg">
+									<Lock size={20} className="text-orange-600" />
+								</div>
+								<h2 className="text-xl font-bold text-gray-900">Account Credentials</h2>
 							</div>
 
-							{/* Contact & Email */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+								{/* Username */}
 								<div>
-									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										Contact Number <span className="text-red-600">*</span>
+									<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+										Username <span className="text-red-600">*</span>
 									</label>
 									<input
-										type="tel"
-										name="ownerPhone"
-										value={formData.ownerPhone}
+										type="text"
+										name="username"
+										value={formData.username}
 										onChange={handleInputChange}
-										placeholder="+1 (555) 123-4567"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-											errors.ownerPhone
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									{errors.ownerPhone && (
-										<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-											<span>•</span> {errors.ownerPhone}
-										</p>
-									)}
-								</div>
-								<div>
-									<label className="block text-sm font-semibold text-gray-900 mb-2">
-										Business Email <span className="text-red-600">*</span>
-									</label>
-									<input
-										type="email"
-										name="businessEmail"
-										value={formData.businessEmail}
-										onChange={handleInputChange}
-										placeholder="admin@restaurant.com"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-											errors.businessEmail
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									{errors.businessEmail && (
-										<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-											<span>•</span> {errors.businessEmail}
-										</p>
-									)}
-								</div>
-							</div>
-						</div>
-					</div>
-
-					{/* Account Credentials Section */}
-					<div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-gray-200">
-						<div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-orange-200">
-							<Lock size={24} className="text-orange-600" />
-							<h2 className="text-2xl font-bold text-gray-900">Account Credentials</h2>
-						</div>
-
-						<div className="space-y-5">
-							{/* Username */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2">
-									Username <span className="text-red-600">*</span>
-								</label>
-								<input
-									type="text"
-									name="username"
-									value={formData.username}
-									onChange={handleInputChange}
-									placeholder="restaurant_admin"
-									className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-										errors.username
+										placeholder="restaurant_admin"
+										className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.username
 											? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
 											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-									}`}
-								/>
-								{errors.username && (
-									<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-										<span>•</span> {errors.username}
-									</p>
-								)}
-							</div>
+											}`}
+									/>
+								</div>
 
-							{/* Password */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-									Password <span className="text-red-600">*</span>
-									<span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-										passwordStrength === 'strong' ? 'bg-green-100 text-green-700' :
-										passwordStrength === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-										'bg-red-100 text-red-700'
-									}`}>
-										{passwordStrength}
-									</span>
-								</label>
-								<div className="relative">
-									<input
-										type={showPassword ? "text" : "password"}
-										name="password"
-										value={formData.password}
-										onChange={handleInputChange}
-										placeholder="Min. 8 characters with uppercase, lowercase, and numbers"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none pr-12 ${
-											errors.password
+								{/* Password */}
+								<div>
+									<label className="block text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-2">
+										Password <span className="text-red-600">*</span>
+										<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${passwordStrength === 'strong' ? 'bg-green-100 text-green-700' :
+											passwordStrength === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+												'bg-red-100 text-red-700'
+											}`}>
+											{passwordStrength}
+										</span>
+									</label>
+									<div className="relative">
+										<input
+											type={showPassword ? "text" : "password"}
+											name="password"
+											value={formData.password}
+											onChange={handleInputChange}
+											placeholder="Min. 8 chars"
+											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none pr-11 text-sm ${errors.password
 												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
 												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									<button
-										type="button"
-										onClick={() => setShowPassword(!showPassword)}
-										className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
-									>
-										{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-									</button>
+												}`}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowPassword(!showPassword)}
+											className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition-colors"
+										>
+											{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+										</button>
+									</div>
 								</div>
-								{errors.password && (
-									<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-										<span>•</span> {errors.password}
-									</p>
-								)}
-							</div>
 
-							{/* Confirm Password */}
-							<div>
-								<label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-									Confirm Password <span className="text-red-600">*</span>
-									{passwordsMatch && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Match</span>}
-								</label>
-								<div className="relative">
-									<input
-										type={showConfirm ? "text" : "password"}
-										name="confirmPassword"
-										value={formData.confirmPassword}
-										onChange={handleInputChange}
-										placeholder="Repeat your password"
-										className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 focus:outline-none pr-12 ${
-											errors.confirmPassword
+								{/* Confirm Password */}
+								<div>
+									<label className="block text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-2">
+										Confirm Password <span className="text-red-600">*</span>
+										{passwordsMatch && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Match</span>}
+									</label>
+									<div className="relative">
+										<input
+											type={showConfirm ? "text" : "password"}
+											name="confirmPassword"
+											value={formData.confirmPassword}
+											onChange={handleInputChange}
+											placeholder="Repeat password"
+											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none pr-11 text-sm ${errors.confirmPassword
 												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
 												: passwordsMatch
-												? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-100'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
-									/>
-									<button
-										type="button"
-										onClick={() => setShowConfirm(!showConfirm)}
-										className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
-									>
-										{showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
-									</button>
+													? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-100'
+													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowConfirm(!showConfirm)}
+											className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition-colors"
+										>
+											{showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+										</button>
+									</div>
 								</div>
-								{errors.confirmPassword && (
-									<p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-										<span>•</span> {errors.confirmPassword}
-									</p>
-								)}
 							</div>
-						</div>
+						</section>
 					</div>
 
-					{/* Confirmation Section */}
-					<div className="bg-orange-50 rounded-2xl p-6 md:p-8 border-2 border-orange-200">
-						<label className="flex items-start gap-3 cursor-pointer group">
+					{/* Agreement & Privacy Policy */}
+					<div className="max-w-xl mx-auto text-center space-y-6 pt-6 border-t border-orange-50">
+						<label className="inline-flex items-start gap-3 cursor-pointer group text-left max-w-md mx-auto">
 							<input
 								type="checkbox"
 								name="agreeTerms"
 								checked={formData.agreeTerms}
 								onChange={handleInputChange}
-								className="w-5 h-5 mt-1 rounded border-2 border-orange-600 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors"
+								className="w-5 h-5 mt-0.5 rounded-lg border-2 border-gray-200 text-orange-600 focus:ring-orange-500 transition-all cursor-pointer"
 							/>
-							<span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors leading-relaxed">
-								I certify that the information provided is accurate and complete. I confirm that my business complies with all local, state, and federal regulations including health and safety standards. I agree to the <button type="button" className="font-semibold text-orange-600 hover:underline">Terms of Service</button> and <button type="button" className="font-semibold text-orange-600 hover:underline">Privacy Policy</button>.
+							<span className="text-xs text-gray-500 group-hover:text-gray-900 transition-colors leading-relaxed">
+								I certify that the information provided is accurate and complies with all regulations. I agree to the
+								<button type="button" className="mx-1 font-bold text-orange-600 hover:text-orange-700 underline underline-offset-4 decoration-2 decoration-orange-100 decoration-offset-2">Terms</button>
+								and
+								<button type="button" className="mx-1 font-bold text-orange-600 hover:text-orange-700 underline underline-offset-4 decoration-2 decoration-orange-100 decoration-offset-2">Privacy Policy</button>.
 							</span>
 						</label>
+						
 						{errors.agreeTerms && (
-							<p className="text-sm text-red-600 mt-3 flex items-center gap-1">
-								<span>•</span> {errors.agreeTerms}
+							<p className="text-xs text-red-600 flex items-center justify-center gap-1 font-bold bg-red-50/50 py-2 rounded-xl border border-red-100">
+								<AlertCircle size={14} /> {errors.agreeTerms}
 							</p>
 						)}
-					</div>
 
-					{/* Form Actions */}
-					<div className="flex gap-4">
-						<button
-							type="submit"
-							disabled={isLoading}
-							className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:scale-100 flex items-center justify-center gap-2"
-						>
-							{isLoading ? (
-								<>
-									<div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-									<span>Creating account...</span>
-								</>
-							) : (
-								<>
-									<span>Create Restaurant Account</span>
-									<ArrowRight size={20} />
-								</>
-							)}
-						</button>
-					</div>
+						{/* Form Actions */}
+						<div className="space-y-6 pt-2">
+							<button
+								type="submit"
+								disabled={isLoading}
+								className="w-full py-4 px-8 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-300 disabled:to-gray-200 text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-orange-500/10 hover:shadow-orange-500/30 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 group/btn uppercase tracking-widest text-sm"
+							>
+								{isLoading ? (
+									<>
+										<div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
+										<span>Processing Application...</span>
+									</>
+								) : (
+									<>
+										<span>Submit Registration</span>
+										<ArrowRight size={20} className="transition-transform duration-300 group-hover/btn:translate-x-1" />
+									</>
+								)}
+							</button>
 
-					{/* Login Link */}
-					<p className="text-center text-gray-700 text-sm">
-						Already have a restaurant account?{" "}
-						<button
-							type="button"
-							onClick={handleLoginLink}
-							className="font-semibold text-orange-600 hover:text-orange-700 transition-colors hover:underline"
-						>
-							Sign in
-						</button>
-					</p>
+							<p className="text-center text-gray-500 font-bold text-xs">
+								Already have a partner account?{" "}
+								<button
+									type="button"
+									onClick={handleLoginLink}
+									className="text-orange-600 hover:text-orange-700 font-black transition-all hover:underline underline-offset-4"
+								>
+									Log in here
+								</button>
+							</p>
+						</div>
+					</div>
 				</form>
 			</div>
 

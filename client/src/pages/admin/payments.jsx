@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../../services/apiClient';
 import { Search, DollarSign, Wallet, ArrowUpRight, ArrowDownRight, RefreshCw, Calendar } from 'lucide-react';
 
 function AdminPayments() {
@@ -16,7 +17,7 @@ function AdminPayments() {
   const fetchPayments = async () => {
     setIsLoading(true);
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseURL = getApiBaseUrl();
       const res = await axios.get(`${baseURL}/api/admin/payments`, { withCredentials: true });
       if (res.data.success) {
         setPayments(res.data.transactions);

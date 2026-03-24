@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../../services/apiClient';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, Menu as MenuIcon, ChevronDown, ChevronUp, Layers, Tag, Banknote, AlertCircle, Check } from 'lucide-react';
-
-const BASE_URL = () => import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ── Combo type presets ───────────────────────────────────────────────────────
 const COMBO_PRESETS = [
@@ -307,7 +305,8 @@ function OwnerMenu() {
   const fetchMenu = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL()}/api/owner/menu`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const response = await apiClient.get('/owner/menu');
       if (response.data.success) setItems(response.data.items);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load menu items');
@@ -335,7 +334,8 @@ function OwnerMenu() {
       // Load existing combinations if Budget Meal
       if (item.category === 'Budget Meal') {
         try {
-          const res = await axios.get(`${BASE_URL()}/api/owner/menu/${item.id}/combinations`, { withCredentials: true });
+          const apiClient = createApiClient();
+          const res = await apiClient.get(`/owner/menu/${item.id}/combinations`);
           if (res.data.success) {
             const loaded = res.data.combinations.map(c => ({
               ...c,
@@ -409,11 +409,12 @@ function OwnerMenu() {
       };
 
       let menuItemId;
+      const apiClient = createApiClient();
       if (editingItem) {
-        await axios.put(`${BASE_URL()}/api/owner/menu/${editingItem.id}`, payload, { withCredentials: true });
+        await apiClient.put(`/owner/menu/${editingItem.id}`, payload);
         menuItemId = editingItem.id;
       } else {
-        const res = await axios.post(`${BASE_URL()}/api/owner/menu`, payload, { withCredentials: true });
+        const res = await apiClient.post('/owner/menu', payload);
         menuItemId = res.data.id;
       }
 
@@ -428,10 +429,9 @@ function OwnerMenu() {
             options: s.options.filter(o => o.trim())
           }))
         }));
-        await axios.put(
-          `${BASE_URL()}/api/owner/menu/${menuItemId}/combinations`,
-          { combinations: comboPayload },
-          { withCredentials: true }
+        await apiClient.put(
+          `/owner/menu/${menuItemId}/combinations`,
+          { combinations: comboPayload }
         );
       }
 
@@ -449,7 +449,8 @@ function OwnerMenu() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this menu item?")) {
       try {
-        await axios.delete(`${BASE_URL()}/api/owner/menu/${id}`, { withCredentials: true });
+        const apiClient = createApiClient();
+        await apiClient.delete(`/owner/menu/${id}`);
         fetchMenu();
       } catch (err) {
         alert(err.response?.data?.message || 'Error deleting item');
@@ -466,19 +467,19 @@ function OwnerMenu() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Menu Management</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">Menu Management</h1>
           <p className="text-gray-500 mt-1">Add, edit, or remove items from your menu.</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold rounded-xl transition shadow-md hover:shadow-lg"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
         >
-          <Plus size={20} />
-          Add Item
+          <Plus size={18} />
+          Add Menu Item
         </button>
       </div>
 
@@ -489,79 +490,95 @@ function OwnerMenu() {
         </div>
       )}
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {items.map(item => (
-          <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition group">
-            <div className="h-40 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-              {item.image_url ? (
-                <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-              ) : (
-                <ImageIcon size={40} className="text-gray-300" />
-              )}
-              <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
-                <span className={`px-2.5 py-1 text-xs font-bold rounded-full shadow-sm backdrop-blur-md ${item.is_available ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white'}`}>
-                  {item.is_available ? 'Available' : 'Unavailable'}
-                </span>
-                {item.category === 'Budget Meal' && (
-                  <span className="px-2.5 py-1 text-xs font-bold rounded-full shadow-sm backdrop-blur-md bg-purple-500/90 text-white">
-                    Budget Meal
-                  </span>
-                )}
-              </div>
-            </div>
+      {/* Responsive table/list */}
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="hidden lg:grid grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 px-6 py-4 bg-gray-50/80 border-b border-gray-100">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Menu Item</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Category</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Price</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Status</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-500 text-right">Actions</span>
+        </div>
 
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.item_name}</h3>
-                <div className="text-right">
-                  {item.category === 'Budget Meal' ? (
-                    <span className="font-bold text-orange-600 block text-sm">From ₱{parseFloat(item.price).toFixed(2)}</span>
-                  ) : item.category === 'Drinks' ? (
-                    <>
-                      <span className="font-bold text-orange-600 block">₱{parseFloat(item.price).toFixed(2)} Med</span>
-                      {item.half_price && <span className="font-semibold text-xs text-orange-400 block">S: ₱{parseFloat(item.half_price).toFixed(2)}</span>}
-                      {item.large_price && <span className="font-semibold text-xs text-orange-400 block">L: ₱{parseFloat(item.large_price).toFixed(2)}</span>}
-                    </>
-                  ) : (
-                    <span className="font-bold text-orange-600 block">₱{parseFloat(item.price).toFixed(2)}</span>
-                  )}
+        <div className="divide-y divide-gray-100">
+          {items.map(item => (
+            <div key={item.id} className="group px-4 sm:px-5 lg:px-6 py-4 transition-colors hover:bg-gray-50/70">
+              <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 lg:gap-6 items-start lg:items-center">
+                <div className="min-w-0 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <ImageIcon size={20} className="text-gray-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-gray-900 truncate">{item.item_name}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-1">{item.description || 'No description provided'}</p>
+                  </div>
+                </div>
+
+                <div className="lg:block flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Category</span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                    {item.category}
+                  </span>
+                </div>
+
+                <div className="lg:block flex items-start justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Price</span>
+                  <div className="text-left lg:text-left">
+                    {item.category === 'Budget Meal' ? (
+                      <span className="font-semibold text-gray-900 text-sm">From ₱{parseFloat(item.price).toFixed(2)}</span>
+                    ) : item.category === 'Drinks' ? (
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-gray-900 text-sm">₱{parseFloat(item.price).toFixed(2)} Med</p>
+                        {item.half_price && <p className="text-xs text-gray-500">S: ₱{parseFloat(item.half_price).toFixed(2)}</p>}
+                        {item.large_price && <p className="text-xs text-gray-500">L: ₱{parseFloat(item.large_price).toFixed(2)}</p>}
+                      </div>
+                    ) : (
+                      <span className="font-semibold text-gray-900 text-sm">₱{parseFloat(item.price).toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:block flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Status</span>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${item.is_available ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                    {item.is_available ? 'Available' : 'Unavailable'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1 lg:pt-0">
+                  <button
+                    onClick={() => handleOpenModal(item)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 transition-all duration-200 text-sm font-medium"
+                  >
+                    <Edit2 size={14} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-sm font-medium"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-md">{item.category}</span>
-              </div>
-
-              <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">{item.description}</p>
-
-              <div className="flex gap-2 pt-4 border-t border-gray-100">
-                <button
-                  onClick={() => handleOpenModal(item)}
-                  className="flex-1 flex justify-center items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-orange-50 text-gray-700 hover:text-orange-600 font-medium rounded-lg transition"
-                >
-                  <Edit2 size={16} /> Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="flex justify-center items-center p-2 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         {items.length === 0 && !isLoading && (
-          <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-gray-300">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <div className="py-16 text-center">
+            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
               <MenuIcon size={24} className="text-gray-400" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">No menu items yet</h3>
             <p className="text-gray-500 mb-4">Start building your restaurant's menu by adding your first item.</p>
-            <button onClick={() => handleOpenModal()} className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-xl transition">
-              Add First Item
+            <button onClick={() => handleOpenModal()} className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+              Add Menu Item
             </button>
           </div>
         )}
@@ -570,8 +587,8 @@ function OwnerMenu() {
       {/* Item Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] animate-slide-up">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50 shrink-0">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh] animate-slide-up">
+            <div className="flex justify-between items-center p-5 sm:p-6 border-b border-gray-100 bg-gray-50/70 shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
                 {formData.category === 'Budget Meal' && (
@@ -585,20 +602,20 @@ function OwnerMenu() {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto">
+            <div className="p-5 sm:p-6 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Basic Fields */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Item Name *</label>
                     <input required type="text" name="name" value={formData.name} onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                   </div>
 
                   <div className="col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Category *</label>
                     <select required name="category" value={formData.category} onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition">
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition">
                       <option value="">Select Category</option>
                       <option value="Main">Main</option>
                       <option value="Drinks">Drinks</option>
@@ -614,17 +631,17 @@ function OwnerMenu() {
                       <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-1">Small Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="half_price" value={formData.half_price} onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-1">Medium Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="price" value={formData.price} onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                       </div>
                       <div className="col-span-2">
                         <label className="block text-sm font-semibold text-gray-900 mb-1">Large Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="large_price" value={formData.large_price} onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                       </div>
                     </>
                   )}
@@ -634,12 +651,12 @@ function OwnerMenu() {
                       <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-1">Full Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="price" value={formData.price} onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-1">Half Price (₱) [Optional]</label>
                         <input min="0" step="0.01" type="number" name="half_price" value={formData.half_price} onChange={handleChange}
-                          className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                       </div>
                     </>
                   )}
@@ -656,7 +673,7 @@ function OwnerMenu() {
                   <div className="col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Description</label>
                     <textarea rows="2" name="description" value={formData.description} onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition resize-none"></textarea>
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition resize-none"></textarea>
                   </div>
 
                   {/* Photo Upload */}
@@ -698,7 +715,7 @@ function OwnerMenu() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Stock Limit (-1 = unlimited)</label>
                     <input type="number" name="inventory_count" value={formData.inventory_count} onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                   </div>
 
                   <div className="flex items-center col-span-1 mt-2">
@@ -722,13 +739,13 @@ function OwnerMenu() {
                   </div>
                 )}
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-4 flex flex-col sm:flex-row gap-3">
                   <button type="button" onClick={handleCloseModal}
-                    className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition">
+                    className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition-all duration-200">
                     Cancel
                   </button>
                   <button type="submit" disabled={isSaving}
-                    className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                    className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2">
                     {isSaving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : (editingItem ? 'Save Changes' : 'Create Item')}
                   </button>
                 </div>

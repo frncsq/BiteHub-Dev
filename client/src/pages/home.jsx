@@ -43,31 +43,32 @@ import {
 import { useTheme } from "../context/ThemeContext"
 import { mockRestaurantsData, mockFoodItems, mockCategories, mockOrderService, mockCartService, mockAuthService } from "../services/mockData"
 import { createApiClient } from "../services/apiClient"
+import biteLogo from "../assets/bite.png"
+import CustomerSidebar from "../components/CustomerSidebar"
 
-const menuItems = [
-    { id: "categories", label: "Categories", icon: Tag },
-    { id: "cart", label: "My Cart", icon: ShoppingCart }, // Modified label and ensured it's a distinct item
-    { id: "orders", label: "Orders", icon: Package },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "profile", label: "Profile", icon: User },
-    { id: "settings", label: "Settings", icon: Settings },
-    { id: "logout", label: "Logout", icon: LogOut },
-]
 
-function HomePage() {
+
+const HomePage = () => {
     const navigate = useNavigate()
     const { isDarkMode, toggleTheme, colors } = useTheme()
-    const API_URL = import.meta.env.VITE_API_URL || "https://to-do-list-1-c0qq.onrender.com"
     const apiClient = createApiClient()
     const MAX_RETRIES = 3
 
     // State management
+    const location = useLocation()
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const [notificationDropdown, setNotificationDropdown] = useState(false)
     const [profileDropdown, setProfileDropdown] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
-    const [activeTab, setActiveTab] = useState("dashboard")
+    const [activeTab, setActiveTab] = useState(location.state?.activeTab || "dashboard")
+
+    // Sync active tab from location state when it changes
+    useEffect(() => {
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab)
+        }
+    }, [location.state])
     const [recommendations, setRecommendations] = useState([])
     const [favorites, setFavorites] = useState(new Set())
     const [cart, setCart] = useState([])
@@ -126,13 +127,13 @@ function HomePage() {
     const fetchLiveOrders = async () => {
         if (userRole !== 'owner') return;
         try {
-            const res = await apiClient.get('/api/owner/orders');
+            const res = await apiClient.get('/owner/orders');
             if (res.data?.success && res.data.orders) {
                 const formatted = res.data.orders.map(o => ({
                     id: o.id,
                     status: o.order_status || 'pending',
                     location: `${o.delivery_address || 'Missing Address'}, ${o.delivery_city || ''}`,
-                    time: new Date(o.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                    time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     total: Number(o.total_amount) || 0
                 }));
                 setLiveOrders(formatted);
@@ -153,15 +154,15 @@ function HomePage() {
     const updateOrderStatus = async (id, newStatus) => {
         setLiveOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o))
         try {
-            await apiClient.put(`/api/owner/orders/${id}/status`, { status: newStatus });
-        } catch(err) {
+            await apiClient.put(`/owner/orders/${id}/status`, { status: newStatus });
+        } catch (err) {
             console.error("Failed to update status in DB:", err);
             fetchLiveOrders(); // rollback visual if network failed
         }
     }
 
     const getOrderStatusColor = (status) => {
-        switch(status) {
+        switch (status) {
             case "pending": return "bg-yellow-100 text-yellow-700 border-yellow-200"
             case "accepted": return "bg-sky-100 text-sky-700 border-sky-200"
             case "preparing": return "bg-blue-100 text-blue-700 border-blue-200"
@@ -177,13 +178,29 @@ function HomePage() {
 
     // Fetch data from backend
     useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn("[GUEST] No token found. Redirecting to login.");
+            navigate('/login');
+            return;
+        }
         fetchData()
         fetchOrders()
         fetchCartItems()
         fetchRecommendations()
     }, [])
 
-    const location = useLocation()
+    useEffect(() => {
+        if (!localStorage.getItem('authToken')) return;
+        
+        const interval = setInterval(() => {
+            fetchOrders()
+            fetchCartItems()
+        }, 30000); // 30s interval for background updates
+        
+        return () => clearInterval(interval);
+    }, [])
+
     useEffect(() => {
         if (location.state?.activeTab) {
             setActiveTab(location.state.activeTab)
@@ -204,10 +221,10 @@ function HomePage() {
 
             // Fetch data from real APIs
             const [catRes, restRes, foodRes, profileRes] = await Promise.all([
-                apiClient.get('/api/categories').catch(() => ({ data: { success: false } })),
-                apiClient.get('/api/restaurants').catch(() => ({ data: { success: false } })),
-                apiClient.get('/api/food').catch(() => ({ data: { success: false } })),
-                apiClient.get('/api/profile').catch(() => ({ data: { success: false } }))
+                apiClient.get('/categories').catch(() => ({ data: { success: false } })),
+                apiClient.get('/restaurants').catch(() => ({ data: { success: false } })),
+                apiClient.get('/food').catch(() => ({ data: { success: false } })),
+                apiClient.get('/profile').catch(() => ({ data: { success: false } }))
             ])
 
             if (profileRes.data?.success && profileRes.data.profile) {
@@ -236,8 +253,8 @@ function HomePage() {
                 const popular = Array.isArray(foodRes.data.foods)
                     ? foodRes.data.foods
                     : Array.isArray(foodRes.data.items)
-                    ? foodRes.data.items
-                    : [];
+                        ? foodRes.data.items
+                        : [];
                 setPopularFoods(popular)
             } else {
                 const allFoods = []
@@ -264,7 +281,7 @@ function HomePage() {
 
     const fetchRecommendations = async () => {
         try {
-            const res = await apiClient.get('/api/food')
+            const res = await apiClient.get('/food')
             if (res.data?.success) {
                 const allFood = res.data.foods || []
                 // Pick 3 random items for recommendations
@@ -277,7 +294,7 @@ function HomePage() {
 
     const fetchCartItems = async () => {
         try {
-            const response = await apiClient.get('/api/cart')
+            const response = await apiClient.get('/cart')
             if (response.data && response.data.cart) {
                 setCart(response.data.cart.map(item => ({
                     ...item,
@@ -302,14 +319,14 @@ function HomePage() {
     // Fetch orders from backend
     const fetchOrders = async () => {
         try {
-            const response = await apiClient.get('/api/orders')
+            const response = await apiClient.get('/orders')
             let rawData = [];
             if (response.data?.success && response.data.orders) {
                 rawData = response.data.orders;
             } else if (Array.isArray(response.data)) {
                 rawData = response.data;
             }
-            
+
             if (rawData.length > 0) {
                 const mappedOrders = rawData.map(o => ({
                     id: `ORD-${o.id}`,
@@ -382,9 +399,9 @@ function HomePage() {
 
         const sizeLabel = selectedSize ? ` (${selectedSize})` : '';
         const effectivePrice = selectedSize === 'Small' ? (food.half_price || food.price) :
-                              selectedSize === 'Large' ? (food.large_price || food.price) :
-                              selectedSize === 'Medium' ? food.price :
-                              food.price;
+            selectedSize === 'Large' ? (food.large_price || food.price) :
+                selectedSize === 'Medium' ? food.price :
+                    food.price;
 
         const cartItem = {
             ...food,
@@ -423,7 +440,7 @@ function HomePage() {
                 return f;
             }));
 
-            apiClient.post('/api/cart/add', { foodId: food.id, quantity: 1, size: selectedSize }).catch(err => {
+            apiClient.post('/cart/add', { foodId: food.id, quantity: 1, size: selectedSize }).catch(err => {
                 console.warn('Failed to sync cart add:', err.message)
             })
 
@@ -448,7 +465,7 @@ function HomePage() {
         setShowBudgetModal(true)
         setBudgetLoadingCombos(true)
         try {
-            const res = await apiClient.get(`/api/food/budget-meal/${food.id}`)
+            const res = await apiClient.get(`/food/budget-meal/${food.id}`)
             if (res.data?.success) {
                 setBudgetCombinations(res.data.combinations || [])
             } else {
@@ -518,7 +535,7 @@ function HomePage() {
         setMessageType('success')
         setTimeout(() => setMessage(''), 2500)
         // Sync with backend
-        apiClient.post('/api/cart/add', { foodId: budgetFood.id, quantity: 1, budgetMeal: budgetMeta }).catch(() => {})
+        apiClient.post('/cart/add', { foodId: budgetFood.id, quantity: 1, budgetMeal: budgetMeta }).catch(() => { })
         closeBudgetModal()
         if (budgetGoToCart) navigate('/cart')
     }
@@ -529,7 +546,7 @@ function HomePage() {
             const item = cart.find(i => i.id === cartId);
             const syncId = item?.baseId || cartId;
             setCart(prev => prev.filter(item => item.id !== cartId));
-            await apiClient.post('/api/cart/remove', { foodId: syncId, cartId: cartId });
+            await apiClient.post('/cart/remove', { foodId: syncId, cartId: cartId });
         } catch (err) {
             console.error("Remove item failed:", err);
             fetchCartItems(); // Re-fetch on failure to keep state consistent
@@ -552,7 +569,7 @@ function HomePage() {
                 ))
 
                 // Sync with backend - mapping variants back to base items
-                await apiClient.post('/api/cart/update', { foodId: syncId, quantity, size: item?.selectedSize })
+                await apiClient.post('/cart/update', { foodId: syncId, quantity, size: item?.selectedSize })
             }
         } catch (error) {
             console.warn("Failed to update quantity:", error.message)
@@ -670,101 +687,16 @@ function HomePage() {
                 <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px] ${isDarkMode ? 'bg-orange-500/10' : 'bg-orange-400/20'}`} />
                 <div className={`absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full blur-[120px] ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-400/15'}`} />
             </div>
-            
-            {/* SIDEBAR */}
-            <aside
-                className={`fixed left-0 top-0 h-screen transition-all duration-300 ease-out z-40 shadow-[8px_0_32px_rgba(0,0,0,0.05)] backdrop-blur-2xl border-r ${
-                    sidebarCollapsed ? "w-20" : "w-64"
-                } ${!sidebarOpen && "hidden md:block"} ${
-                    isDarkMode ? "bg-[#1a1a2e]/60 border-[#1a1a2e]/50" : "bg-white/60 border-white/50"
-                }`}
-            >
-                {/* Decorative glow */}
-                <div className={`absolute top-0 left-0 w-full h-32 bg-gradient-to-b pointer-events-none -z-10 ${
-                    isDarkMode ? "from-orange-500/5 to-transparent" : "from-white/60 to-transparent"
-                }`} />
 
-                {/* Logo/Brand */}
-                <div className={`flex items-center justify-between h-16 px-4 border-b relative z-20 ${isDarkMode ? 'border-gray-700/50' : 'border-white/40'}`}>
-                    {!sidebarCollapsed && (
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-orange-500/30 transform transition-transform hover:scale-105 duration-300 ring-1 ring-white/30">
-                                B
-                            </div>
-                            <span className={`font-bold text-lg tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${isDarkMode ? 'from-white to-gray-300' : 'from-gray-900 to-gray-600'}`}>BiteHub</span>
-                        </div>
-                    )}
-                    <button
-                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                        className={`p-1 rounded-lg transition hover:shadow-sm ${isDarkMode ? 'hover:bg-gray-800/50 text-gray-400' : 'hover:bg-white/50 text-gray-500'}`}
-                    >
-                        {sidebarCollapsed ? <ChevronRight size={20} /> : <Menu size={20} />}
-                    </button>
-                </div>
-
-                {/* Menu Items */}
-                <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1 relative z-20">
-                    {menuItems.map((item) => {
-                        const Icon = item.icon
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => {
-                                    if (item.id === "logout") {
-                                        if (window.confirm("Are you sure you want to logout?")) {
-                                            navigate("/login")
-                                        }
-                                        return
-                                    }
-                                    if (item.id === "cart") {
-                                        navigate("/cart")
-                                        return
-                                    }
-                                    if (item.id === "notifications") {
-                                        setNotificationDropdown((prev) => !prev)
-                                        return
-                                    }
-                                    if (item.id === "browse" || item.id === "categories") {
-                                        setActiveTab("dashboard")
-                                        setTimeout(() => {
-                                            if (item.id === "browse") browseFoodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                                        }, 100)
-                                    } else if (item.id === "profile" || item.id === "settings") {
-                                        setActiveTab(item.id)
-                                    } else if (item.id === "orders") {
-                                        navigate("/orders")
-                                    } else {
-                                        setActiveTab(item.id)
-                                    }
-                                }}
-                                className={`group relative w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-300 rounded-xl overflow-hidden ${
-                                    activeTab === item.id
-                                        ? isDarkMode 
-                                            ? "bg-gray-800/80 text-orange-400 shadow-sm border border-gray-700/50"
-                                            : "bg-white/80 text-orange-600 shadow-sm border border-white/60"
-                                        : isDarkMode
-                                            ? "text-gray-400 hover:bg-gray-800/40 hover:text-gray-200 border border-transparent"
-                                            : "text-gray-600 hover:bg-white/50 hover:text-gray-900 border border-transparent hover:-translate-y-0.5"
-                                }`}
-                                title={sidebarCollapsed ? item.label : ""}
-                            >
-                                {activeTab === item.id && (
-                                    <div className={`absolute inset-0 bg-gradient-to-r pointer-events-none -z-10 ${isDarkMode ? 'from-orange-500/10' : 'from-orange-100/40'} to-transparent`} />
-                                )}
-                                <Icon size={20} className={`flex-shrink-0 transition-all duration-300 group-hover:scale-110 ${activeTab === item.id ? 'text-orange-500' : 'group-hover:text-orange-400'}`} />
-                                {!sidebarCollapsed && <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">{item.label}</span>}
-
-                                {/* Tooltip for collapsed sidebar */}
-                                {sidebarCollapsed && (
-                                    <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-xl bg-gray-900/90 backdrop-blur-md px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-hover:translate-x-0 translate-x-1">
-                                        {item.label}
-                                    </span>
-                                )}
-                            </button>
-                        )
-                    })}
-                </nav>
-            </aside>
+            <CustomerSidebar 
+                activeTab={activeTab === 'dashboard' ? 'home' : activeTab} 
+                onTabChange={(tabId) => {
+                    if (tabId === 'home') setActiveTab('dashboard')
+                    else setActiveTab(tabId)
+                }}
+                sidebarCollapsed={sidebarCollapsed}
+                setSidebarCollapsed={setSidebarCollapsed}
+            />
 
             {/* Main Content */}
             <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
@@ -788,11 +720,10 @@ function HomePage() {
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Search food, restaurants..."
-                                    className={`w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:shadow-sm transition-all duration-300 backdrop-blur-md ${
-                                        isDarkMode 
-                                            ? 'bg-gray-800/40 border-gray-700/50 text-white placeholder-gray-400 focus:bg-gray-800/80' 
-                                            : 'bg-white/40 border-white/50 text-gray-900 placeholder-gray-500 focus:bg-white/80'
-                                    }`}
+                                    className={`w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:shadow-sm transition-all duration-300 backdrop-blur-md ${isDarkMode
+                                        ? 'bg-gray-800/40 border-gray-700/50 text-white placeholder-gray-400 focus:bg-gray-800/80'
+                                        : 'bg-white/40 border-white/50 text-gray-900 placeholder-gray-500 focus:bg-white/80'
+                                        }`}
                                 />
                             </div>
                         </div>
@@ -822,9 +753,8 @@ function HomePage() {
                                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
                                 </button>
                                 {notificationDropdown && (
-                                    <div className={`absolute right-0 mt-2 w-80 border rounded-2xl shadow-xl p-4 animate-fade-in space-y-3 backdrop-blur-2xl ${
-                                        isDarkMode ? 'bg-gray-900/80 border-gray-700/50' : 'bg-white/80 border-white/50'
-                                    }`}>
+                                    <div className={`absolute right-0 mt-2 w-80 border rounded-2xl shadow-xl p-4 animate-fade-in space-y-3 backdrop-blur-2xl ${isDarkMode ? 'bg-gray-900/80 border-gray-700/50' : 'bg-white/80 border-white/50'
+                                        }`}>
                                         <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
                                         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                                             <div className="p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl text-sm text-gray-700 backdrop-blur-sm shadow-sm">Your order #1234 is ready for delivery</div>
@@ -842,11 +772,10 @@ function HomePage() {
                 <main className="p-4 md:p-8 pb-20">
                     {/* Error/Success Messages */}
                     {(error || message) && (
-                        <div className={`mb-4 rounded-lg border px-4 py-3 text-sm shadow-sm flex items-center justify-between ${
-                            messageType === 'success'
-                                ? 'border-green-200 bg-green-50 text-green-700'
-                                : 'border-red-200 bg-red-50 text-red-700'
-                        }`}>
+                        <div className={`mb-4 rounded-lg border px-4 py-3 text-sm shadow-sm flex items-center justify-between ${messageType === 'success'
+                            ? 'border-green-200 bg-green-50 text-green-700'
+                            : 'border-red-200 bg-red-50 text-red-700'
+                            }`}>
                             <div className="flex items-center gap-2">
                                 {messageType === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
                                 <span>{message || error}</span>
@@ -874,76 +803,76 @@ function HomePage() {
                     )}
 
                     {activeTab === "dashboard" && (
-                        <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
+                        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
                             {/* Lightweight Greeting Section */}
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
                                 <div>
-                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Hello, {userName}! 👋</h1>
-                                    <p className="text-gray-500 text-sm mt-1">
+                                    <h1 className="text-xl md:text-2xl font-bold text-gray-900">Hello, {userName}! 👋</h1>
+                                    <p className="text-gray-500 text-xs mt-1">
                                         Find your favorite campus meals & late-night snacks instantly.
                                     </p>
                                 </div>
-                                <button onClick={() => navigate("/orders")} className="bg-orange-50 text-orange-600 px-5 py-2 rounded-full text-sm font-semibold hover:bg-orange-100 transition-all flex items-center gap-2 w-max">
-                                    <MapPin size={16} /> View My Orders
+                                <button onClick={() => navigate("/orders")} className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-xs font-semibold hover:bg-orange-100 transition-all flex items-center gap-2 w-max">
+                                    <MapPin size={14} /> View My Orders
                                 </button>
                             </div>
 
                             {/* Promotional Banner / Slider */}
                             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="md:col-span-2 bg-gradient-to-r from-orange-50 to-orange-100 rounded-3xl p-6 md:p-8 shadow-sm relative overflow-hidden">
-                                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-orange-200 rounded-full opacity-40"></div>
-                                    <div className="absolute -right-16 bottom-0 w-48 h-48 bg-orange-300 rounded-full opacity-20"></div>
+                                <div className="md:col-span-2 bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-5 md:p-6 shadow-sm relative overflow-hidden border border-orange-200/50">
+                                    <div className="absolute -right-6 -top-6 w-32 h-32 bg-orange-200 rounded-full opacity-40"></div>
+                                    <div className="absolute -right-10 bottom-0 w-40 h-40 bg-orange-300 rounded-full opacity-20"></div>
                                     <div className="relative">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-xs font-semibold text-orange-700 mb-3">
-                                            <Percent size={14} /> Limited Time Student Deal
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-100/80 text-[10px] font-bold text-orange-700 mb-2">
+                                            <Percent size={12} /> Limited Time Student Deal
                                         </div>
-                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                                            Up to 30% OFF on late-night orders
+                                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1.5 tracking-tight">
+                                            Up to 10% OFF on late-night orders
                                         </h2>
-                                        <p className="text-sm text-gray-600 mb-4 max-w-xl">
-                                            Use code <span className="font-semibold text-orange-600">BITEHUB30</span> at checkout on
+                                        <p className="text-xs text-gray-600 mb-4 max-w-lg leading-relaxed">
+                                            Use code <span className="font-bold text-orange-600">BITE10</span> at checkout on
                                             orders after 9 PM. Perfect for study sessions and group projects.
                                         </p>
-                                        <button className="inline-flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-orange-600 hover:shadow-md hover:-translate-y-0.5 transition-all">
-                                            Claim Offer <ArrowRight size={16} />
+                                        <button className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-orange-600 hover:shadow-md hover:-translate-y-0.5 transition-all shadow-sm">
+                                            Claim Offer <ArrowRight size={14} />
                                         </button>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+                                <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col justify-between border border-gray-100">
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 mb-1">Delivery ETA</h3>
-                                        <p className="text-sm text-gray-500 mb-4">Average time to your campus</p>
-                                        <div className="space-y-3">
+                                        <h3 className="text-sm font-bold text-gray-900 mb-0.5">Delivery ETA</h3>
+                                        <p className="text-xs text-gray-500 mb-3">Average time to your campus</p>
+                                        <div className="space-y-2.5">
                                             <div>
-                                                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                                    <span>Current</span>
-                                                    <span>25 min</span>
+                                                <div className="flex justify-between text-[10px] text-gray-500 mb-1">
+                                                    <span>Current Status</span>
+                                                    <span className="font-bold text-orange-600">10 min</span>
                                                 </div>
-                                                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                                                <div className="h-1.5 rounded-full bg-gray-50 overflow-hidden border border-gray-100">
                                                     <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-orange-500 to-orange-400"></div>
                                                 </div>
                                             </div>
                                             <div>
-                                                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                                    <span>Best this week</span>
-                                                    <span>18 min</span>
+                                                <div className="flex justify-between text-[10px] text-gray-500 mb-1">
+                                                    <span>Peak Record</span>
+                                                    <span className="font-bold text-emerald-600">5 min</span>
                                                 </div>
-                                                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                                                <div className="h-1.5 rounded-full bg-gray-50 overflow-hidden border border-gray-100">
                                                     <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                                        <Truck size={14} /> Live-tracked delivery for all orders.
+                                    <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                                        <Truck size={12} className="text-orange-400" /> Real-time tracking enabled.
                                     </div>
                                 </div>
                             </section>
 
                             {/* Featured Restaurants Carousel */}
                             <section>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-2xl font-bold text-gray-900">Featured Restaurants</h2>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">Featured Restaurants</h2>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => handleFeaturedScroll("prev")}
@@ -968,33 +897,35 @@ function HomePage() {
                                     {restaurants.map((restaurant) => (
                                         <div
                                             key={restaurant.id}
-                                            className="min-w-[260px] bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group"
+                                            className="min-w-[220px] max-w-[220px] bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
                                         >
-                                            <img
-                                                src={restaurant.image}
-                                                alt={restaurant.name}
-                                                className="h-40 w-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                            />
-                                            <div className="p-4">
-                                                <h3 className="font-bold text-gray-900 text-sm mb-1 truncate">
+                                            <div className="h-32 w-full overflow-hidden bg-gray-50">
+                                                <img
+                                                    src={restaurant.image}
+                                                    alt={restaurant.name}
+                                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                            </div>
+                                            <div className="p-3">
+                                                <h3 className="font-bold text-gray-900 text-xs mb-0.5 truncate group-hover:text-orange-600 transition-colors">
                                                     {restaurant.name}
                                                 </h3>
-                                                <p className="text-xs text-gray-500 mb-3">{restaurant.cuisine}</p>
-                                                <div className="flex items-center justify-between text-xs mb-3">
-                                                    <div className="flex items-center gap-1">
-                                                        <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                                                        <span className="font-semibold text-gray-900">
+                                                <p className="text-[10px] text-gray-500 mb-2">{restaurant.cuisine}</p>
+                                                <div className="flex items-center justify-between text-[10px] mb-2">
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                                        <span className={`font-black ${isDarkMode ? 'text-white' : 'text-black'}`}>
                                                             {restaurant.rating}
                                                         </span>
-                                                        <span className="text-gray-500">({restaurant.reviews})</span>
+                                                        <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-950'} font-bold`}>({restaurant.reviews})</span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                                <div className={`flex items-center justify-between text-[11px] font-bold ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>
                                                     <span className="flex items-center gap-1">
-                                                        <Clock size={12} /> {restaurant.deliveryTime} min
+                                                        <Clock size={11} /> {restaurant.deliveryTime} min
                                                     </span>
                                                     <span className="flex items-center gap-1">
-                                                        <MapPin size={12} /> {restaurant.distance}
+                                                        <MapPin size={11} /> {restaurant.distance}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1006,44 +937,41 @@ function HomePage() {
                             {/* ====== EXPLORE MENU ====== */}
                             <section ref={browseFoodRef} className="scroll-mt-24">
                                 {/* Header */}
-                                <div className="mb-5">
-                                    <h2 className={`text-3xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Explore Menu</h2>
-                                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Browse all dishes from every restaurant on campus</p>
+                                <div className="mb-3">
+                                    <h2 className={`text-xl font-black mb-0.5 ${isDarkMode ? 'text-white' : 'text-black'} tracking-tight`}>Explore Menu</h2>
+                                    <p className={`text-[12px] font-bold ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>Browse all dishes from every restaurant on campus</p>
                                 </div>
 
                                 {/* Category Pills */}
                                 <div className="mb-4">
-                                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Filter &amp; Categories</p>
+                                    <p className={`text-[10px] font-black uppercase tracking-[2px] mb-2 ${isDarkMode ? 'text-orange-400' : 'text-black'}`}>Filter &amp; Categories</p>
                                     <div className="flex flex-wrap gap-2">
                                         {['All', 'Main', 'Drinks', 'Snack', 'Dessert', 'Budget Meal', ...categories.map(c => c.name)]
                                             .filter((v, i, a) => a.indexOf(v) === i)
                                             .map(cat => (
-                                            <button
-                                                key={cat}
-                                                onClick={() => setActiveCategoryFilter(cat)}
-                                                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
-                                                    activeCategoryFilter === cat
+                                                <button
+                                                    key={cat}
+                                                    onClick={() => setActiveCategoryFilter(cat)}
+                                                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${activeCategoryFilter === cat
                                                         ? 'bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-200'
                                                         : isDarkMode
-                                                            ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
-                                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {cat === 'All' && <Grid3x3 size={13} />}
-                                                {cat}
-                                            </button>
-                                        ))}
+                                                            ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+                                                            : 'bg-white text-black border-gray-200 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    {cat === 'All' && <Grid3x3 size={13} />}
+                                                    {cat}
+                                                </button>
+                                            ))}
                                     </div>
                                 </div>
 
                                 {/* Filter Bar */}
-                                <div className={`flex flex-wrap gap-3 items-center mb-6 p-3 rounded-2xl border ${
-                                    isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
-                                }`}>
-                                    {/* Price Range */}
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${
-                                        isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
+                                <div className={`flex flex-wrap gap-3 items-center mb-6 p-3 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
                                     }`}>
+                                    {/* Price Range */}
+                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
+                                        }`}>
                                         <span className="font-medium text-xs">Price Range</span>
                                         <input
                                             type="range" min="5" max="1000" value={priceFilter}
@@ -1057,9 +985,8 @@ function HomePage() {
                                     <select
                                         value={cuisineFilter}
                                         onChange={e => setCuisineFilter(e.target.value)}
-                                        className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition ${
-                                            isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
+                                            }`}
                                     >
                                         <option value="All">Cuisine: All</option>
                                         {[...new Set(popularFoods.map(f => f.category).filter(Boolean))].map(c => (
@@ -1068,12 +995,11 @@ function HomePage() {
                                     </select>
 
                                     {/* Rating */}
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${
-                                        isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
-                                    }`}>
+                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
+                                        }`}>
                                         <span className="text-xs font-medium">Rating (1–5)</span>
                                         <div className="flex gap-0.5">
-                                            {[1,2,3,4,5].map(n => (
+                                            {[1, 2, 3, 4, 5].map(n => (
                                                 <button key={n} onClick={() => setMinRating(minRating === n ? 0 : n)}>
                                                     <Star size={14} className={n <= minRating ? 'text-yellow-400 fill-yellow-400' : isDarkMode ? 'text-gray-600 fill-gray-600' : 'text-gray-300 fill-gray-300'} />
                                                 </button>
@@ -1081,7 +1007,7 @@ function HomePage() {
                                         </div>
                                     </div>
 
-                                    <span className={`ml-auto text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}>
+                                    <span className={`ml-auto text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>
                                         {filteredFoods.length} of {popularFoods.length} items
                                     </span>
                                 </div>
@@ -1089,7 +1015,7 @@ function HomePage() {
                                 {/* Two-column layout: Main Grid + Right Panel */}
                                 <div className="flex gap-6">
                                     {/* Main Food Grid */}
-                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                         {filteredFoods.length === 0 ? (
                                             <div className="col-span-full flex flex-col items-center justify-center py-20 gap-3">
                                                 <Utensils size={40} className="text-gray-300" />
@@ -1097,166 +1023,152 @@ function HomePage() {
                                                 <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Try adjusting your filters or check back later</p>
                                             </div>
                                         ) : filteredFoods.map((food) => {
-                                            // ── Stock awareness ──
-                                            const hasStock = food.current_stock === null || food.current_stock === undefined || food.current_stock < 0 || food.current_stock > 0;
-                                            const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock >= 0 && food.current_stock === 0;
+                                            const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock <= 0;
                                             const isLowStock = !isOOS && food.daily_stock > 0 && food.current_stock !== null && (food.current_stock / food.daily_stock) <= 0.25;
                                             const stockLabel = food.daily_stock !== null && food.daily_stock >= 0
                                                 ? isOOS ? 'Out of Stock'
-                                                : isLowStock ? `Low: ${food.current_stock} left`
-                                                : `${food.current_stock} left`
+                                                    : isLowStock ? `Low: ${food.current_stock} left`
+                                                        : `${food.current_stock} left`
                                                 : null;
 
                                             return (
-                                            <div
-                                                key={food.id}
-                                                onMouseEnter={() => setHoveredFoodId(food.id)}
-                                                onMouseLeave={() => setHoveredFoodId(null)}
-                                                className={`relative rounded-2xl overflow-hidden border transition-all duration-300 cursor-pointer group ${
-                                                    isOOS
+                                                <div
+                                                    key={food.id}
+                                                    onMouseEnter={() => setHoveredFoodId(food.id)}
+                                                    onMouseLeave={() => setHoveredFoodId(null)}
+                                                    className={`relative rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer group ${isOOS
                                                         ? isDarkMode ? 'bg-gray-800/50 border-gray-700 opacity-75' : 'bg-gray-50 border-gray-200 opacity-75'
                                                         : isDarkMode
-                                                            ? 'bg-gray-800/80 border-gray-700 hover:border-orange-500/50 hover:shadow-xl hover:shadow-orange-500/10'
-                                                            : 'bg-white border-gray-100 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100 hover:-translate-y-1'
-                                                }`}
-                                            >
-                                                {/* Food Image */}
-                                                <div className="relative h-44 overflow-hidden bg-gray-100">
-                                                    <img
-                                                        src={food.image}
-                                                        alt={food.name}
-                                                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isOOS ? 'grayscale' : ''}`}
-                                                        onError={e => e.target.style.display = 'none'}
-                                                    />
-                                                    {/* Favorite */}
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); toggleFavorite(food.id); }}
-                                                        className="absolute top-2 right-2 p-2 rounded-full bg-white/90 backdrop-blur-sm shadow hover:scale-110 transition-transform z-10"
-                                                    >
-                                                        <Heart size={15} className={favorites.has(food.id) ? 'text-red-500 fill-red-500' : 'text-gray-400'} />
-                                                    </button>
-                                                    {food.discount > 0 && (
-                                                        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                            -{food.discount}%
-                                                        </div>
-                                                    )}
-                                                    {/* Stock Badge overlay */}
-                                                    {stockLabel && (
-                                                        <div className={`absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm ${
-                                                            isOOS ? 'bg-red-600/90 text-white'
-                                                            : isLowStock ? 'bg-orange-500/90 text-white'
-                                                            : 'bg-emerald-600/90 text-white'
-                                                        }`}>
-                                                            {stockLabel}
-                                                        </div>
-                                                    )}
-                                                    {/* Out of Stock overlay */}
-                                                    {isOOS && (
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/40 backdrop-blur-[1px]">
-                                                            <span className="bg-red-600 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-lg">
-                                                                OUT OF STOCK
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Card Content (Clickable) */}
-                                                <div className="p-4" onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}>
-                                                    <div className="flex items-start justify-between gap-2 mb-1">
-                                                        <h3 className={`font-bold text-sm leading-tight truncate flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</h3>
-                                                        <div className="flex items-center gap-0.5 flex-shrink-0">
-                                                            <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                                                            <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{food.rating}</span>
-                                                        </div>
-                                                    </div>
-                                                    <p className={`text-xs mb-3 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                        {food.description || food.restaurant}
-                                                    </p>
-
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex flex-col">
-                                                            {food.category === 'Drinks' ? (
-                                                                <>
-                                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full mb-1 w-fit ${
-                                                                        isDarkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-50 text-blue-600'
-                                                                    }`}>🧋 Multiple Sizes</span>
-                                                                    <span className={`text-sm font-extrabold ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
-                                                                        ₱{Number(food.half_price || food.price || 0).toFixed(2)} – ₱{Number(food.large_price || food.price || 0).toFixed(2)}
-                                                                    </span>
-                                                                </>
-                                                            ) : food.category === 'Budget Meal' ? (
-                                                                <>
-                                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full mb-1 w-fit ${
-                                                                        isDarkMode ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-50 text-purple-600'
-                                                                    }`}>🍱 Budget Meal</span>
-                                                                    <span className={`text-sm font-extrabold ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
-                                                                        From ₱{Number(food.price || 0).toFixed(2)}
-                                                                    </span>
-                                                                </>
-                                                            ) : (
-                                                                <span className={`text-lg font-extrabold ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
-                                                                    ₱{((food.price || 0) * (1 - (food.discount || 0) / 100)).toFixed(2)}
+                                                            ? 'bg-gray-800/80 border-gray-700 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/5'
+                                                            : 'bg-white border-gray-100 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100 hover:-translate-y-0.5'
+                                                        }`}
+                                                >
+                                                    {/* Food Image */}
+                                                    <div className="relative h-32 overflow-hidden bg-gray-50">
+                                                        <img
+                                                            src={food.image}
+                                                            alt={food.name}
+                                                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isOOS ? 'grayscale' : ''}`}
+                                                            onError={e => e.target.style.display = 'none'}
+                                                        />
+                                                        {/* Favorite */}
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); toggleFavorite(food.id); }}
+                                                            className="absolute top-2 right-2 p-1.5 rounded-full bg-white shadow-md hover:scale-110 transition-transform z-10"
+                                                        >
+                                                            <Heart size={14} className={favorites.has(food.id) ? 'text-red-500 fill-red-500' : 'text-gray-950'} />
+                                                        </button>
+                                                        {food.discount > 0 && (
+                                                            <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                                                                -{food.discount}%
+                                                            </div>
+                                                        )}
+                                                        {stockLabel && (
+                                                            <div className={`absolute bottom-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm ${isOOS ? 'bg-red-600/90 text-white'
+                                                                : isLowStock ? 'bg-orange-500/90 text-white'
+                                                                    : 'bg-emerald-600/90 text-white'
+                                                                }`}>
+                                                                {stockLabel}
+                                                            </div>
+                                                        )}
+                                                        {isOOS && (
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30 backdrop-blur-[1px]">
+                                                                <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md">
+                                                                    OUT OF STOCK
                                                                 </span>
-                                                            )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="p-2.5" onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}>
+                                                        <div className="flex items-start justify-between gap-2 mb-0.5">
+                                                            <h3 className={`font-black text-xs leading-tight truncate flex-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{food.name}</h3>
+                                                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                                                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                                                                <span className={`text-[10px] font-black ${isDarkMode ? 'text-white' : 'text-black'}`}>{food.rating}</span>
+                                                            </div>
+                                                        </div>
+                                                        <p className={`text-[10px] font-bold mb-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                                            {food.description || food.restaurant}
+                                                        </p>
+
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex flex-col">
+                                                                {food.category === 'Drinks' ? (
+                                                                    <>
+                                                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-0.5 w-fit ${isDarkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-50 text-blue-600'
+                                                                            }`}>🧋 Multiple Sizes</span>
+                                                                        <span className={`text-xs font-black ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
+                                                                            ₱{Number(food.half_price || food.price || 0).toFixed(2)}–₱{Number(food.large_price || food.price || 0).toFixed(2)}
+                                                                        </span>
+                                                                    </>
+                                                                ) : food.category === 'Budget Meal' ? (
+                                                                    <>
+                                                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-0.5 w-fit ${isDarkMode ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-50 text-purple-600'
+                                                                            }`}>🍱 Budget Meal</span>
+                                                                        <span className={`text-xs font-black ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
+                                                                            From ₱{Number(food.price || 0).toFixed(2)}
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className={`text-sm font-black ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
+                                                                        ₱{((food.price || 0) * (1 - (food.discount || 0) / 100)).toFixed(2)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                {/* Action Buttons */}
-                                                <div className="px-4 pb-4 flex gap-2">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }}
-                                                        disabled={isOOS}
-                                                        className={`flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-xl transition-all border ${
-                                                            isOOS
+                                                    <div className="px-2.5 pb-2.5 flex gap-1.5">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }}
+                                                            disabled={isOOS}
+                                                            className={`flex-1 flex items-center justify-center gap-1 text-[8.5px] font-bold py-1.5 rounded-lg transition-all border ${isOOS
                                                                 ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                                                                 : isDarkMode
                                                                     ? 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                                                                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                                                        }`}
-                                                    >
-                                                        <Plus size={12} /> {food.category === 'Drinks' ? 'Select Size' : food.category === 'Budget Meal' ? 'Customize' : 'Add'}
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }}
-                                                        disabled={isOOS}
-                                                        className={`flex-1 text-[10px] font-bold py-2 rounded-xl transition-all shadow-sm ${
-                                                            isOOS
+                                                                    : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'
+                                                                }`}
+                                                        >
+                                                            <Plus size={10} /> {food.category === 'Drinks' ? 'Size' : food.category === 'Budget Meal' ? 'Combo' : 'Add'}
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }}
+                                                            disabled={isOOS}
+                                                            className={`flex-1 text-[8.5px] font-bold py-1.5 rounded-lg transition-all shadow-sm ${isOOS
                                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                                 : 'bg-orange-500 text-white hover:bg-orange-600'
-                                                        }`}
-                                                    >
-                                                        {food.category === 'Budget Meal' ? 'Order' : 'Checkout'}
-                                                    </button>
+                                                                }`}
+                                                        >
+                                                            {food.category === 'Budget Meal' ? 'Order' : 'Checkout'}
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
                                             );
                                         })}
                                     </div>
 
                                     {/* Right Quick-View Panel */}
-                                    <div className="hidden xl:flex flex-col gap-4 w-60 flex-shrink-0">
-                                        <div className={`p-4 rounded-2xl border ${
-                                            isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
-                                        }`}>
-                                            <h3 className={`font-bold text-sm mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Quick Picks</h3>
+                                    <div className="hidden xl:flex flex-col gap-4 w-56 flex-shrink-0">
+                                        <div className={`p-3 rounded-2xl border ${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
+                                            }`}>
+                                            <h3 className={`font-bold text-xs mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Quick Picks</h3>
                                             <div className="flex flex-col gap-3">
                                                 {popularFoods.slice(0, 4).map(food => (
-                                                    <div key={food.id} className={`flex gap-2 items-center p-2 rounded-xl border transition ${
-                                                        isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'
-                                                    }`}>
+                                                    <div key={food.id} className={`flex gap-2 items-center p-2 rounded-xl border transition ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'
+                                                        }`}>
                                                         <img
                                                             src={food.image}
                                                             alt={food.name}
-                                                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                                                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                                                             onError={e => e.target.style.display = 'none'}
                                                         />
                                                         <div className="flex-1 min-w-0">
-                                                            <p className={`text-xs font-bold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</p>
-                                                            <p className={`text-xs truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{food.restaurant}</p>
+                                                            <p className={`text-[11px] font-bold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</p>
+                                                            <p className={`text-[10px] truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{food.restaurant}</p>
                                                             <div className="flex items-center justify-between mt-0.5">
-                                                                <span className={`text-xs font-bold ${isDarkMode ? 'text-orange-400' : 'text-gray-800'}`}>₱{(food.price || 0).toFixed(2)}</span>
-                                                                <button onClick={() => addToCart(food)} className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-lg hover:bg-orange-600 transition">
+                                                                <span className={`text-[11px] font-bold ${isDarkMode ? 'text-orange-400' : 'text-gray-800'}`}>₱{(food.price || 0).toFixed(2)}</span>
+                                                                <button onClick={() => addToCart(food)} className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-lg hover:bg-orange-600 transition">
                                                                     Add
                                                                 </button>
                                                             </div>
@@ -1271,29 +1183,29 @@ function HomePage() {
 
                             {/* Special Offers */}
                             <section>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Special Offers</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-                                        <Zap className="mb-3" size={32} />
-                                        <h3 className="font-bold text-lg mb-1">Flash Sale</h3>
-                                        <p className="text-blue-100 text-sm mb-3">50% off selected items</p>
-                                        <button className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-50 transition">
+                                <h2 className="text-lg font-bold text-gray-900 mb-2">Special Offers</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-3 text-white">
+                                        <Zap className="mb-1.5" size={20} />
+                                        <h3 className="font-bold text-sm mb-0.5">Flash Sale</h3>
+                                        <p className="text-blue-100 text-[11px] mb-2.5">50% off selected items</p>
+                                        <button className="bg-white text-blue-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-blue-50 transition">
                                             Shop Now
                                         </button>
                                     </div>
-                                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
-                                        <Star className="mb-3" size={32} />
-                                        <h3 className="font-bold text-lg mb-1">Top Rated</h3>
-                                        <p className="text-green-100 text-sm mb-3">Most popular this week</p>
-                                        <button className="bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-50 transition">
+                                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
+                                        <Star className="mb-1.5" size={20} />
+                                        <h3 className="font-bold text-sm mb-0.5">Top Rated</h3>
+                                        <p className="text-green-100 text-[11px] mb-2.5">Most popular this week</p>
+                                        <button className="bg-white text-green-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-green-50 transition">
                                             Explore
                                         </button>
                                     </div>
-                                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-6 text-white">
-                                        <TrendingUp className="mb-3" size={32} />
-                                        <h3 className="font-bold text-lg mb-1">Trending</h3>
-                                        <p className="text-pink-100 text-sm mb-3">What everyone is ordering</p>
-                                        <button className="bg-white text-pink-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-50 transition">
+                                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-3 text-white">
+                                        <TrendingUp className="mb-1.5" size={20} />
+                                        <h3 className="font-bold text-sm mb-0.5">Trending</h3>
+                                        <p className="text-pink-100 text-[11px] mb-2.5">What everyone is ordering</p>
+                                        <button className="bg-white text-pink-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-pink-50 transition">
                                             Discover
                                         </button>
                                     </div>
@@ -1302,9 +1214,9 @@ function HomePage() {
 
                             {/* Nearby Restaurants */}
                             <section>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-2xl font-bold text-gray-900">Nearby Restaurants</h2>
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-xl font-bold text-gray-900">Nearby Restaurants</h2>
+                                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
                                         <span>Max distance</span>
                                         <input
                                             type="range"
@@ -1312,51 +1224,51 @@ function HomePage() {
                                             max="10"
                                             value={maxDistance}
                                             onChange={(e) => setMaxDistance(Number(e.target.value))}
-                                            className="accent-orange-500"
+                                            className="accent-orange-500 w-16"
                                         />
                                         <span className="text-gray-700 font-semibold">{maxDistance} km</span>
                                     </div>
                                 </div>
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                     {filteredRestaurants.map((restaurant) => (
-                                        <div key={restaurant.id} className="bg-white rounded-2xl border border-gray-200 hover:shadow-md transition overflow-hidden">
-                                            <div 
+                                        <div key={restaurant.id} className="bg-white rounded-xl border border-gray-100 hover:shadow-sm transition overflow-hidden">
+                                            <div
                                                 onClick={() => setExpandedRestaurantId(expandedRestaurantId === restaurant.id ? null : restaurant.id)}
-                                                className="flex items-center gap-4 p-4 cursor-pointer"
+                                                className="flex items-center gap-3 p-3 cursor-pointer"
                                             >
                                                 <img
                                                     src={restaurant.image}
                                                     alt={restaurant.name}
-                                                    className="flex-shrink-0 w-16 h-16 rounded-xl object-cover"
+                                                    className="flex-shrink-0 w-14 h-14 rounded-lg object-cover"
                                                     onError={(e) => {
                                                         e.target.style.display = 'none';
                                                     }}
                                                 />
-                                                <div className="flex-1">
+                                                <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
-                                                        <h3 className="font-bold text-gray-900">{restaurant.name}</h3>
-                                                        <span className="text-gray-400">
-                                                            {expandedRestaurantId === restaurant.id ? <ChevronDown size={18} className="rotate-180 transition-transform" /> : <ChevronDown size={18} className="transition-transform" />}
+                                                        <h3 className="font-bold text-gray-900 text-sm truncate">{restaurant.name}</h3>
+                                                        <span className="text-gray-400 p-1">
+                                                            {expandedRestaurantId === restaurant.id ? <ChevronDown size={14} className="rotate-180 transition-transform" /> : <ChevronDown size={14} className="transition-transform" />}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-gray-500">{restaurant.cuisines ? restaurant.cuisines.join(', ') : (restaurant.cuisine || restaurant.type || 'Restaurant')}</p>
-                                                    <div className="flex items-center gap-2 mt-1 text-xs">
-                                                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                                    <p className="text-[10px] text-gray-500 truncate">{restaurant.cuisines ? restaurant.cuisines.join(', ') : (restaurant.cuisine || restaurant.type || 'Restaurant')}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px]">
+                                                        <Star size={10} className="text-yellow-400 fill-yellow-400" />
                                                         <span className="font-semibold">{restaurant.rating}</span>
-                                                        <span className="text-gray-500">({restaurant.reviews})</span>
-                                                        <span className="text-gray-500">•</span>
-                                                        <Clock size={12} className="text-gray-500" />
-                                                        <span className="text-gray-500">{restaurant.deliveryTime} min</span>
+                                                        <span className="text-gray-400">({restaurant.reviews})</span>
+                                                        <span className="text-gray-400">•</span>
+                                                        <Clock size={10} className="text-gray-400" />
+                                                        <span className="text-gray-400">{restaurant.deliveryTime} min</span>
                                                     </div>
                                                 </div>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setExpandedRestaurantId(restaurant.id); browseFoodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} 
-                                                    className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition hidden md:block"
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setExpandedRestaurantId(restaurant.id); browseFoodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                                                    className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 transition hidden md:block"
                                                 >
                                                     Order
                                                 </button>
                                             </div>
-                                            
+
                                             {/* Expanded Content */}
                                             {expandedRestaurantId === restaurant.id && (
                                                 <div className="p-4 pt-0 border-t border-gray-100 bg-gray-50/50 animate-fade-in flex flex-col">
@@ -1368,7 +1280,7 @@ function HomePage() {
                                                     <div className="mb-4 pt-4 text-sm text-gray-600 flex flex-col gap-2">
                                                         {restaurant.description && <p className="leading-relaxed">{restaurant.description}</p>}
                                                         <div className="flex flex-wrap gap-3 mt-1 text-xs">
-                                                            {restaurant.address && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 p-2 rounded-lg border border-gray-100"><MapPin size={14} className="text-orange-500"/> {restaurant.address}</span>}
+                                                            {restaurant.address && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 p-2 rounded-lg border border-gray-100"><MapPin size={14} className="text-orange-500" /> {restaurant.address}</span>}
                                                             {restaurant.phone && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 p-2 rounded-lg border border-gray-100">📞 {restaurant.phone}</span>}
                                                         </div>
                                                     </div>
@@ -1397,7 +1309,7 @@ function HomePage() {
                                                         )}
                                                     </div>
                                                     <div className="mt-4 flex justify-end">
-                                                        <button 
+                                                        <button
                                                             onClick={(e) => { e.stopPropagation(); setSelectedRestaurant(restaurant); setShowRestaurantDialog(true); }}
                                                             className="px-5 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition shadow-sm hover:shadow-orange-500/30 w-full md:w-auto mt-2"
                                                         >
@@ -1419,14 +1331,14 @@ function HomePage() {
 
                     {/* Profile Tab */}
                     {activeTab === "profile" && (
-                        <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">My Profile</h2>
-                            
+                        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">My Profile</h2>
+
                             {/* Moved Dashboard Welcome Section */}
-                            <section className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-3xl p-8 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <section className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                                 <div>
-                                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Profile of {userName}</h1>
-                                    <p className="text-orange-100 mb-6 max-w-xl">
+                                    <h1 className="text-xl md:text-2xl font-bold mb-1">Profile of {userName}</h1>
+                                    <p className="text-orange-100 text-xs mb-4 max-w-xl">
                                         View your campus dining analytics, default delivery addresses, and recent activity.
                                     </p>
                                     <div className="flex flex-wrap items-center gap-3">
@@ -1530,9 +1442,9 @@ function HomePage() {
                                             />
                                         </div>
                                     </div>
-                                    
+
                                     <div className="pt-4">
-                                        <button 
+                                        <button
                                             onClick={async () => {
                                                 try {
                                                     const res = await apiClient.put('/api/profile', {
@@ -1659,7 +1571,7 @@ function HomePage() {
                                         <Settings size={20} className="text-orange-500" /> Account Manage
                                     </h3>
                                     <div className="space-y-3">
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 setMessage("Local cache cleared successfully! App may reload soon.")
                                                 setMessageType("success")
@@ -1672,7 +1584,7 @@ function HomePage() {
                                             </div>
                                             <Trash2 size={18} className="text-gray-400" />
                                         </button>
-                                        
+
                                     </div>
                                 </section>
                             </div>
@@ -1765,7 +1677,7 @@ function HomePage() {
                                                 <option>This Month</option>
                                             </select>
                                         </div>
-                                        
+
                                         {/* Modern Data Graph Mockup */}
                                         <div className="relative h-64 flex items-end justify-between gap-1 md:gap-3 px-2 pt-10">
                                             {/* Grid lines */}
@@ -1775,7 +1687,7 @@ function HomePage() {
                                                 <div className="border-b border-gray-100 w-full h-0"></div>
                                                 <div className="border-b border-gray-100 w-full h-0"></div>
                                             </div>
-                                            
+
                                             {[
                                                 { day: "Mon", rev: 45, ord: 20 },
                                                 { day: "Tue", rev: 60, ord: 40 },
@@ -1790,14 +1702,14 @@ function HomePage() {
                                                     <div className="absolute -top-12 bg-gray-900 text-white text-xs font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
                                                         ₱{(data.rev * 15).toFixed(0)}
                                                     </div>
-                                                    
+
                                                     {/* Double Bar System */}
                                                     <div className="w-full flex justify-center items-end gap-1 h-48 bg-transparent">
-                                                        <div 
+                                                        <div
                                                             className="w-1/2 md:w-3 max-w-[12px] bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-sm shadow-sm group-hover:shadow-orange-500/50 transition-all"
                                                             style={{ height: `${data.rev}%` }}
                                                         ></div>
-                                                        <div 
+                                                        <div
                                                             className="w-1/2 md:w-3 max-w-[12px] bg-gradient-to-t from-gray-200 to-gray-300 rounded-t-sm"
                                                             style={{ height: `${data.ord}%` }}
                                                         ></div>
@@ -1826,7 +1738,7 @@ function HomePage() {
                                             LIVE SYSTEM
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[400px]">
                                         {liveOrders.map((o) => (
                                             <div
@@ -1834,14 +1746,13 @@ function HomePage() {
                                                 className="rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition p-4 md:p-5 relative overflow-hidden group"
                                             >
                                                 {/* Left accent color based on status */}
-                                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                                                    o.status === 'pending' ? 'bg-yellow-400' :
+                                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${o.status === 'pending' ? 'bg-yellow-400' :
                                                     o.status === 'accepted' ? 'bg-sky-400' :
-                                                    o.status === 'preparing' ? 'bg-blue-400' :
-                                                    o.status === 'prepared' ? 'bg-purple-400' :
-                                                    o.status === 'out_for_delivery' ? 'bg-orange-400' : 'bg-emerald-400'
-                                                }`}></div>
-                                                
+                                                        o.status === 'preparing' ? 'bg-blue-400' :
+                                                            o.status === 'prepared' ? 'bg-purple-400' :
+                                                                o.status === 'out_for_delivery' ? 'bg-orange-400' : 'bg-emerald-400'
+                                                    }`}></div>
+
                                                 <div className="flex flex-col md:flex-row justify-between gap-4">
                                                     <div>
                                                         <div className="flex gap-3 items-center mb-1">
@@ -1853,7 +1764,7 @@ function HomePage() {
                                                         </div>
                                                         <p className="text-lg font-black text-emerald-600">₱{o.total.toFixed(2)}</p>
                                                     </div>
-                                                    
+
                                                     <div className="flex flex-col items-start md:items-end justify-between">
                                                         <select
                                                             value={o.status}
@@ -1867,7 +1778,7 @@ function HomePage() {
                                                             <option value="out_for_delivery">🟠 Out for Delivery</option>
                                                             <option value="delivered">🟢 Delivered</option>
                                                         </select>
-                                                        
+
                                                         {o.status !== 'delivered' && (
                                                             <p className="text-xs text-gray-500 font-medium mt-3 md:mt-0">
                                                                 Action Required
@@ -1894,7 +1805,7 @@ function HomePage() {
                                         <Plus size={16} /> Add Item
                                     </button>
                                 </div>
-                                
+
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm whitespace-nowrap">
                                         <thead>
@@ -1996,32 +1907,32 @@ function HomePage() {
                         <div className="space-y-4 mb-8">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Delivery Address</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={checkoutInfo.deliveryAddress}
                                     placeholder="e.g. 123 Campus Dorm, Room 4B"
-                                    onChange={(e) => setCheckoutInfo(prev => ({...prev, deliveryAddress: e.target.value}))}
+                                    onChange={(e) => setCheckoutInfo(prev => ({ ...prev, deliveryAddress: e.target.value }))}
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">City</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={checkoutInfo.deliveryCity}
                                         placeholder="e.g. University Town"
-                                        onChange={(e) => setCheckoutInfo(prev => ({...prev, deliveryCity: e.target.value}))}
+                                        onChange={(e) => setCheckoutInfo(prev => ({ ...prev, deliveryCity: e.target.value }))}
                                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
-                                    <input 
-                                        type="tel" 
+                                    <input
+                                        type="tel"
                                         value={checkoutInfo.phone}
                                         placeholder="Mobile number"
-                                        onChange={(e) => setCheckoutInfo(prev => ({...prev, phone: e.target.value}))}
+                                        onChange={(e) => setCheckoutInfo(prev => ({ ...prev, phone: e.target.value }))}
                                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition"
                                     />
                                 </div>
@@ -2032,13 +1943,13 @@ function HomePage() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button 
+                            <button
                                 onClick={() => setShowCheckoutDialog(false)}
                                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={handleCheckout}
                                 className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-orange-500/30 transition-all flex justify-center items-center gap-2"
                             >
@@ -2052,7 +1963,7 @@ function HomePage() {
             {showFoodModal && selectedFood && !showSizeModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setShowFoodModal(false)}>
                     <div className={`w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-                        
+
                         {/* Close Button */}
                         <button onClick={() => setShowFoodModal(false)} className="absolute top-6 right-6 z-10 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-md transition-all active:scale-90">
                             <X size={20} />
@@ -2083,7 +1994,7 @@ function HomePage() {
                                     <p className={`text-sm leading-relaxed mb-6 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                         {selectedFood.description || "A delicious meticulously prepared meal using farm-fresh ingredients and traditional recipes to ensure the perfect taste in every bite."}
                                     </p>
-                                    
+
                                     <div className="space-y-4">
                                         <div>
                                             <h4 className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Ingredients</h4>
@@ -2108,19 +2019,17 @@ function HomePage() {
                                                     <button
                                                         key={size.label}
                                                         onClick={() => setSelectedModalSize(size.label)}
-                                                        className={`flex-1 flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all ${
-                                                            selectedModalSize === size.label
-                                                                ? isDarkMode
-                                                                    ? 'border-orange-500 bg-orange-500/10 text-orange-400'
-                                                                    : 'border-orange-500 bg-orange-50 text-orange-600'
-                                                                : isDarkMode
-                                                                    ? 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                                                                    : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300'
-                                                        }`}
+                                                        className={`flex-1 flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all ${selectedModalSize === size.label
+                                                            ? isDarkMode
+                                                                ? 'border-orange-500 bg-orange-500/10 text-orange-400'
+                                                                : 'border-orange-500 bg-orange-50 text-orange-600'
+                                                            : isDarkMode
+                                                                ? 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
+                                                                : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300'
+                                                            }`}
                                                     >
-                                                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm ${
-                                                            selectedModalSize === size.label ? 'bg-orange-500 text-white' : isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                                                        }`}>{size.icon}</span>
+                                                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm ${selectedModalSize === size.label ? 'bg-orange-500 text-white' : isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                                                            }`}>{size.icon}</span>
                                                         <span className="text-[10px] font-black uppercase tracking-wide">{size.label}</span>
                                                         <span className="text-sm font-black">₱{Number(size.price).toFixed(2)}</span>
                                                     </button>
@@ -2132,8 +2041,8 @@ function HomePage() {
                                                 <span className="text-2xl font-black text-orange-500">
                                                     ₱{Number(
                                                         selectedModalSize === 'Small' ? (selectedFood.half_price || selectedFood.price) :
-                                                        selectedModalSize === 'Large' ? (selectedFood.large_price || selectedFood.price) :
-                                                        selectedFood.price || 0
+                                                            selectedModalSize === 'Large' ? (selectedFood.large_price || selectedFood.price) :
+                                                                selectedFood.price || 0
                                                     ).toFixed(2)}
                                                 </span>
                                             </div>
@@ -2147,7 +2056,7 @@ function HomePage() {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-2xl border border-gray-100 dark:border-gray-700">
-                                                <button 
+                                                <button
                                                     onClick={() => updateQuantity(selectedFood.id, (cart.find(c => c.id === selectedFood.id)?.quantity || 0) - 1)}
                                                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm text-gray-400 hover:text-orange-500 transition-all active:scale-90"
                                                 >
@@ -2156,7 +2065,7 @@ function HomePage() {
                                                 <span className="w-6 text-center font-black text-lg">
                                                     {cart.find(c => c.id === selectedFood.id)?.quantity || 0}
                                                 </span>
-                                                <button 
+                                                <button
                                                     onClick={() => addToCart(selectedFood)}
                                                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm text-gray-400 hover:text-orange-500 transition-all active:scale-90"
                                                 >
@@ -2167,7 +2076,7 @@ function HomePage() {
                                     )}
 
                                     <div className="flex gap-4">
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 if (selectedFood.category === 'Drinks') {
                                                     addToCart(selectedFood, selectedModalSize, false);
@@ -2179,7 +2088,7 @@ function HomePage() {
                                         >
                                             Add to Cart
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 if (selectedFood.category === 'Drinks') {
                                                     addToCart(selectedFood, selectedModalSize, true);
@@ -2231,25 +2140,22 @@ function HomePage() {
                     onClick={closeBudgetModal}
                 >
                     <div
-                        className={`w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-slide-up flex flex-col relative ${
-                            isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white'
-                        }`}
+                        className={`w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-slide-up flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white'
+                            }`}
                         style={{ maxHeight: '90vh' }}
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className={`flex items-center justify-between px-6 py-4 border-b ${
-                            isDarkMode ? 'border-gray-700/50' : 'border-gray-100'
-                        }`}>
+                        <div className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'border-gray-700/50' : 'border-gray-100'
+                            }`}>
                             <div className="flex items-center gap-3">
                                 {budgetStep > 1 && (
                                     <button
                                         onClick={() => setBudgetStep(s => s - 1)}
-                                        className={`p-1.5 rounded-xl transition ${
-                                            isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                                        }`}
+                                        className={`p-1.5 rounded-xl transition ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                            }`}
                                     >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M15 18l-6-6 6-6"/></svg>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M15 18l-6-6 6-6" /></svg>
                                     </button>
                                 )}
                                 <div>
@@ -2258,30 +2164,27 @@ function HomePage() {
                                         {budgetStep === 2 && '🥩 Select Your Options'}
                                         {budgetStep === 3 && '✅ Confirm Order'}
                                     </h2>
-                                    <p className={`text-[10px] font-bold uppercase tracking-widest ${
-                                        isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                                    }`}>
+                                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                                        }`}>
                                         {budgetFood.name} · Step {budgetStep} of 3
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={closeBudgetModal} className={`p-2 rounded-xl transition ${
-                                isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
-                            }`}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            <button onClick={closeBudgetModal} className={`p-2 rounded-xl transition ${isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                                }`}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
                             </button>
                         </div>
 
                         {/* Progress Dots */}
                         <div className="flex justify-center gap-2 py-3">
-                            {[1,2,3].map(step => (
+                            {[1, 2, 3].map(step => (
                                 <div
                                     key={step}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                                        step === budgetStep ? 'w-8 bg-orange-500' :
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${step === budgetStep ? 'w-8 bg-orange-500' :
                                         step < budgetStep ? 'w-4 bg-orange-300' :
-                                        'w-4 bg-gray-200'
-                                    }`}
+                                            'w-4 bg-gray-200'
+                                        }`}
                                 />
                             ))}
                         </div>
@@ -2295,13 +2198,13 @@ function HomePage() {
                                     {budgetLoadingCombos ? (
                                         <div className="flex flex-col items-center py-12 gap-3">
                                             <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                                            <p className={`text-sm font-bold ${ isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading options...</p>
+                                            <p className={`text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading options...</p>
                                         </div>
                                     ) : budgetCombinations.length === 0 ? (
                                         <div className="flex flex-col items-center py-12 gap-3">
                                             <span className="text-4xl">😔</span>
-                                            <p className={`text-sm font-bold text-center ${ isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                No combinations available.<br/>The restaurant hasn't set up this Budget Meal yet.
+                                            <p className={`text-sm font-bold text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                No combinations available.<br />The restaurant hasn't set up this Budget Meal yet.
                                             </p>
                                         </div>
                                     ) : (
@@ -2309,30 +2212,28 @@ function HomePage() {
                                             <button
                                                 key={combo.id}
                                                 onClick={() => budgetSelectCombo(combo)}
-                                                className={`w-full group flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-200 ${
-                                                    budgetSelectedCombo?.id === combo.id
-                                                        ? isDarkMode ? 'border-orange-500 bg-orange-500/10' : 'border-orange-500 bg-orange-50'
-                                                        : isDarkMode ? 'border-gray-700 bg-gray-800/40 hover:border-orange-500/50' : 'border-gray-100 bg-white hover:border-orange-200 hover:shadow-md'
-                                                }`}
+                                                className={`w-full group flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-200 ${budgetSelectedCombo?.id === combo.id
+                                                    ? isDarkMode ? 'border-orange-500 bg-orange-500/10' : 'border-orange-500 bg-orange-50'
+                                                    : isDarkMode ? 'border-gray-700 bg-gray-800/40 hover:border-orange-500/50' : 'border-gray-100 bg-white hover:border-orange-200 hover:shadow-md'
+                                                    }`}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all ${
-                                                        isDarkMode ? 'bg-gray-700 group-hover:bg-orange-500/20' : 'bg-orange-50 group-hover:bg-orange-100'
-                                                    }`}>
+                                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all ${isDarkMode ? 'bg-gray-700 group-hover:bg-orange-500/20' : 'bg-orange-50 group-hover:bg-orange-100'
+                                                        }`}>
                                                         🍱
                                                     </div>
                                                     <div className="text-left">
-                                                        <p className={`font-black text-sm ${ isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                        <p className={`font-black text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                                             {combo.label}
                                                         </p>
-                                                        <p className={`text-[11px] font-medium mt-0.5 ${ isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                        <p className={`text-[11px] font-medium mt-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                             {combo.slots.map(s => s.component_type).join(' + ')}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-lg font-black text-orange-500">₱{Number(combo.price).toFixed(2)}</span>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-all ${ isDarkMode ? 'text-gray-600 group-hover:text-orange-400' : 'text-gray-300 group-hover:text-orange-500'}`}><path d="M9 18l6-6-6-6"/></svg>
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-all ${isDarkMode ? 'text-gray-600 group-hover:text-orange-400' : 'text-gray-300 group-hover:text-orange-500'}`}><path d="M9 18l6-6-6-6" /></svg>
                                                 </div>
                                             </button>
                                         ))
@@ -2344,12 +2245,11 @@ function HomePage() {
                             {budgetStep === 2 && budgetSelectedCombo && (
                                 <div className="space-y-5">
                                     {/* Combo summary badge */}
-                                    <div className={`flex items-center justify-between p-3 rounded-2xl ${
-                                        isDarkMode ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-orange-50 border border-orange-100'
-                                    }`}>
+                                    <div className={`flex items-center justify-between p-3 rounded-2xl ${isDarkMode ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-orange-50 border border-orange-100'
+                                        }`}>
                                         <div>
-                                            <p className={`text-xs font-black uppercase tracking-widest mb-0.5 ${ isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Selected</p>
-                                            <p className={`font-black text-sm ${ isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>{budgetSelectedCombo.label}</p>
+                                            <p className={`text-xs font-black uppercase tracking-widest mb-0.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Selected</p>
+                                            <p className={`font-black text-sm ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>{budgetSelectedCombo.label}</p>
                                         </div>
                                         <span className="font-black text-lg text-orange-500">₱{Number(budgetSelectedCombo.price).toFixed(2)}</span>
                                     </div>
@@ -2357,18 +2257,16 @@ function HomePage() {
                                     {budgetSelectedCombo.slots.map((slot, idx) => (
                                         <div key={idx}>
                                             <div className="flex items-center gap-2 mb-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
-                                                    budgetSelections[budgetSlotKey(budgetSelectedCombo, slot)]
-                                                        ? 'bg-orange-500 text-white'
-                                                        : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
-                                                }`}>{idx + 1}</div>
-                                                <p className={`text-sm font-black uppercase tracking-wide ${ isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${budgetSelections[budgetSlotKey(budgetSelectedCombo, slot)]
+                                                    ? 'bg-orange-500 text-white'
+                                                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+                                                    }`}>{idx + 1}</div>
+                                                <p className={`text-sm font-black uppercase tracking-wide ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                                     Choose your {slot.component_type}
                                                 </p>
                                                 {budgetSelections[budgetSlotKey(budgetSelectedCombo, slot)] && (
-                                                    <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-full ${
-                                                        isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-50 text-green-600'
-                                                    }`}> ✓ Selected</span>
+                                                    <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-50 text-green-600'
+                                                        }`}> ✓ Selected</span>
                                                 )}
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
@@ -2379,15 +2277,13 @@ function HomePage() {
                                                         <button
                                                             key={opt.id}
                                                             onClick={() => setBudgetSelections(prev => ({ ...prev, [key]: opt.name }))}
-                                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border-2 text-sm font-bold transition-all duration-200 ${
-                                                                isChosen
-                                                                    ? isDarkMode ? 'border-orange-500 bg-orange-500/15 text-orange-300' : 'border-orange-500 bg-orange-50 text-orange-700'
-                                                                    : isDarkMode ? 'border-gray-700 bg-gray-800/40 text-gray-300 hover:border-gray-600' : 'border-gray-100 bg-white text-gray-700 hover:border-orange-300 hover:shadow-sm'
-                                                            }`}
+                                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border-2 text-sm font-bold transition-all duration-200 ${isChosen
+                                                                ? isDarkMode ? 'border-orange-500 bg-orange-500/15 text-orange-300' : 'border-orange-500 bg-orange-50 text-orange-700'
+                                                                : isDarkMode ? 'border-gray-700 bg-gray-800/40 text-gray-300 hover:border-gray-600' : 'border-gray-100 bg-white text-gray-700 hover:border-orange-300 hover:shadow-sm'
+                                                                }`}
                                                         >
-                                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                                                                isChosen ? 'border-orange-500 bg-orange-500' : isDarkMode ? 'border-gray-600' : 'border-gray-300'
-                                                            }`}>
+                                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isChosen ? 'border-orange-500 bg-orange-500' : isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                                                                }`}>
                                                                 {isChosen && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                                                             </div>
                                                             {opt.name}
@@ -2401,11 +2297,10 @@ function HomePage() {
                                     <button
                                         onClick={() => { if (budgetAllSelected()) setBudgetStep(3) }}
                                         disabled={!budgetAllSelected()}
-                                        className={`w-full py-4 rounded-2xl font-black text-sm transition-all ${
-                                            budgetAllSelected()
-                                                ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30 active:scale-[0.98]'
-                                                : isDarkMode ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        }`}
+                                        className={`w-full py-4 rounded-2xl font-black text-sm transition-all ${budgetAllSelected()
+                                            ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30 active:scale-[0.98]'
+                                            : isDarkMode ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            }`}
                                     >
                                         {budgetAllSelected() ? 'Review My Order →' : `Select all ${budgetSelectedCombo.slots.length} item${budgetSelectedCombo.slots.length > 1 ? 's' : ''} to continue`}
                                     </button>
@@ -2422,35 +2317,34 @@ function HomePage() {
                                         </div>
                                     )}
 
-                                    <div className={`p-4 rounded-2xl border ${
-                                        isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'
-                                    }`}>
-                                        <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${ isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Order Summary</p>
-                                        
+                                    <div className={`p-4 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'
+                                        }`}>
+                                        <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Order Summary</p>
+
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
-                                                <span className={`text-sm font-bold ${ isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Item</span>
-                                                <span className={`text-sm font-black ${ isDarkMode ? 'text-white' : 'text-gray-900'}`}>{budgetFood.name}</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Item</span>
+                                                <span className={`text-sm font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{budgetFood.name}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className={`text-sm font-bold ${ isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Combo</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Combo</span>
                                                 <span className={`text-sm font-black text-orange-500`}>{budgetSelectedCombo.label}</span>
                                             </div>
-                                            
+
                                             {/* Selected options */}
                                             {budgetSelectedCombo.slots.map((slot, idx) => {
                                                 const key = budgetSlotKey(budgetSelectedCombo, slot)
                                                 return (
                                                     <div key={idx} className="flex justify-between">
-                                                        <span className={`text-sm font-bold ${ isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{slot.component_type}</span>
-                                                        <span className={`text-sm font-black ${ isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{budgetSelections[key]}</span>
+                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{slot.component_type}</span>
+                                                        <span className={`text-sm font-black ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{budgetSelections[key]}</span>
                                                     </div>
                                                 )
                                             })}
                                         </div>
 
-                                        <div className={`mt-4 pt-4 border-t flex justify-between items-center ${ isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                            <span className={`text-sm font-black uppercase tracking-wide ${ isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total</span>
+                                        <div className={`mt-4 pt-4 border-t flex justify-between items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                            <span className={`text-sm font-black uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total</span>
                                             <span className="text-2xl font-black text-orange-500">₱{Number(budgetSelectedCombo.price).toFixed(2)}</span>
                                         </div>
                                     </div>
@@ -2469,7 +2363,7 @@ function HomePage() {
                                             Order Now 🚀
                                         </button>
                                     </div>
-                                    <p className={`text-center text-[10px] font-medium ${ isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                                    <p className={`text-center text-[10px] font-medium ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
                                         You can adjust quantity from the cart
                                     </p>
                                 </div>
@@ -2483,7 +2377,7 @@ function HomePage() {
             {showSizeModal && foodForSize && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setShowSizeModal(false)}>
                     <div className={`w-full max-w-sm rounded-[35px] overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white p-8 px-6'}`} onClick={e => e.stopPropagation()}>
-                        
+
                         <div className="text-center mb-6">
                             {/* Drink Image if available */}
                             {foodForSize.image && (
@@ -2509,16 +2403,14 @@ function HomePage() {
                                 <button
                                     key={size.label}
                                     onClick={() => addToCart(foodForSize, size.label, sizeModalCheckout)}
-                                    className={`w-full group relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 ${
-                                        isDarkMode 
-                                            ? 'bg-gray-800/40 border-gray-700 hover:border-orange-500 hover:bg-orange-500/5' 
-                                            : 'bg-white border-gray-100 hover:border-orange-400 hover:bg-orange-50'
-                                    }`}
+                                    className={`w-full group relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 ${isDarkMode
+                                        ? 'bg-gray-800/40 border-gray-700 hover:border-orange-500 hover:bg-orange-500/5'
+                                        : 'bg-white border-gray-100 hover:border-orange-400 hover:bg-orange-50'
+                                        }`}
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-base transition-all group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white ${
-                                            isDarkMode ? 'bg-gray-700 text-orange-400' : 'bg-orange-50 text-orange-600'
-                                        }`}>
+                                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-base transition-all group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white ${isDarkMode ? 'bg-gray-700 text-orange-400' : 'bg-orange-50 text-orange-600'
+                                            }`}>
                                             {size.icon}
                                         </div>
                                         <div className="text-left">
@@ -2539,7 +2431,7 @@ function HomePage() {
                             {sizeModalCheckout ? 'Select a size to checkout' : 'Select a size to add to cart'}
                         </p>
 
-                        <button 
+                        <button
                             onClick={() => setShowSizeModal(false)}
                             className="w-full py-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 font-black text-sm transition-all border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl"
                         >

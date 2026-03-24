@@ -1,19 +1,42 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 import { comparePassword, hashPassword } from '../components/hash.js';
 
 const router = express.Router();
 
-// Middleware to check admin session
+// Middleware to check admin session or token
 const isAdmin = (req, res, next) => {
-    if (!req.session.adminId) {
-        return res.status(401).json({ success: false, message: 'Unauthorized access. Admin login required.' });
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super-secret-key-123');
+            req.userId = decoded.id;
+            req.user = decoded;
+            if (req.session) {
+                req.session.adminId = decoded.id;
+                req.session.adminRole = decoded.role;
+            }
+            return next();
+        } catch (err) {
+            console.error("[ADMIN AUTH] ❌ Token invalid:", err.message);
+        }
+    }
+
+    // Fallback to session
+    const adminId = req.session.adminId;
+    if (!adminId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized access. Admin token or session required.' });
     }
     next();
 };
 
 const isSuperAdmin = (req, res, next) => {
-    if (!req.session.adminId || req.session.adminRole !== 'super_admin') {
+    const adminId = req.userId || req.session.adminId;
+    const adminRole = req.user?.role || req.session.adminRole;
+    if (!adminId || adminRole !== 'super_admin') {
         return res.status(403).json({ success: false, message: 'Forbidden. Super admin privileges required.' });
     }
     next();
@@ -48,7 +71,15 @@ router.post('/login', async (req, res) => {
         req.session.adminRole = admin.role;
         req.session.adminUser = { id: admin.id, username: admin.username, email: admin.email, role: admin.role };
 
-        res.json({ success: true, user: req.session.adminUser });
+        // Issue JWT token for admin
+        const token = jwt.sign(
+            { id: admin.id, email: admin.email, role: admin.role, type: 'admin' },
+            process.env.JWT_SECRET || 'super-secret-key-123',
+            { expiresIn: '7d' }
+        );
+
+        console.log(`[ADMIN LOGIN] Token generated for ${admin.email}`);
+        res.json({ success: true, user: req.session.adminUser, token });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -59,8 +90,18 @@ router.post('/logout', (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
-router.get('/me', isAdmin, (req, res) => {
-    res.json({ success: true, user: req.session.adminUser });
+router.get('/me', isAdmin, async (req, res) => {
+    try {
+        const adminId = req.userId || req.session.adminId;
+        const result = await pool.query('SELECT id, username, email, role FROM admins WHERE id = $1', [adminId]);
+        if (result.rows.length === 0) {
+            return res.status(401).json({ success: false, message: 'Admin not found.' });
+        }
+        res.json({ success: true, user: result.rows[0] });
+    } catch (err) {
+        console.error("[ADMIN ME] Error:", err.message);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 });
 
 // ============================================

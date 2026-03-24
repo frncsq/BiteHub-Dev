@@ -1,6 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState, createContext, useContext, useRef, useCallback } from 'react';
-import axios from 'axios';
+import { createApiClient } from '../services/apiClient.js';
 import OwnerSidebar from './OwnerSidebar';
 import { Clock, XCircle, CheckCircle, PartyPopper, X } from 'lucide-react';
 
@@ -87,11 +87,10 @@ function OwnerLayout() {
   const [showApprovalToast, setShowApprovalToast] = useState(false);
   const pollRef = useRef(null);
 
-  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   const checkSession = useCallback(async (isPoll = false) => {
     try {
-      const res = await axios.get(`${baseURL}/api/owner/session`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const res = await apiClient.get('/owner/session');
 
       if (!res.data.session) {
         navigate('/restaurant-login');
@@ -119,7 +118,7 @@ function OwnerLayout() {
     } finally {
       if (!isPoll) setIsChecking(false);
     }
-  }, [baseURL, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     checkSession(false);

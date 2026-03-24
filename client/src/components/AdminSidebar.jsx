@@ -1,6 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, Settings, LogOut, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../services/apiClient';
+import biteLogo from '../assets/bite.png';
 
 function AdminSidebar() {
   const location = useLocation();
@@ -17,11 +19,16 @@ function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      await axios.post(`${baseURL}/api/admin/logout`, {}, { withCredentials: true });
+      const baseURL = getApiBaseUrl();
+      // Try to notify the backend, but clear local token regardless
+      await axios.post(`${baseURL}/api/admin/logout`, {}, { withCredentials: true }).catch(() => {});
+      localStorage.removeItem('authToken');
+      console.log("✅ Admin auth token cleared");
       navigate('/admin-login');
     } catch (err) {
       console.error(err);
+      localStorage.removeItem('authToken');
+      navigate('/admin-login');
     }
   };
 
@@ -31,8 +38,8 @@ function AdminSidebar() {
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none -z-10" />
       
       <div className="p-6 border-b border-white/10 flex items-center gap-3 relative z-20">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/30 transform transition-transform hover:scale-105 duration-300 ring-1 ring-white/20">
-          <ShieldAlert size={22} className="text-white drop-shadow-md" />
+        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transform transition-transform hover:scale-105 duration-300 ring-1 ring-white/20">
+          <img src={biteLogo} alt="BiteHub Logo" className="w-full h-full object-contain" />
         </div>
         <div>
            <span className="text-xl font-bold tracking-tight text-white block">System Admin</span>

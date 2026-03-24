@@ -1,18 +1,19 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
 import { useState } from "react"
+import { getApiBaseUrl } from "../services/apiClient"
 
 function Header() {
     const navigate = useNavigate()
     const location = useLocation()
-    const API_URL = import.meta.env.VITE_API_URL
+    const API_URL = getApiBaseUrl()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     const handleLogout = async () => {
         if (!window.confirm("Are you sure you want to logout?")) return
 
         try {
-            const response = await axios.post(`${API_URL}/logout`, {}, {
+            const response = await axios.post(`${API_URL}/api/customer/logout`, {}, {
                 withCredentials: true
             })
             if (response.data.success) {

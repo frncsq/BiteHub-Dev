@@ -14,35 +14,92 @@ import {
 // Check if we're in mock mode with fallback data support
 const MOCK_MODE_ENABLED = false; // Set to false to use real backend API
 
+/** Empty string in Vite dev uses the dev-server proxy (see vite.config.js) so the browser never cross-posts to :5000. */
+export function getApiBaseUrl() {
+	// If VITE_API_URL is explicitly set to something else, use it.
+	// Otherwise, in DEV, we MUST return an empty string to use the Vite proxy (vite.config.js).
+	const raw = import.meta.env.VITE_API_URL
+	if (raw != null && String(raw).trim() !== '' && !import.meta.env.DEV) {
+		return String(raw).replace(/\/$/, '')
+	}
+	
+	if (import.meta.env.DEV) {
+		// Empty string makes axios use the current origin (localhost:5173),
+		// which Vite proxies to the backend (localhost:5000).
+		return ''
+	}
+	
+	return window.location.origin // Fallback for production if not set
+}
+
 export const createApiClient = () => {
-	const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+	// Dynamically resolve baseURL to leverage Vite's proxy in development. 
+	// If getApiBaseUrl() returns '' (dev), baseURL becomes '/api'.
+	const base = getApiBaseUrl()
+	const baseURL = base === '' ? '/api' : `${base}/api`
 	
 	const client = axios.create({
-		baseURL,
-		timeout: 10000,
-		withCredentials: true,
+		baseURL: baseURL, 
+		timeout: 15000,
 		headers: {
 			'Content-Type': 'application/json',
 		}
 	})
 
-	// Request interceptor
-	client.interceptors.request.use((config) => {
-		const token = localStorage.getItem('authToken')
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`
-		}
-		return config
-	})
+	// INTERCEPTOR: Attach Authorization header (JWT) automatically
+	client.interceptors.request.use(
+		(config) => {
+			const token = localStorage.getItem('authToken')
+			if (token && token !== 'null' && token !== 'undefined') {
+				// Attach token as Bearer <token>
+				config.headers.Authorization = `Bearer ${token}`
+			}
+			return config
+		},
+		(error) => Promise.reject(error)
+	)
 
-	// Response interceptor with mock data fallback
+	// INTERCEPTOR: Handle responses
 	client.interceptors.response.use(
 		(response) => response,
 		(error) => {
+			const status = error.response?.status;
+			
+			if (status === 401) {
+				// Only clear and redirect if we're not already on the login page
+				// to avoid infinite loops.
+				console.warn("🔒 Unauthorized access - 401");
+				
+				const isLoginPath = window.location.pathname === '/login' || 
+								  window.location.pathname === '/restaurant-login' ||
+								  window.location.pathname === '/admin-login';
+				
+				if (!isLoginPath) {
+					console.warn("Clearing invalid token and redirecting to login.");
+					localStorage.removeItem('authToken');
+					
+					// Smart redirect based on current path
+					const path = window.location.pathname;
+					if (path.includes('/owner')) {
+						window.location.href = '/restaurant-login?expired=true';
+					} else if (path.includes('/admin')) {
+						window.location.href = '/admin-login?expired=true';
+					} else {
+						window.location.href = '/login?expired=true';
+					}
+				}
+			}
+			
+			if (status === 431) {
+				console.error("⛔ HTTP 431 Header Too Large - Clearing storage.");
+				localStorage.clear();
+			}
+
 			// If there's a network error and mock mode is enabled, use mock data
 			if (MOCK_MODE_ENABLED && (error.message === 'Network Error' || !error.response)) {
-				return handleMockResponse(error.config)
+				return handleMockResponse(error.config);
 			}
+
 			return Promise.reject(error)
 		}
 	)

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../../services/apiClient';
 import { Search, MapPin, Award, Store, CheckCircle, XCircle, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
 
 const STATUS_TABS = [
@@ -28,7 +29,7 @@ function AdminRestaurants() {
   const [activeTab, setActiveTab] = useState('pending');
   const [actionLoading, setActionLoading] = useState(null);
 
-  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const baseURL = getApiBaseUrl();
 
   const fetchRestaurants = async () => {
     setIsLoading(true);

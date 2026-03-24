@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../../services/apiClient';
 import { Search, Filter, RefreshCw, Package, MapPin, Map, Clock, User, Store } from 'lucide-react';
 
 function AdminOrders() {
@@ -11,7 +12,7 @@ function AdminOrders() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseURL = getApiBaseUrl();
       const res = await axios.get(`${baseURL}/api/admin/orders`, { withCredentials: true });
       if (res.data.success) {
         setOrders(res.data.orders);

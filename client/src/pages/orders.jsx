@@ -1,7 +1,7 @@
 import CustomerSidebar from "../components/CustomerSidebar"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Package, MapPin, Clock, Phone, ArrowLeft, TrendingUp, Utensils, Info, X, Receipt, ShoppingBag, Star, Bell, Search, User } from "lucide-react"
+import { Package, MapPin, Clock, Phone, ArrowLeft, TrendingUp, Utensils, Info, X, Receipt, ShoppingBag, Star, Bell, Search, User, ChevronDown, ChevronUp } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
 import { createApiClient } from "../services/apiClient"
 
@@ -11,15 +11,21 @@ function Orders() {
     const [error, setError] = useState("")
     const [statusFilter, setStatusFilter] = useState("all")
     const [selectedOrder, setSelectedOrder] = useState(null)
+    const [expandedOrderId, setExpandedOrderId] = useState(null)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const navigate = useNavigate()
     const { isDarkMode, colors } = useTheme()
 
     useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
         fetchOrders()
         const interval = setInterval(() => {
             fetchOrders(false) // Pass false to skip full loading state on background refresh
-        }, 5000)
+        }, 30000) // Increase to 30s to reduce unnecessary load
         return () => clearInterval(interval)
     }, [])
 
@@ -28,7 +34,7 @@ function Orders() {
             if (showLoading) setLoading(true)
             setError("")
             const apiClient = createApiClient();
-            const response = await apiClient.get('/api/orders')
+            const response = await apiClient.get('/orders')
 
             let rawData = [];
             if (response.data?.success && response.data.orders) {
@@ -47,6 +53,8 @@ function Orders() {
                     restaurantName: o.restaurant_name || "Unknown Restaurant",
                     deliveryAddress: o.delivery_address,
                     deliveryCity: o.delivery_city,
+                    department: o.department,
+                    course: o.course,
                     deliveryTime: o.estimated_delivery_time || "30-45 min"
                 }));
                 setOrders(mappedOrders);
@@ -59,6 +67,10 @@ function Orders() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const toggleOrderExpansion = (orderId) => {
+        setExpandedOrderId(expandedOrderId === orderId ? null : orderId)
     }
 
     const filteredOrders = statusFilter === 'all'
@@ -126,44 +138,40 @@ function Orders() {
                     <ArrowLeft size={16} /> Back to Home
                 </button>
 
-                {/* Hero Section */}
-                <section className="mb-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-3xl p-8 md:p-12 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
-                            <Package size={40} />
-                            My Orders
-                        </h1>
-                        <p className="text-orange-100 mb-4 max-w-xl">
-                            Track and manage all your food orders in one place. Stay updated on delivery status and reorder your favorites.
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
-                        <div className="bg-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                            <p className="text-xs text-orange-100">Total Orders</p>
-                            <p className="text-2xl font-bold">{orders.length}</p>
+                {/* Compact Status Header */}
+                <section className={`mb-6 p-6 rounded-[32px] border flex flex-col md:flex-row items-center justify-between gap-6 transition-all ${isDarkMode ? 'bg-gray-900/40 border-gray-800' : 'bg-white border-gray-100 shadow-sm'}`}>
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                            <Package size={24} />
                         </div>
-                        <div className="bg-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                            <p className="text-xs text-orange-100">This Month</p>
-                            <p className="text-2xl font-bold">{orders.filter(o => new Date(o.date).getMonth() === new Date().getMonth()).length}</p>
+                        <div>
+                            <h1 className="text-xl font-black tracking-tight leading-none mb-1">My Orders</h1>
+                            <p className={`text-[10px] font-black uppercase tracking-[2px] ${isDarkMode ? 'text-white' : 'text-black'}`}>Track Selections</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="text-right">
+                            <p className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>Total Records</p>
+                            <p className="text-xl font-black leading-none">{orders.length}</p>
+                        </div>
+                        <div className="w-px h-8 bg-gray-200 dark:bg-gray-800" />
+                        <div className="text-right">
+                            <p className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>This Month</p>
+                            <p className="text-xl font-black leading-none">{orders.filter(o => new Date(o.date).getMonth() === new Date().getMonth()).length}</p>
                         </div>
                     </div>
                 </section>
 
-                {/* Status Filter */}
-                <div className="mb-8 flex gap-2 flex-wrap">
+                {/* Minimalist Filter Bar */}
+                <div className="mb-6 flex gap-2 flex-wrap px-1">
                     {['all', 'preparing', 'out for delivery', 'delivered', 'cancelled'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setStatusFilter(status)}
-                            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize ${statusFilter === status
-                                    ? 'text-white shadow-md'
-                                    : isDarkMode ? 'text-gray-300 border border-gray-600 hover:bg-gray-700/50' : 'text-gray-700 border border-gray-200 hover:bg-gray-50'
+                            className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === status
+                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 active:scale-95'
+                                    : isDarkMode ? 'text-gray-100 border border-gray-800 hover:bg-gray-800' : 'text-black border border-gray-100 hover:bg-gray-50'
                                 }`}
-                            style={
-                                statusFilter === status
-                                    ? { backgroundColor: '#f97316' }
-                                    : {}
-                            }
                         >
                             {status}
                         </button>
@@ -208,89 +216,96 @@ function Orders() {
                             <p style={{ color: colors.textSecondary }} className="text-sm">
                                 Showing {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
                             </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        </div>                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             {filteredOrders.map((order) => (
                                 <div
                                     key={order.id}
-                                    className="rounded-2xl shadow-md hover:shadow-lg transition-all overflow-hidden border group hover:-translate-y-1"
-                                    style={{ borderColor: colors.border, backgroundColor: colors.secondaryBg }}
+                                    className={`rounded-[28px] border transition-all duration-300 group hover:-translate-y-1 ${isDarkMode ? 'bg-gray-900/30 border-gray-800 hover:bg-gray-900/50' : 'bg-white border-gray-100/50 hover:shadow-xl shadow-sm'}`}
                                 >
-                                    {/* Card Header with Status */}
-                                    <div className="p-5 border-b" style={{ borderColor: colors.border, backgroundColor: colors.tertiary }}>
-                                        <div className="flex justify-between items-start gap-3 mb-2">
-                                            <div>
-                                                <h3 className="text-lg font-bold" style={{ color: colors.text }}>
-                                                    {order.restaurantName}
-                                                </h3>
-                                                <p className="text-xs" style={{ color: colors.textSecondary }}>
-                                                    Order #{order.id}
-                                                </p>
-                                            </div>
-                                            <span className="px-3 py-1 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: getStatusColor(order.status) }}>
+                                    {/* Compact Card Header */}
+                                    <div className={`p-4 border-b ${isDarkMode ? 'border-gray-800/50' : 'border-gray-100/50'}`}>
+                                        <div className="flex justify-between items-start mb-1">
+                                            <p className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>ID: #{order.id}</p>
+                                            <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest text-white shadow-sm" style={{ backgroundColor: getStatusColor(order.status) }}>
                                                 {order.status || 'unknown'}
                                             </span>
                                         </div>
+                                        <h3 className={`text-[15px] font-black tracking-tight leading-tight truncate ${isDarkMode ? 'text-white' : 'text-black'}`}>{order.restaurantName}</h3>
                                     </div>
-
-                                    {/* Card Content */}
-                                    <div className="p-5 space-y-4">
-                                        {/* Order Date */}
-                                        <div className="flex items-start gap-3">
-                                            <Clock size={18} style={{ color: '#f97316', flexShrink: 0 }} />
-                                            <div>
-                                                <p className="text-xs" style={{ color: colors.textSecondary }}>
-                                                    Order Date
-                                                </p>
-                                                <p className="text-sm font-semibold" style={{ color: colors.text }}>
-                                                    {formatDate(order.date)}
-                                                </p>
+                                    
+                                    {/* High-density Content */}
+                                    <div className="p-4 space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                                <Clock size={12} />
                                             </div>
+                                            <p className={`text-[11px] font-bold ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>{formatDate(order.date)}</p>
                                         </div>
 
-                                        {/* Delivery Time */}
-                                        {order.deliveryTime && (
-                                            <div className="flex items-start gap-3">
-                                                <TrendingUp size={18} style={{ color: '#f97316', flexShrink: 0 }} />
-                                                <div>
-                                                    <p className="text-xs" style={{ color: colors.textSecondary }}>
-                                                        Estimated Delivery
-                                                    </p>
-                                                    <p className="text-sm font-semibold" style={{ color: colors.text }}>
-                                                        {order.deliveryTime}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Items Summary */}
-                                        <div className="pt-2 border-t" style={{ borderColor: colors.border }}>
-                                            <p className="text-xs font-semibold mb-2" style={{ color: colors.text }}>
-                                                Items ({order.items?.length || 0})
-                                            </p>
-                                            <p className="text-xs" style={{ color: colors.textSecondary }}>
-                                                {order.items?.slice(0, 2).map(item => item.name).join(', ')}
-                                                {order.items?.length > 2 && ` +${order.items.length - 2} more`}
-                                            </p>
-                                        </div>
-
-                                        {/* Price */}
-                                        <div className="pt-2 border-t flex justify-between items-center" style={{ borderColor: colors.border }}>
-                                            <span className="text-xs text-gray-500">Total</span>
-                                            <span className="text-2xl font-bold" style={{ color: '#f97316' }}>
+                                        <div className="pt-3 border-t border-dashed border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                                            <span className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>Amount</span>
+                                            <span className="text-lg font-black text-orange-500">
                                                 ₱{(order.total || 0).toFixed(2)}
                                             </span>
                                         </div>
+
+                                        {/* Expandable Order Details (Drop Down) */}
+                                        {expandedOrderId === order.id && (
+                                            <div className="pt-4 border-t space-y-4 animate-fade-in" style={{ borderColor: colors.border }}>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-2">Order Breakdown</p>
+                                                    <div className="space-y-2">
+                                                        {order.items?.map((item, idx) => (
+                                                            <div key={idx} className={`flex justify-between items-center p-2 rounded-xl ${isDarkMode ? 'bg-white/5' : 'bg-gray-50'}`}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs font-black text-orange-500">{item.quantity}x</span>
+                                                                    <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{item.name}</span>
+                                                                </div>
+                                                                <span className={`text-xs font-black ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                                                                    ₱{(Number(item.price_at_order || 0) * item.quantity).toFixed(2)}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="p-3 rounded-xl border flex flex-col gap-2" style={{ borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)' }}>
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin size={14} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <p className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>
+                                                                {order.deliveryAddress || "University Main Campus"}
+                                                            </p>
+                                                            {(order.department || order.course) && (
+                                                                <p className={`text-[9px] font-black uppercase tracking-tight text-orange-500`}>
+                                                                    {order.department}{order.course ? ` • ${order.course}` : ''}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock size={14} className="text-orange-500" />
+                                                        <p className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>
+                                                            Arriving in {order.deliveryTime || "25-30 min"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Card Footer */}
                                     <div className="px-5 pb-5 space-y-3">
                                         <button
-                                            onClick={() => setSelectedOrder(order)}
-                                            className="w-full px-4 py-2.5 rounded-full font-semibold transition-all border flex items-center justify-center gap-2 hover:shadow-md hover:-translate-y-0.5"
-                                            style={{ borderColor: colors.accent, color: colors.accent }}
+                                            onClick={() => toggleOrderExpansion(order.id)}
+                                            className={`w-full px-4 py-2.5 rounded-full font-black text-[11px] uppercase tracking-widest transition-all border flex items-center justify-center gap-2 ${expandedOrderId === order.id ? 'bg-orange-500 text-white border-orange-500' : 'hover:bg-gray-50 border-gray-200'}`}
+                                            style={expandedOrderId !== order.id ? { color: colors.text } : {}}
                                         >
-                                            <Info size={18} /> View Details
+                                            {expandedOrderId === order.id ? (
+                                                <><ChevronUp size={16} /> Hide Details</>
+                                            ) : (
+                                                <><ChevronDown size={16} /> Order Details</>
+                                            )}
                                         </button>
 
                                         {['delivered', 'completed'].includes(order.status?.toLowerCase()) ? (
@@ -417,6 +432,23 @@ function Orders() {
                     </div>
                 </div>
             )}
+
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in {
+                    animation: fadeIn 0.4s ease-out forwards;
+                }
+                .animate-slide-up {
+                    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+            `}</style>
             </main>
         </div>
     )

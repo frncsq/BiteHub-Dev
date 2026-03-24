@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../../services/apiClient';
 import { Search, Filter, ShieldOff, ShieldAlert, MoreVertical, RefreshCw } from 'lucide-react';
 
 function AdminUsers() {
@@ -11,7 +12,7 @@ function AdminUsers() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseURL = getApiBaseUrl();
       const res = await axios.get(`${baseURL}/api/admin/users`, { withCredentials: true });
       if (res.data.success) {
         setUsers(res.data.users);
@@ -29,7 +30,7 @@ function AdminUsers() {
 
   const toggleStatus = async (id, currentStatus) => {
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseURL = getApiBaseUrl();
       await axios.patch(`${baseURL}/api/admin/users/${id}/status`, { is_active: !currentStatus }, { withCredentials: true });
       fetchUsers();
     } catch (err) {
@@ -41,7 +42,7 @@ function AdminUsers() {
      const newPass = prompt("Enter new password for user:");
      if (!newPass) return;
      try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseURL = getApiBaseUrl();
       const res = await axios.patch(`${baseURL}/api/admin/users/${id}/reset-password`, { newPassword: newPass }, { withCredentials: true });
       alert(res.data.message);
     } catch (err) {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, ArrowRight, ShieldAlert, CheckCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { getApiBaseUrl } from '../services/apiClient';
 
 function AdminLogin() {
   const navigate = useNavigate();
@@ -24,10 +25,15 @@ function AdminLogin() {
     setMessage('');
 
     try {
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const baseURL = getApiBaseUrl();
       const response = await axios.post(`${baseURL}/api/admin/login`, { email, password }, { withCredentials: true });
       
       if (response.data.success) {
+        const { token } = response.data;
+        if (token) {
+          localStorage.setItem('authToken', token);
+          console.log("✅ Admin auth token stored");
+        }
         setMessage('Admin login successful. Redirecting...');
         setMessageType('success');
         setTimeout(() => navigate('/admin/dashboard'), 800);

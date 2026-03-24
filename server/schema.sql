@@ -6,7 +6,6 @@
 -- ============================================
 CREATE TYPE order_status_enum AS ENUM ('pending', 'accepted', 'confirmed', 'preparing', 'prepared', 'ready', 'out_for_delivery', 'on_the_way', 'delivered', 'cancelled');
 CREATE TYPE payment_status_enum AS ENUM ('pending', 'completed', 'failed');
-CREATE TYPE contact_status_enum AS ENUM ('new', 'read', 'replied', 'closed');
 CREATE TYPE delivery_status_enum AS ENUM ('assigned', 'picked_up', 'in_transit', 'delivered');
 CREATE TYPE discount_type_enum AS ENUM ('percentage', 'fixed');
 
@@ -182,24 +181,6 @@ CREATE TABLE reviews (
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
 CREATE INDEX idx_reviews_restaurant_id ON reviews(restaurant_id);
 CREATE INDEX idx_reviews_menu_item_id ON reviews(menu_item_id);
-
--- ============================================
--- CONTACT MESSAGES TABLE
--- ============================================
-CREATE TABLE contact_messages (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    subject VARCHAR(255),
-    message TEXT NOT NULL,
-    status contact_status_enum DEFAULT 'new',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    replied_at TIMESTAMP NULL
-);
-
-CREATE INDEX idx_contact_messages_email ON contact_messages(email);
-CREATE INDEX idx_contact_messages_status ON contact_messages(status);
 
 -- ============================================
 -- FAVORITES TABLE

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { createApiClient } from '../../services/apiClient';
 import {
   DollarSign, ShoppingBag, Clock, TrendingUp, List,
   Activity, ChevronRight, Eye, Search, Download,
@@ -21,8 +22,8 @@ function OwnerDashboard() {
   const fetchDashboardData = async (showLoading = true) => {
     try {
       if (showLoading) setIsLoading(true);
-      const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await axios.get(`${baseURL}/api/owner/dashboard`, { withCredentials: true });
+      const apiClient = createApiClient();
+      const response = await apiClient.get('/owner/dashboard');
       if (response.data.success) {
         setMetrics(response.data.metrics);
         if (response.data.recentOrders) setRecentOrders(response.data.recentOrders);
@@ -33,15 +34,24 @@ function OwnerDashboard() {
         setError('Failed to fetch dashboard data');
       }
     } catch (err) {
+      console.error("Dashboard error:", err);
       setError(err.response?.data?.message || 'Error loading dashboard');
     } finally {
       if (showLoading) setIsLoading(false);
     }
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      console.warn("No token for dashboard. Redirecting.");
+      navigate('/restaurant-login');
+      return;
+    }
     fetchDashboardData();
-    const interval = setInterval(() => fetchDashboardData(false), 8000);
+    const interval = setInterval(() => fetchDashboardData(false), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -249,9 +259,8 @@ function OwnerDashboard() {
               </div>
             </div>
             <div className="mt-5">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${
-                metrics.activeOrders > 0 ? 'bg-red-500/30 text-red-300 animate-pulse' : 'bg-white/10 text-gray-400'
-              }`}>
+              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${metrics.activeOrders > 0 ? 'bg-red-500/30 text-red-300 animate-pulse' : 'bg-white/10 text-gray-400'
+                }`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 {metrics.activeOrders > 0 ? 'Requires Attention' : 'All Clear'}
               </span>
@@ -433,103 +442,84 @@ function OwnerDashboard() {
       {/* ══════════════════════════════════════════════════════════════════
           Recent Activity Feed
       ══════════════════════════════════════════════════════════════════ */}
-      <div className="bg-[#f2f4f7] rounded-[40px] border border-white/80 shadow-[12px_12px_36px_#d1d9e6,-12px_-12px_36px_#ffffff] p-6 md:p-10">
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-10">
+      <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm p-5 sm:p-6 md:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
           <div>
-            <h2 className="text-3xl font-black text-gray-800 tracking-tight">Recent Activity Feed</h2>
-            <p className="text-sm text-gray-400 mt-1 font-bold">Monitor your business performance in real-time.</p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Recent Activity</h2>
+            <p className="text-sm text-gray-500 mt-1">Monitor your latest customer orders in real time.</p>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Status Filter Placeholder */}
-            <div className="flex items-center gap-3 bg-white/70 backdrop-blur-sm px-5 py-2.5 rounded-2xl border border-white shadow-sm text-sm font-bold text-gray-500 cursor-pointer hover:bg-white transition-all group">
-              Status <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform text-gray-400" />
-            </div>
-            {/* Date Range Filter Placeholder */}
-            <div className="flex items-center gap-3 bg-white/70 backdrop-blur-sm px-5 py-2.5 rounded-2xl border border-white shadow-sm text-sm font-bold text-gray-500 cursor-pointer hover:bg-white transition-all group">
-              Date Range <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform text-gray-400" />
-            </div>
-            {/* Filter Toggle */}
-            <div className="bg-orange-500 p-3 rounded-2xl text-white shadow-lg shadow-orange-500/30 cursor-pointer hover:scale-105 active:scale-95 transition-all">
-              <Filter size={18} />
-            </div>
-            {/* Search Bar */}
-            <div className="relative group">
-              <input 
-                type="text" 
-                placeholder="Search" 
-                className="pl-5 pr-12 py-3 rounded-[20px] bg-white/70 backdrop-blur-sm border border-white shadow-sm text-sm font-bold text-gray-500 focus:outline-none focus:ring-4 focus:ring-orange-50 w-44 focus:w-64 transition-all"
-              />
-              <Search size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400" />
-            </div>
-          </div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-600">
+            <Activity size={14} className="text-orange-500" />
+            Live Feed
+          </span>
         </div>
 
         {recentOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white/40 rounded-[32px] border border-white/60">
-            <div className="w-24 h-24 bg-orange-100/50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-              <Clock className="text-orange-400" size={40} />
+          <div className="flex flex-col items-center justify-center py-16 sm:py-20 bg-gray-50 rounded-3xl border border-gray-100">
+            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+              <Clock className="text-orange-500" size={28} />
             </div>
-            <p className="text-gray-400 font-black text-lg">No recent activity detected</p>
-            <p className="text-xs text-gray-300 font-bold mt-2 uppercase tracking-widest">Awaiting incoming orders...</p>
+            <p className="text-gray-700 font-bold text-base">No recent activity detected</p>
+            <p className="text-xs text-gray-400 font-medium mt-1">Awaiting incoming orders...</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {recentOrders.map((order, index) => {
-              const mainItem = order.items?.[0]?.name || 'Menu item';
-              const moreCount = (order.items?.length || 0) > 1 ? ` + ${order.items.length - 1}` : '';
-              
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white/80 backdrop-blur-md rounded-[28px] p-5 flex items-center justify-between shadow-sm border border-white/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group"
-                  style={{ animation: `fadeSlideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) ${index * 80}ms both` }}
-                >
-                  <div className="flex items-center gap-6 flex-[2] min-w-0">
-                    {/* Glassy Avatar Container */}
-                    <div className="w-14 h-14 rounded-[22px] bg-gradient-to-br from-orange-50 to-red-50 p-0.5 shadow-sm border border-white/80 flex-shrink-0">
-                      <div className="w-full h-full rounded-[20px] overflow-hidden shadow-inner ring-1 ring-black/5">
-                        <img 
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(order.customer_name || 'User')}&background=random&color=666&size=128&bold=true`} 
-                          alt="" 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                        />
+          <div className="relative">
+            <div className="absolute left-[19px] top-2 bottom-2 w-px bg-gradient-to-b from-orange-100 via-orange-200 to-transparent hidden sm:block" />
+            <div className="space-y-3 sm:space-y-4">
+              {recentOrders.map((order, index) => {
+                const mainItem = order.items?.[0]?.name || 'Menu item';
+                const moreCount = (order.items?.length || 0) > 1 ? ` + ${order.items.length - 1}` : '';
+
+                return (
+                  <div
+                    key={order.id}
+                    className="group relative rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                    style={{ animation: `fadeSlideIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) ${index * 80}ms both` }}
+                  >
+                    <div className="flex gap-3 sm:gap-4">
+                      <div className="relative flex-shrink-0 pt-0.5">
+                        <div className="h-10 w-10 rounded-xl border border-orange-100 bg-orange-50 text-orange-600 flex items-center justify-center shadow-sm transition-colors group-hover:bg-orange-100">
+                          <ShoppingBag size={16} />
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-6">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                                {order.customer_name || 'Anonymous'}
+                              </h4>
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide border border-transparent ${statusColor(order.status)}`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-sm text-gray-600 truncate">
+                              <span className="font-medium text-gray-800">{mainItem}</span>
+                              <span className="text-gray-500">{moreCount}</span>
+                            </p>
+                            <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                              <Eye size={13} className="text-gray-400" />
+                              <span>{order.total_amount > 1000 ? 'Bulk Action' : 'Payment'}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex sm:block items-center justify-between sm:text-right flex-shrink-0 sm:min-w-[110px]">
+                            <p className="font-bold text-gray-900 text-lg sm:text-xl tracking-tight">
+                              ₱{fmt(order.total_amount)}
+                            </p>
+                            <p className="inline-flex sm:flex items-center gap-1 text-[11px] text-gray-500 font-medium mt-0.5 sm:justify-end">
+                              <Clock size={12} className="text-gray-400" />
+                              {new Date(order.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-extrabold text-gray-800 text-lg leading-tight truncate group-hover:text-orange-600 transition-colors">
-                        {order.customer_name || 'Anonymous'}
-                      </h4>
-                      <p className="text-sm font-bold text-gray-400 mt-0.5 truncate">
-                        {mainItem}{moreCount}
-                      </p>
-                    </div>
                   </div>
-
-                  <div className="hidden lg:flex flex-1 justify-center">
-                    <span className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                      {order.total_amount > 1000 ? 'Bulk Action' : 'Payment'}
-                    </span>
-                  </div>
-
-                  <div className="hidden md:flex flex-1 justify-center">
-                    <span className={`text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-widest shadow-sm border border-white/80 transition-all group-hover:shadow-md ${statusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <div className="w-32 text-right">
-                    <p className="font-black text-gray-900 text-2xl tracking-tight transition-all group-hover:scale-110 origin-right">
-                      ₱{fmt(order.total_amount)}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">
-                      {new Date(order.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

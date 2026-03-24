@@ -1,7 +1,9 @@
 import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import jwt from 'jsonwebtoken';
 import session from 'express-session';
 import { pool } from './db.js';
-import cors from 'cors';
 import { hashPassword, comparePassword } from './components/hash.js';
 import { mockRestaurantsData, mockFoodItems, mockCategories } from './mockData.js';
 import ownerRoutes from './routes/owner.js';
@@ -96,6 +98,11 @@ const ensureStockColumns = async () => {
     await pool.query(`
       ALTER TABLE menu_items 
       ADD COLUMN IF NOT EXISTS current_stock INT DEFAULT NULL;
+    `);
+    // Ensure updated_at exists for tracking changes in inventory
+    await pool.query(`
+      ALTER TABLE menu_items 
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
     // Migrate: for any row where daily_stock is null but inventory_count > 0,
     // carry over legacy inventory_count into daily_stock and current_stock
@@ -221,28 +228,100 @@ const seedDatabase = async () => {
 })();
 
 const app = express();
+// Behind Vite (or any reverse proxy), trust X-Forwarded-* so sessions/cookies behave correctly
+app.set('trust proxy', 1);
+
+const sessionSecret = process.env.SESSION_SECRET || '1234567890';
+const isProd = process.env.NODE_ENV === 'production';
+
+// 1. Debugging: Log incoming requests and warn if cookies are large (potential 431 cause)
+app.use((req, res, next) => {
+  const o = req.headers.origin;
+  const ref = req.headers.referer;
+  const from = o || (ref ? `referer ${ref}` : 'same-origin');
+  const cookieLen = req.headers.cookie ? req.headers.cookie.length : 0;
+  
+  if (cookieLen > 4000) {
+    console.warn(`[${new Date().toLocaleTimeString()}] ⚠️ LARGE COOKIE DETECTED (${cookieLen} chars) from ${from}`);
+  }
+  
+  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.path} — ${from}`);
+  next();
+});
+
+// 2. CORS: reflect request Origin so credentialed requests work from any dev URL
+//    (localhost / 127.0.0.1 / LAN IP). The cors package handles preflight reliably.
+// 2. CORS: Strict configuration for credentialed requests
+app.use(
+  cors({
+    origin: 'http://localhost:5173', // Allow exactly the frontend dev port
+    credentials: true, // If sessions/cookies are still needed for some parts
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Set-Cookie'],
+  })
+);
+
+// 2b. JWT Middleware
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  // LOGGING: Debug incoming auth
+  if (authHeader) {
+      console.log(`[AUTH] ${req.method} ${req.path} — Token present: ${authHeader.substring(0, 15)}...`);
+  } else {
+      console.log(`[AUTH] ${req.method} ${req.path} — ❌ No token provided`);
+  }
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Authorization required (Bearer token missing)' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (!token || token === 'null' || token === 'undefined') {
+    return res.status(401).json({ success: false, message: 'Invalid token format' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super-secret-key-123');
+    req.user = decoded;
+    req.userId = decoded.id; // Correct extraction of user ID from token
+    console.log(`[AUTH] ✅ Verified user ${decoded.email} (ID: ${decoded.id})`);
+    next();
+  } catch (err) {
+    console.error("❌ JWT Verify Error:", err.message);
+    return res.status(401).json({ success: false, message: 'Invalid or expired token', error: err.message });
+  }
+};
+
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
-const corsOptions = {
-  origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
-
 app.use(session({
-  secret: '1234567890', 
+  name: 'bitehub.sid', // Custom sid name
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } 
+  rolling: true, // Keep session alive on interaction
+  cookie: {
+    httpOnly: true,
+    path: '/',
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    sameSite: isProd ? 'none' : 'lax', // Use 'lax' for local dev, 'none' for HTTPS prod
+    secure: isProd, // Must be true if sameSite: 'none'
+  },
 }));
 
+// Routes
+// Note: Some legacy routes use session, but we are prioritizing JWT
 app.use('/api/owner', ownerRoutes);
 app.use('/api/admin', adminRoutes);
+// Test Endpoint
+app.get('/api/test', (req, res) => {
+  res.status(200).json({ success: true, message: "API working", timestamp: new Date() });
+});
+
+
 
 const PORT = process.env.PORT || 5000;
 
@@ -287,9 +366,7 @@ publicCatalogRouter.get('/restaurants', async (req, res) => {
   }
 });
 
-publicCatalogRouter.get('/rooms', async (req, res) => {
-  res.redirect('/api/restaurants');
-});
+// Deleted Rooms endpoint (redirected to restaurants previously)
 
 publicCatalogRouter.get('/food', async (req, res) => {
   try {
@@ -401,7 +478,6 @@ publicCatalogRouter.get('/food/budget-meal/:menuItemId', async (req, res) => {
   }
 });
 
-app.use(publicCatalogRouter);
 app.use('/api', publicCatalogRouter);
 
 // ==========================================================
@@ -424,217 +500,57 @@ const getSessionFavorites = (req) => {
 
 
 
-app.post('/orders/create', async (req, res) => {
-  // Redirect legacy endpoint to the main one
-  req.url = '/api/orders/create';
-  // Forward to same handler by just re-calling the logic inline:
-  const { items, subtotal, tax, deliveryFee, total, deliveryAddress, deliveryCity } = req.body || {};
-  const userId = req.session.userId;
-  
-  if (!items || items.length === 0) {
-    return res.status(400).json({ success: false, message: 'Cart is empty' });
-  }
+// Legacy non-API routes removed to prevent duplication and CORS confusion.
+// All client requests should use the /api prefix which is handled below.
 
-  const restaurantId = items[0].restaurantId || 1;
-
-  if (dbConnected && userId) {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const item of items) {
-        const menuItemId = item.id || item.foodId;
-        const qty = Number(item.quantity) || 1;
-        const stockRes = await client.query(
-          `SELECT id, item_name, current_stock, is_available FROM menu_items WHERE id = $1 FOR UPDATE`,
-          [menuItemId]
-        );
-        if (stockRes.rows.length) {
-          const mi = stockRes.rows[0];
-          if (!mi.is_available) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ success: false, message: `"${mi.item_name}" is currently unavailable` });
-          }
-          if (mi.current_stock !== null && mi.current_stock >= 0 && mi.current_stock < qty) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ success: false, message: `Insufficient stock for "${mi.item_name}". Only ${mi.current_stock} left.` });
-          }
-          if (mi.current_stock !== null && mi.current_stock >= 0) {
-            await client.query(`UPDATE menu_items SET current_stock = GREATEST(current_stock - $1, 0), updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [qty, menuItemId]);
-          }
-        }
-      }
-      const orderRes = await client.query(
-        `INSERT INTO orders (user_id, restaurant_id, order_status, total_amount, delivery_address, delivery_city) 
-         VALUES ($1, $2, 'pending', $3, $4, $5) RETURNING id, created_at, order_status as status`,
-        [userId, restaurantId, total, deliveryAddress || req.session.profile?.address || '123 Main St', deliveryCity || req.session.profile?.city || 'City']
-      );
-      const newOrder = orderRes.rows[0];
-      for (const item of items) {
-        await client.query(`INSERT INTO order_items (order_id, menu_item_id, quantity, price_at_order) VALUES ($1, $2, $3, $4)`,
-          [newOrder.id, item.id, item.quantity, item.price]);
-      }
-      await client.query('COMMIT');
-      req.session.cart = [];
-      res.status(201).json({ success: true, order: newOrder });
-    } catch (err) {
-      await client.query('ROLLBACK');
-      console.error('Order creation error:', err);
-      res.status(500).json({ success: false, message: err.message });
-    } finally {
-      client.release();
-    }
-  } else {
-    const order = {
-      id: `ORD-${Date.now()}`,
-      status: 'pending',
-      date: new Date().toISOString().slice(0, 10),
-      items: Array.isArray(items) ? items : [],
-      subtotal: Number(subtotal ?? 0),
-      tax: Number(tax ?? 0),
-      deliveryFee: Number(deliveryFee ?? 0),
-      total: Number(total ?? 0),
-    };
-    const orders = getSessionOrders(req);
-    orders.unshift(order);
-    req.session.cart = [];
-    res.status(201).json({ success: true, order });
-  }
-});
-
-app.post('/cart/add', (req, res) => {
-  const { foodId, quantity } = req.body || {};
-  if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
-
-  const cart = getSessionCart(req);
-  const qty = Math.max(1, Number(quantity ?? 1));
-  const existing = cart.find((i) => i.foodId === foodId);
-  if (existing) existing.quantity += qty;
-  else cart.push({ foodId, quantity: qty });
-
-  res.status(200).json({ success: true, cart });
-});
-
-app.post('/cart/remove', (req, res) => {
-  const { foodId } = req.body || {};
-  if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
-
-  const cart = getSessionCart(req);
-  req.session.cart = cart.filter((i) => i.foodId !== foodId);
-  res.status(200).json({ success: true, cart: req.session.cart });
-});
-
-app.post('/cart/update', (req, res) => {
-  const { foodId, quantity } = req.body || {};
-  if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
-
-  const cart = getSessionCart(req);
-  const qty = Number(quantity ?? 1);
-  if (qty <= 0) {
-    req.session.cart = cart.filter((i) => i.foodId !== foodId);
-    return res.status(200).json({ success: true, cart: req.session.cart });
-  }
-
-  const existing = cart.find((i) => i.foodId === foodId);
-  if (existing) existing.quantity = qty;
-  else cart.push({ foodId, quantity: qty });
-
-  res.status(200).json({ success: true, cart });
-});
-
-app.post('/favorites/toggle', (req, res) => {
-  const { foodId } = req.body || {};
-  if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
-
-  const favorites = getSessionFavorites(req);
-  const idx = favorites.indexOf(foodId);
-  const isFavorite = idx === -1;
-  if (isFavorite) favorites.push(foodId);
-  else favorites.splice(idx, 1);
-
-  res.status(200).json({ success: true, isFavorite, favorites });
-});
-
-app.put('/api/profile', (req, res) => {
-  const nextProfile = req.body || {};
-  req.session.profile = { ...(req.session.profile || {}), ...nextProfile };
-  res.status(200).json({ success: true, profile: req.session.profile });
-});
-
-// ==========================================
-// CONTACT ENDPOINT
-// ==========================================
-
-app.post('/api/contact/submit', async (req, res) => {
-  const { name, email, phone, subject, message } = req.body || {};
-
-  if (!name || !email || !subject || !message) {
-    return res.status(400).json({ success: false, message: "Missing required fields" });
-  }
-
-  try {
-    const result = await pool.query(
-      `INSERT INTO contact_messages (name, email, phone, subject, message, status) 
-       VALUES ($1, $2, $3, $4, $5, 'new') RETURNING id, created_at`,
-      [name, email, phone || null, subject, message]
-    );
-
-    const contact = result.rows[0];
-    res.status(201).json({ 
-      success: true, 
-      message: "Thank you! We'll get back to you soon.",
-      contactId: contact.id 
-    });
-  } catch (error) {
-    console.error('Contact Error:', error);
-    res.status(500).json({ success: false, message: "Error submitting contact form" });
-  }
-});
+// Contact endpoint deleted
 
 // ==========================================
 // ==========================================
 // CUSTOMER ACTIVITY ENDPOINTS - API PREFIX
 // ==========================================
 
-app.get('/api/orders', async (req, res) => {
-  const userId = req.session.userId;
-  if (!userId) {
-    if (req.session.orders) return res.status(200).json({ success: true, orders: req.session.orders });
-    return res.status(401).json({ success: false, message: 'Not logged in' });
+app.get('/api/orders', verifyToken, async (req, res) => {
+  const userId = req.userId;
+  
+  if (dbConnected && userId) {
+    try {
+      // Get orders from DB
+      const ordersResult = await pool.query(`
+        SELECT o.*, r.business_name as restaurant_name 
+        FROM orders o 
+        LEFT JOIN restaurants r ON o.restaurant_id = r.id 
+        WHERE o.user_id = $1 
+        ORDER BY o.created_at DESC
+      `, [userId]);
+      
+      const orders = ordersResult.rows;
+      
+      // For each order, get its items
+      for (let order of orders) {
+        const itemsResult = await pool.query(`
+          SELECT oi.*, COALESCE(mi.item_name, 'Unknown Item') as name, mi.image_url 
+          FROM order_items oi 
+          LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id 
+          WHERE oi.order_id = $1
+        `, [order.id]);
+        order.items = itemsResult.rows;
+      }
+      
+      return res.status(200).json({ success: true, orders });
+    } catch (err) {
+      console.error("Error fetching orders from DB:", err);
+      // Fallback below
+    }
   }
   
-  try {
-    // Get orders with a fallback for restaurant name
-    const ordersResult = await pool.query(`
-      SELECT o.*, r.business_name as restaurant_name 
-      FROM orders o 
-      LEFT JOIN restaurants r ON o.restaurant_id = r.id 
-      WHERE o.user_id = $1 
-      ORDER BY o.created_at DESC
-    `, [userId]);
-    
-    const orders = ordersResult.rows;
-    
-    // For each order, get its items
-    for (let order of orders) {
-      const itemsResult = await pool.query(`
-        SELECT oi.*, COALESCE(mi.item_name, 'Unknown Item') as name, mi.image_url 
-        FROM order_items oi 
-        LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id 
-        WHERE oi.order_id = $1
-      `, [order.id]);
-      order.items = itemsResult.rows;
-    }
-    
-    res.status(200).json({ success: true, orders });
-  } catch (err) {
-    console.error("Error fetching orders:", err);
-    res.status(200).json({ success: true, orders: getSessionOrders(req) });
-  }
+  // Fallback to session if DB not available/connected
+  res.status(200).json({ success: true, orders: getSessionOrders(req) });
 });
 
-app.post('/api/orders/create', async (req, res) => {
-  const { items, subtotal, discount, tax, total, department, course } = req.body || {};
-  const userId = req.session.userId;
+app.post('/api/orders/create', verifyToken, async (req, res) => {
+  const { items, subtotal, discount, tax, total, department, course, deliveryAddress, deliveryCity } = req.body || {};
+  const userId = req.userId;
   
   if (!items || items.length === 0) {
     return res.status(400).json({ success: false, message: 'Cart is empty' });
@@ -696,7 +612,7 @@ app.post('/api/orders/create', async (req, res) => {
       const orderRes = await client.query(
         `INSERT INTO orders (user_id, restaurant_id, order_status, total_amount, delivery_address, delivery_city, department, course) 
          VALUES ($1, $2, 'pending', $3, $4, $5, $6, $7) RETURNING id, created_at, order_status as status`,
-        [userId, restaurantId, total, req.session.profile?.address || '123 Main St', req.session.profile?.city || 'City', department || '', course || '']
+        [userId, restaurantId, total, deliveryAddress || 'University Main Campus', deliveryCity || 'City', department || '', course || '']
       );
       const newOrder = orderRes.rows[0];
 
@@ -765,14 +681,42 @@ app.get('/api/stock/:menuItemId', async (req, res) => {
   }
 });
 
-app.post('/api/cart/add', (req, res) => {
+app.post('/api/cart/add', verifyToken, async (req, res) => {
   const { foodId, quantity, size, budgetMeal } = req.body || {};
+  const userId = req.userId;
   if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
 
-  const cart = getSessionCart(req);
   const qty = Math.max(1, Number(quantity ?? 1));
-  
-  // Unique key: for budget meals use combinationId, for drinks use size
+
+  if (dbConnected && userId) {
+    try {
+      // Find restaurant_id for the item
+      const itemRes = await pool.query('SELECT restaurant_id FROM menu_items WHERE id = $1', [foodId]);
+      if (itemRes.rows.length === 0) return res.status(404).json({ success: false, message: 'Item not found' });
+      const restaurantId = itemRes.rows[0].restaurant_id;
+
+      // Check if already in DB cart
+      const existing = await pool.query(
+        'SELECT id, quantity FROM cart WHERE user_id = $1 AND menu_item_id = $2 AND (size = $3 OR (size IS NULL AND $3 IS NULL))',
+        [userId, foodId, size || null]
+      );
+
+      if (existing.rows.length > 0) {
+        await pool.query('UPDATE cart SET quantity = quantity + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [qty, existing.rows[0].id]);
+      } else {
+        await pool.query(
+          'INSERT INTO cart (user_id, restaurant_id, menu_item_id, quantity, size) VALUES ($1, $2, $3, $4, $5)',
+          [userId, restaurantId, foodId, qty, size || null]
+        );
+      }
+      return res.status(200).json({ success: true, message: 'Added to cart in DB' });
+    } catch (err) {
+      console.error("DB Cart Add Error:", err.message);
+    }
+  }
+
+  // Session fallback
+  const cart = getSessionCart(req);
   const comboId = budgetMeal?.combinationId ?? null;
   const existing = cart.find((i) => {
     if (String(i.foodId) !== String(foodId)) return false;
@@ -781,7 +725,6 @@ app.post('/api/cart/add', (req, res) => {
   });
   if (existing) {
     existing.quantity += qty;
-    // Update selection if re-added (allows changing options via re-add)
     if (budgetMeal) existing.budgetMeal = budgetMeal;
   } else {
     cart.push({ foodId, quantity: qty, size: size || null, budgetMeal: budgetMeal || null });
@@ -790,9 +733,22 @@ app.post('/api/cart/add', (req, res) => {
   res.status(200).json({ success: true, cart });
 });
 
-app.post('/api/cart/remove', (req, res) => {
+app.post('/api/cart/remove', verifyToken, async (req, res) => {
   const { foodId, size, budgetMealComboId } = req.body || {};
+  const userId = req.userId;
   if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
+
+  if (dbConnected && userId) {
+    try {
+      await pool.query(
+        'DELETE FROM cart WHERE user_id = $1 AND menu_item_id = $2 AND (size = $3 OR (size IS NULL AND $3 IS NULL))',
+        [userId, foodId, size || null]
+      );
+      return res.status(200).json({ success: true, message: 'Removed from DB cart' });
+    } catch (err) {
+      console.error("DB Cart Remove Error:", err.message);
+    }
+  }
 
   const cart = getSessionCart(req);
   req.session.cart = cart.filter((i) => {
@@ -803,13 +759,33 @@ app.post('/api/cart/remove', (req, res) => {
   res.status(200).json({ success: true, cart: req.session.cart });
 });
 
-app.post('/api/cart/update', (req, res) => {
+app.post('/api/cart/update', verifyToken, async (req, res) => {
   const { foodId, quantity, size, budgetMealComboId } = req.body || {};
+  const userId = req.userId;
   if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
 
-  const cart = getSessionCart(req);
   const qty = Number(quantity ?? 1);
-  
+
+  if (dbConnected && userId) {
+    try {
+      if (qty <= 0) {
+        await pool.query(
+          'DELETE FROM cart WHERE user_id = $1 AND menu_item_id = $2 AND (size = $3 OR (size IS NULL AND $3 IS NULL))',
+          [userId, foodId, size || null]
+        );
+      } else {
+        await pool.query(
+          'UPDATE cart SET quantity = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 AND menu_item_id = $3 AND (size = $4 OR (size IS NULL AND $4 IS NULL))',
+          [qty, userId, foodId, size || null]
+        );
+      }
+      return res.status(200).json({ success: true, message: 'Updated in DB cart' });
+    } catch (err) {
+      console.error("DB Cart Update Error:", err.message);
+    }
+  }
+
+  const cart = getSessionCart(req);
   const findItem = (i) => {
     if (String(i.foodId) !== String(foodId)) return false;
     if (budgetMealComboId != null) return i.budgetMeal?.combinationId === budgetMealComboId;
@@ -831,16 +807,35 @@ app.post('/api/cart/update', (req, res) => {
   res.status(200).json({ success: true, cart });
 });
 
-app.get('/api/cart', async (req, res) => {
-  const sessionCart = getSessionCart(req);
+app.get('/api/cart', verifyToken, async (req, res) => {
+  const userId = req.userId;
+  let itemsToHydrate = req.session.cart || [];
+
+  if (dbConnected && userId) {
+    try {
+      const dbCartRes = await pool.query('SELECT * FROM cart WHERE user_id = $1', [userId]);
+      if (dbCartRes.rows.length > 0) {
+        // Convert DB format to session format for the hydration logic below
+        itemsToHydrate = dbCartRes.rows.map(r => ({
+          foodId: r.menu_item_id,
+          quantity: r.quantity,
+          size: r.size,
+          budgetMeal: null // Add budgetMeal support if needed
+        }));
+      }
+    } catch (err) {
+      console.error("DB Cart Fetch Error:", err.message);
+    }
+  }
+
   if (dbConnected) {
     try {
-      if (sessionCart.length === 0) {
+      if (itemsToHydrate.length === 0) {
         return res.status(200).json({ success: true, cart: [] });
       }
 
       // Map session items to IDs for querying
-      const ids = sessionCart.map(i => i.foodId);
+      const ids = itemsToHydrate.map(i => i.foodId);
       const result = await pool.query(`
         SELECT m.*, r.business_name as restaurant 
         FROM menu_items m 
@@ -851,7 +846,7 @@ app.get('/api/cart', async (req, res) => {
       const dbItems = new Map();
       result.rows.forEach(row => dbItems.set(String(row.id), row));
 
-      const hydratedCart = sessionCart.map(sItem => {
+      const hydratedCart = itemsToHydrate.map(sItem => {
         const row = dbItems.get(String(sItem.foodId));
         if (!row) return null;
 
@@ -893,7 +888,7 @@ app.get('/api/cart', async (req, res) => {
   } else {
     // Session fallback: mockFoodItems is a keyed object { 1: [...], 2: [...] }
     const allMockFoods = Object.values(mockFoodItems).flat();
-    const mockHydrated = sessionCart
+    const mockHydrated = itemsToHydrate
       .map(i => {
         const item = allMockFoods.find(mi => String(mi.id) === String(i.foodId));
         if (!item) return null;
@@ -928,10 +923,27 @@ app.get('/api/cart', async (req, res) => {
   }
 });
 
-app.post('/api/favorites/toggle', (req, res) => {
+app.post('/api/favorites/toggle', verifyToken, async (req, res) => {
   const { foodId } = req.body || {};
+  const userId = req.userId;
   if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
 
+  if (dbConnected && userId) {
+    try {
+      const existing = await pool.query('SELECT id FROM favorites WHERE user_id = $1 AND menu_item_id = $2', [userId, foodId]);
+      if (existing.rows.length > 0) {
+        await pool.query('DELETE FROM favorites WHERE id = $1', [existing.rows[0].id]);
+        return res.status(200).json({ success: true, isFavorite: false });
+      } else {
+        await pool.query('INSERT INTO favorites (user_id, menu_item_id) VALUES ($1, $2)', [userId, foodId]);
+        return res.status(200).json({ success: true, isFavorite: true });
+      }
+    } catch (err) {
+      console.error("DB Favorites Sync Error:", err.message);
+    }
+  }
+
+  // Fallback
   const favorites = getSessionFavorites(req);
   const idx = favorites.indexOf(foodId);
   const isFavorite = idx === -1;
@@ -941,58 +953,77 @@ app.post('/api/favorites/toggle', (req, res) => {
   res.status(200).json({ success: true, isFavorite, favorites });
 });
 
-app.get('/api/profile', async (req, res) => {
-  const userId = req.session.userId;
-  if (!userId) return res.status(200).json({ success: true, profile: req.session.profile || {} });
+app.get('/api/profile', verifyToken, async (req, res) => {
+  const userId = req.userId;
+  if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
   
   if (dbConnected) {
     try {
-      const result = await pool.query('SELECT full_name, email, phone, address, city, department, course, year FROM users WHERE id = $1', [userId]);
+      const result = await pool.query('SELECT id, full_name, email, phone, address, city, department, course, year FROM users WHERE id = $1', [userId]);
       if (result.rows.length > 0) {
         const user = result.rows[0];
-        req.session.profile = {
-          full_name: user.full_name,
-          email: user.email,
-          address: user.address || '',
-          city: user.city || '',
-          phone: user.phone || '',
-          department: user.department || '',
-          course: user.course || '',
-          year: user.year || ''
-        };
+        // Synch session profile for legacy reasons if needed, but return DB data
+        res.status(200).json({ 
+          success: true, 
+          profile: {
+            id: user.id,
+            fullName: user.full_name,
+            email: user.email,
+            address: user.address || '',
+            city: user.city || '',
+            phone: user.phone || '',
+            department: user.department || '',
+            course: user.course || '',
+            year: user.year || ''
+          } 
+        });
+        return;
       }
     } catch(err) {
       console.error("Profile fetch error:", err.message);
+      return res.status(500).json({ success: false, message: 'Database error fetching profile' });
     }
   }
 
+  // Fallback if DB not connected (using session or mock)
   res.status(200).json({ success: true, profile: req.session.profile || {} });
 });
 
-app.put('/api/profile', async (req, res) => {
-  const nextProfile = req.body || {};
-  req.session.profile = { ...(req.session.profile || {}), ...nextProfile };
-  const userId = req.session.userId;
+app.put('/api/profile', verifyToken, async (req, res) => {
+  const { address, city, phone, department, course, year } = req.body || {};
+  const userId = req.userId;
   
   if (dbConnected && userId) {
     try {
       await pool.query(
         'UPDATE users SET address=$1, city=$2, phone=$3, department=$4, course=$5, year=$6 WHERE id=$7', 
         [
-          req.session.profile.address || null,
-          req.session.profile.city || null,
-          req.session.profile.phone || null,
-          req.session.profile.department || null,
-          req.session.profile.course || null,
-          req.session.profile.year || null,
+          address || null,
+          city || null,
+          phone || null,
+          department || null,
+          course || null,
+          year || null,
           userId
         ]
       );
+      
+      // Update session if it exists (though withCredentials may be false)
+      if (req.session.profile) {
+        req.session.profile = { ...req.session.profile, address, city, phone, department, course, year };
+      }
+      
+      return res.status(200).json({ success: true, message: 'Profile updated successfully' });
     } catch (err) {
       console.error("Profile update error:", err.message);
+      return res.status(500).json({ success: false, message: 'Error updating profile in database' });
     }
   }
 
+  // Fallback if DB not connected
+  if (req.session.profile) {
+    req.session.profile = { ...req.session.profile, address, city, phone, department, course, year };
+  }
   res.status(200).json({ success: true, profile: req.session.profile });
 });
 
@@ -1013,14 +1044,26 @@ app.post('/api/customer/register', async (req, res) => {
 
     const hashed = await hashPassword(password);
     
-    await pool.query(
+    const newUserResult = await pool.query(
       `INSERT INTO users (full_name, email, phone, address, city, department, course, year, password_hash)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, full_name, email`,
       [full_name, email, phone, address, city, department, course, year, hashed]
     );
 
-    res.json({ success: true, message: 'Registration successful' });
+    const newUser = newUserResult.rows[0];
+
+    // Issue JWT Token for direct login after registration (minimal payload as requested)
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email },
+      process.env.JWT_SECRET || 'super-secret-key-123',
+      { expiresIn: '7d' }
+    );
+
+    console.log(`[REGISTER] Token generated for ${newUser.email}`);
+    res.json({ success: true, message: 'Registration successful', token });
   } catch (err) {
+    console.error("❌ Registration error:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -1053,15 +1096,26 @@ app.post('/api/customer/login', async (req, res) => {
       course: user.course || '',
       year: user.year || ''
     };
-    res.json({ success: true, profile: req.session.profile });
+
+    // Issue JWT Token for localStorage storage (minimal payload as requested)
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET || 'super-secret-key-123',
+      { expiresIn: '7d' }
+    );
+
+    console.log(`[LOGIN] User ${user.email} logged in. Token issued.`);
+    res.json({ success: true, profile: req.session.profile, token });
   } catch (err) {
+    console.error("[LOGIN] Error:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
 app.post('/api/customer/logout', (req, res) => {
   req.session.destroy();
-  res.json({ success: true });
+  // Frontend should clear localStorage.authToken
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // ==========================================
@@ -1077,7 +1131,11 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });
 }); 
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// Match Vite dev (client/package.json): large Cookie / credentialed proxy requests can exceed Node's default header limit (431).
+const MAX_HTTP_HEADER_SIZE = 262144;
+const server = http.createServer({ maxHeaderSize: MAX_HTTP_HEADER_SIZE }, app);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server is running on http://localhost:${PORT} (maxHeaderSize=${MAX_HTTP_HEADER_SIZE})`);
+  console.log(`👉 Access via Vite proxy on http://localhost:5173`);
 });
 

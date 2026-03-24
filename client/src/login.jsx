@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react'
 import axios from 'axios'
+import { createApiClient } from './services/apiClient'
 
 function Login() {
 	const navigate = useNavigate();
@@ -30,7 +31,7 @@ function Login() {
 	const handleLogin = async (e) => {
 		e.preventDefault();
 		const newErrors = validateForm();
-		
+
 		if (Object.keys(newErrors).length > 0) {
 			setErrors(newErrors);
 			setMessage('Please fill in all fields correctly');
@@ -43,15 +44,24 @@ function Login() {
 		setMessage('');
 
 		try {
-			const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-			const response = await axios.post(`${baseURL}/api/customer/login`, {
+			const apiClient = createApiClient();
+			const response = await apiClient.post('/customer/login', {
 				fullName: fullName.trim(),
 				password: password
-			}, { withCredentials: true });
-			
+			});
+
 			if (response.data.success) {
+				const { token, profile } = response.data;
+				
+				// Store token for Authorization header
+				if (token) {
+					localStorage.setItem('authToken', token);
+					console.log("✅ Auth token stored in localStorage");
+				}
+
 				setMessage('Login successful! Redirecting...');
 				setMessageType('success');
+				
 				if (rememberMe) {
 					localStorage.setItem('rememberMe', JSON.stringify({
 						fullName: fullName.trim()
@@ -65,6 +75,7 @@ function Login() {
 				setMessageType('error');
 			}
 		} catch (error) {
+			console.error("Login Error:", error);
 			setMessage(error.response?.data?.message || error.message || 'An error occurred during login');
 			setMessageType('error');
 		} finally {
@@ -92,151 +103,119 @@ function Login() {
 			<div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-100/30 rounded-full translate-y-1/2 -translate-x-1/3 blur-3xl"></div>
 
 			{/* Main Container */}
-			<div className="w-full max-w-4xl relative z-10">
+			<div className="w-full max-w-3xl relative z-10">
 				{/* Desktop Two-Column Layout */}
-				<div className="hidden lg:grid lg:grid-cols-2 gap-8 items-center">
+				<div className="hidden lg:grid lg:grid-cols-2 gap-6 items-center">
 					{/* Left Column - Form */}
-					<div className="animate-fade-in">
+					<div className="animate-fade-in pr-6">
 						<button
 							onClick={handleBackToRoles}
-							className="mb-8 text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors"
+							className="mb-6 text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors text-sm"
 						>
 							← Back to role selection
 						</button>
 
-						<div className="space-y-2 mb-8">
-							<h1 className="text-4xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
-							<p className="text-lg text-gray-600">Sign in to access your account and manage your orders</p>
+						<div className="space-y-1 mb-6">
+							<h1 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
+							<p className="text-sm text-gray-600">Sign in to access your account</p>
 						</div>
 
-						<form onSubmit={handleLogin} className="space-y-5">
+						<form onSubmit={handleLogin} className="space-y-4">
 							{/* Global Status Messages */}
 							{message && (
-								<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 animate-fade-in ${
-									messageType === 'success' 
-										? 'bg-emerald-50 border-emerald-500 text-emerald-800' 
-										: messageType === 'error'
+								<div className={`p-3 rounded-lg border-l-4 flex items-start gap-3 animate-fade-in ${messageType === 'success'
+									? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+									: messageType === 'error'
 										? 'bg-red-50 border-red-500 text-red-800'
 										: 'bg-blue-50 border-blue-500 text-blue-800'
-								}`}>
-									<div className="mt-0.5">
-										{messageType === 'success' && <CheckCircle size={20} />}
-										{messageType === 'error' && <AlertCircle size={20} />}
-										{messageType === 'info' && <Mail size={20} />}
-									</div>
-									<p className="text-sm font-medium">{message}</p>
+									}`}>
+									<p className="text-xs font-medium">{message}</p>
 								</div>
 							)}
 
 							{/* Full Name Input */}
-							<div className="space-y-2">
-								<label htmlFor="fullName" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
-											<Mail size={18} className="text-orange-600" />
+							<div className="space-y-1.5">
+								<label htmlFor="fullName" className="block text-xs font-semibold text-gray-900 flex items-center gap-2">
+									<Mail size={16} className="text-orange-600" />
 									Full Name
 								</label>
 								<div className="relative">
-									<input 
+									<input
 										id="fullName"
-										type="text" 
-										value={fullName} 
+										type="text"
+										value={fullName}
 										onChange={(e) => {
 											setFullName(e.target.value);
 											if (errors.fullName) {
-												setErrors({...errors, fullName: ''});
+												setErrors({ ...errors, fullName: '' });
 											}
 										}}
-										placeholder="John Doe" 
-										aria-label="Full Name"
-										aria-invalid={!!errors.fullName}
-										aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${
-											errors.fullName 
-												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50' 
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
+										placeholder="John Doe"
+										className={`w-full px-3.5 py-2.5 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none text-sm ${errors.fullName
+											? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
+											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+											}`}
 									/>
-									{errors.fullName && (
-										<div className="absolute right-3 top-3">
-											<AlertCircle size={20} className="text-red-500" />
-										</div>
-									)}
 								</div>
-								{errors.fullName && (
-									<p id="fullName-error" className="text-sm text-red-600 flex items-center gap-1">
-										<span>•</span> {errors.fullName}
-									</p>
-								)}
 							</div>
 
 							{/* Password Input */}
-							<div className="space-y-2">
-								<label htmlFor="password" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
-											<Lock size={18} className="text-orange-600" />
+							<div className="space-y-1.5">
+								<label htmlFor="password" className="block text-xs font-semibold text-gray-900 flex items-center gap-2">
+									<Lock size={16} className="text-orange-600" />
 									Password
 								</label>
 								<div className="relative">
-									<input 
+									<input
 										id="password"
-										type={showPassword ? "text" : "password"} 
+										type={showPassword ? "text" : "password"}
 										value={password}
 										onChange={(e) => {
 											setPassword(e.target.value);
 											if (errors.password) {
-												setErrors({...errors, password: ''});
+												setErrors({ ...errors, password: '' });
 											}
 										}}
-										placeholder="••••••••" 
-										aria-label="Password"
-										aria-invalid={!!errors.password}
-										aria-describedby={errors.password ? 'password-error' : undefined}
-										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none pr-12 ${
-											errors.password 
-												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50' 
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-										}`}
+										placeholder="••••••••"
+										className={`w-full px-3.5 py-2.5 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none pr-11 text-sm ${errors.password
+											? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
+											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+											}`}
 									/>
 									<button
 										type="button"
 										onClick={() => setShowPassword(!showPassword)}
-										className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
-										aria-label={showPassword ? "Hide password" : "Show password"}
+										className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition-colors"
 									>
-										{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+										{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
 									</button>
 								</div>
-								{errors.password && (
-									<p id="password-error" className="text-sm text-red-600 flex items-center gap-1">
-										<span>•</span> {errors.password}
-									</p>
-								)}
 							</div>
 
 							{/* Remember Me & Forgot Password */}
-							<div className="flex items-center justify-between pt-2">
+							<div className="flex items-center justify-between pt-1">
 								<label className="flex items-center gap-2 cursor-pointer group">
-									<input 
-										type="checkbox" 
+									<input
+										type="checkbox"
 										checked={rememberMe}
 										onChange={(e) => setRememberMe(e.target.checked)}
-										className="w-4 h-4 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors" 
-										aria-label="Remember me"
+										className="w-3.5 h-3.5 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors"
 									/>
-									<span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">Remember me</span>
+									<span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Remember me</span>
 								</label>
-								<button 
+								<button
 									type="button"
-											className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+									className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
 								>
 									Forgot password?
 								</button>
 							</div>
 
 							{/* Primary Login Button */}
-							<button 
-								type="submit" 
+							<button
+								type="submit"
 								disabled={isLoading}
-								className="w-full py-3 px-4 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-[1.02] disabled:scale-100 flex items-center justify-center gap-2"
-								aria-label="Sign in"
+								className="w-full py-2.5 px-4 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:scale-100 flex items-center justify-center gap-2 text-sm"
 							>
 								{isLoading ? (
 									<>
@@ -246,18 +225,18 @@ function Login() {
 								) : (
 									<>
 										<span>Sign In</span>
-										<ArrowRight size={18} />
+										<ArrowRight size={16} />
 									</>
 								)}
 							</button>
 
 							{/* Divider */}
-							<div className="relative py-4">
+							<div className="relative py-2">
 								<div className="absolute inset-0 flex items-center">
-									<div className="w-full border-t border-gray-300"></div>
+									<div className="w-full border-t border-gray-200"></div>
 								</div>
-								<div className="relative flex justify-center text-sm">
-									<span className="px-3 bg-white text-gray-600 font-medium">Or continue with</span>
+								<div className="relative flex justify-center text-[10px]">
+									<span className="px-2 bg-white text-gray-400 font-bold uppercase tracking-widest">Or</span>
 								</div>
 							</div>
 
@@ -266,30 +245,28 @@ function Login() {
 								<button
 									type="button"
 									onClick={() => handleSocialLogin('Google')}
-									className="py-3 px-4 border-2 border-gray-300 hover:border-orange-400 rounded-xl font-semibold text-gray-700 hover:text-orange-600 transition-all duration-200 hover:bg-orange-50 flex items-center justify-center gap-2"
-									aria-label="Sign in with Google"
+									className="py-2.5 px-3 border border-gray-200 hover:border-orange-500/30 rounded-xl font-bold text-xs text-gray-700 hover:text-orange-600 transition-all duration-200 hover:bg-orange-50/50 flex items-center justify-center gap-2"
 								>
-									<span className="text-xl">🔷</span>
-									<span className="hidden sm:inline">Google</span>
+									<span className="text-lg">🔷</span>
+									<span>Google</span>
 								</button>
 								<button
 									type="button"
 									onClick={() => handleSocialLogin('GitHub')}
-										className="py-3 px-4 border-2 border-gray-300 hover:border-orange-400 rounded-xl font-semibold text-gray-700 hover:text-orange-600 transition-all duration-200 hover:bg-orange-50 flex items-center justify-center gap-2"
-									aria-label="Sign in with GitHub"
+									className="py-2.5 px-3 border border-gray-200 hover:border-orange-500/30 rounded-xl font-bold text-xs text-gray-700 hover:text-orange-600 transition-all duration-200 hover:bg-orange-50/50 flex items-center justify-center gap-2"
 								>
-									<span className="text-xl">⚫</span>
-									<span className="hidden sm:inline">GitHub</span>
+									<span className="text-lg">⚫</span>
+									<span>GitHub</span>
 								</button>
 							</div>
 
 							{/* Register Link */}
-							<p className="text-center text-gray-700 text-sm">
+							<p className="text-center text-gray-500 text-xs font-medium pt-2">
 								Don't have an account?{" "}
-								<button 
+								<button
 									type="button"
-									onClick={handleRegisterLink} 
-									className="font-semibold text-orange-600 hover:text-orange-700 transition-colors hover:underline"
+									onClick={handleRegisterLink}
+									className="font-bold text-orange-600 hover:text-orange-700 transition-colors hover:underline"
 								>
 									Create account
 								</button>
@@ -298,34 +275,19 @@ function Login() {
 					</div>
 
 					{/* Right Column - Illustration/Branding */}
-					<div className="hidden lg:flex flex-col items-center justify-center space-y-8 animate-fade-in" style={{animationDelay: '0.2s'}}>
-							<div className="relative w-full h-80 bg-gradient-to-br from-orange-100 to-orange-200 rounded-3xl flex items-center justify-center overflow-hidden group">
-<div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-								
-								{/* Decorative Elements */}
-								<div className="absolute top-8 left-8 w-20 h-20 bg-orange-300 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0s'}}></div>
-								<div className="absolute bottom-12 right-8 w-32 h-32 bg-orange-300 rounded-full opacity-20 animate-bounce" style={{animationDelay: '0.5s'}}></div>
-								<div className="absolute top-1/2 right-1/4 w-16 h-16 bg-orange-400 rounded-full opacity-10 animate-pulse"></div>
-							
-							{/* Center Icon */}
-							<div className="relative z-10 text-8xl animate-pulse">
-								🍽️
-							</div>
+					<div className="hidden lg:flex flex-col items-center justify-center space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+						<div className="relative w-full h-64 bg-gradient-to-br from-orange-50/50 to-orange-100/50 rounded-2xl flex items-center justify-center overflow-hidden border border-orange-100">
+							{/* decorative circles */}
+							<div className="absolute top-4 left-4 w-12 h-12 bg-orange-200/20 rounded-full"></div>
+							<div className="absolute bottom-4 right-4 w-20 h-20 bg-orange-200/20 rounded-full"></div>
+							<div className="relative z-10 text-6xl drop-shadow-sm">🍽️</div>
 						</div>
 
-						<div className="space-y-3 text-center">
-							<h2 className="text-3xl font-bold text-gray-900">BiteHub</h2>
-							<p className="text-gray-600 max-w-xs">
-								Your gateway to delicious food delivery. Order now and enjoy fresh meals delivered to your doorstep.
+						<div className="space-y-1 text-center">
+							<h2 className="text-2xl font-bold text-gray-900 tracking-tight">BiteHub</h2>
+							<p className="text-gray-500 text-xs max-w-[200px] leading-relaxed">
+								Delicious food delivery right to your doorstep.
 							</p>
-							<div className="flex items-center justify-center gap-1 pt-2">
-									<span className="text-orange-600">★</span>
-									<span className="text-orange-600">★</span>
-									<span className="text-orange-600">★</span>
-									<span className="text-orange-600">★</span>
-									<span className="text-orange-600">★</span>
-								<span className="text-gray-600 text-sm ml-2">(4.9/5 - 2.3K reviews)</span>
-							</div>
 						</div>
 					</div>
 				</div>
@@ -346,7 +308,7 @@ function Login() {
 							<div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
 							<div className="relative z-10 space-y-2">
 								<h1 className="text-3xl font-bold text-white">Welcome Back</h1>
-							<p className="text-orange-100 text-sm">Sign in to your account</p>
+								<p className="text-orange-100 text-sm">Sign in to your account</p>
 							</div>
 						</div>
 
@@ -354,13 +316,14 @@ function Login() {
 						<div className="px-6 py-8 space-y-5">
 							{/* Status Messages */}
 							{message && (
-								<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 animate-fade-in ${
-									messageType === 'success' 
-										? 'bg-emerald-50 border-emerald-500 text-emerald-800' 
-										: messageType === 'error'
+								<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 animate-fade-in ${messageType === 'success'
+									? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+									: messageType === 'error'
+
+
 										? 'bg-red-50 border-red-500 text-red-800'
 										: 'bg-blue-50 border-blue-500 text-blue-800'
-								}`}>
+									}`}>
 									<div className="mt-0.5">
 										{messageType === 'success' && <CheckCircle size={20} />}
 										{messageType === 'error' && <AlertCircle size={20} />}
@@ -374,27 +337,26 @@ function Login() {
 								{/* Full Name Input */}
 								<div className="space-y-2">
 									<label htmlFor="mobile-fullName" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
-											<Mail size={18} className="text-orange-600" />
+										<Mail size={18} className="text-orange-600" />
 										Full Name
 									</label>
 									<div className="relative">
-										<input 
+										<input
 											id="mobile-fullName"
-											type="text" 
-											value={fullName} 
+											type="text"
+											value={fullName}
 											onChange={(e) => {
 												setFullName(e.target.value);
 												if (errors.fullName) {
-													setErrors({...errors, fullName: ''});
+													setErrors({ ...errors, fullName: '' });
 												}
 											}}
-											placeholder="John Doe" 
+											placeholder="John Doe"
 											aria-label="Full Name"
-											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${
-												errors.fullName 
-													? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50' 
-																: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-											}`}
+											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${errors.fullName
+												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
+												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
 										/>
 										{errors.fullName && (
 											<div className="absolute right-3 top-3">
@@ -412,27 +374,26 @@ function Login() {
 								{/* Password Input */}
 								<div className="space-y-2">
 									<label htmlFor="mobile-password" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
-											<Lock size={18} className="text-orange-600" />
+										<Lock size={18} className="text-orange-600" />
 										Password
 									</label>
 									<div className="relative">
-										<input 
+										<input
 											id="mobile-password"
-											type={showPassword ? "text" : "password"} 
+											type={showPassword ? "text" : "password"}
 											value={password}
 											onChange={(e) => {
 												setPassword(e.target.value);
 												if (errors.password) {
-													setErrors({...errors, password: ''});
+													setErrors({ ...errors, password: '' });
 												}
 											}}
-											placeholder="••••••••" 
+											placeholder="••••••••"
 											aria-label="Password"
-											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none pr-12 ${
-												errors.password 
-													? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50' 
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-											}`}
+											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none pr-12 ${errors.password
+												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
+												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+												}`}
 										/>
 										<button
 											type="button"
@@ -453,25 +414,25 @@ function Login() {
 								{/* Remember Me & Forgot Password */}
 								<div className="space-y-2 pt-2">
 									<label className="flex items-center gap-2 cursor-pointer group">
-										<input 
-											type="checkbox" 
+										<input
+											type="checkbox"
 											checked={rememberMe}
 											onChange={(e) => setRememberMe(e.target.checked)}
-												className="w-4 h-4 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors"
+											className="w-4 h-4 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors"
 										/>
 										<span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">Remember me</span>
 									</label>
-									<button 
+									<button
 										type="button"
-											className="w-full text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors py-2"
+										className="w-full text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors py-2"
 									>
 										Forgot password?
 									</button>
 								</div>
 
 								{/* Submit Button */}
-								<button 
-									type="submit" 
+								<button
+									type="submit"
 									disabled={isLoading}
 									className="w-full py-3 px-4 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:scale-100 flex items-center justify-center gap-2 mt-6"
 								>
@@ -522,8 +483,8 @@ function Login() {
 							{/* Register Link */}
 							<p className="text-center text-gray-700 text-sm pt-4 border-t border-gray-200">
 								Don't have an account?{" "}
-								<button 
-									onClick={handleRegisterLink} 
+								<button
+									onClick={handleRegisterLink}
 									className="font-semibold text-orange-600 hover:text-orange-700 transition-colors hover:underline"
 								>
 									Create account
