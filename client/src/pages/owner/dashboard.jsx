@@ -117,15 +117,15 @@ function OwnerDashboard() {
   }
 
   return (
-    <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
+    <div className="space-y-6 md:space-y-8 pb-12 max-w-[1400px] mx-auto">
 
       {/* ══════════════════════════════════════════════════════════════════
           Header
       ══════════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
         <div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Dashboard Overview</h1>
-          <p className="text-gray-400 mt-1 font-medium">Welcome back! Here's what's happening today.</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Dashboard Overview</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">Welcome back! Here's what's happening today.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative hidden md:block">
@@ -133,10 +133,10 @@ function OwnerDashboard() {
             <input
               type="text"
               placeholder="dishes, restaurants..."
-              className="pl-10 pr-5 py-2.5 rounded-2xl border border-gray-200 bg-white text-sm font-medium focus:outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-50 w-56 transition-all"
+              className="pl-10 pr-5 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium focus:outline-none focus:border-orange-300 focus:ring-4 focus:ring-orange-50 w-52 transition-all"
             />
           </div>
-          <button className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 text-sm">
+          <button className="px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl shadow-sm shadow-orange-500/25 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 text-sm">
             <Download size={16} /> Download Report
           </button>
         </div>
@@ -147,22 +147,22 @@ function OwnerDashboard() {
       {/* ══════════════════════════════════════════════════════════════════
           4 KPI Cards Row
       ══════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
         {/* 1 · Total Revenue — Green gradient */}
-        <div className="relative overflow-hidden p-6 rounded-[28px] bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 text-white shadow-xl shadow-emerald-500/20 group hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-700 text-white shadow-lg shadow-emerald-500/20 group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
           <div className="absolute top-0 right-0 -mt-6 -mr-6 w-28 h-28 bg-white/15 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
           <div className="relative z-10">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[2px] mb-2">Total Revenue</p>
-                <h3 className="text-4xl font-black tracking-tight leading-none">₱{fmt(metrics.revenue)}</h3>
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight leading-none">₱{fmt(metrics.revenue)}</h3>
               </div>
-              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm shadow-inner">
-                <Banknote size={22} className="text-white" />
+              <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner">
+                <Banknote size={20} className="text-white" />
               </div>
             </div>
-            <div className="mt-5">
+            <div className="mt-4">
               <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
                 <TrendingUp size={12} /> Peak Performance
               </span>
@@ -171,15 +171,15 @@ function OwnerDashboard() {
         </div>
 
         {/* 2 · Total Orders — White card with mini bar chart */}
-        <div className="relative overflow-hidden p-6 rounded-[28px] bg-white border border-gray-100 shadow-sm group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-white border border-gray-100 shadow-sm group hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
           <div className="relative z-10">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-[10px] font-black uppercase tracking-[2px] mb-2">Total Orders</p>
-                <h3 className="text-4xl font-black text-gray-900 tracking-tight leading-none">{metrics.totalOrders}</h3>
+                <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-none">{metrics.totalOrders}</h3>
               </div>
               {/* Mini bar chart showing Today vs Yesterday */}
-              <div className="flex items-end gap-1.5 h-14">
+              <div className="flex items-end gap-1.5 h-12">
                 <div className="flex flex-col items-center gap-0.5">
                   <div
                     className="w-5 rounded-t-md bg-gradient-to-t from-emerald-400 to-emerald-500 transition-all duration-500"
@@ -196,7 +196,7 @@ function OwnerDashboard() {
                 </div>
               </div>
             </div>
-            <div className="mt-5 flex items-center gap-2 text-xs font-medium text-gray-500">
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-500">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
               Since Launch &middot; {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -204,16 +204,16 @@ function OwnerDashboard() {
         </div>
 
         {/* 3 · Menu Items — White card with circle accent */}
-        <div className="relative overflow-hidden p-6 rounded-[28px] bg-white border border-gray-100 shadow-sm group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-white border border-gray-100 shadow-sm group hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
           <div className="relative z-10">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-[10px] font-black uppercase tracking-[2px] mb-2">Menu Items</p>
-                <h3 className="text-4xl font-black text-gray-900 tracking-tight leading-none">{metrics.menuItems}</h3>
+                <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-none">{metrics.menuItems}</h3>
               </div>
               <div className="relative">
                 {/* Animated ring */}
-                <svg width="52" height="52" viewBox="0 0 52 52" className="drop-shadow-sm">
+                <svg width="46" height="46" viewBox="0 0 52 52" className="drop-shadow-sm">
                   <circle cx="26" cy="26" r="20" fill="none" stroke="#f3f4f6" strokeWidth="5" />
                   <circle cx="26" cy="26" r="20" fill="none" stroke="url(#menuGrad)" strokeWidth="5"
                     strokeDasharray={`${Math.min(metrics.menuItems / 20, 1) * 125.6} 125.6`}
@@ -229,36 +229,36 @@ function OwnerDashboard() {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <List size={18} className="text-indigo-500" />
+                  <List size={16} className="text-indigo-500" />
                 </div>
               </div>
             </div>
-            <div className="mt-5 flex items-center gap-2 text-xs font-medium text-gray-500">
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-500">
               <span className="w-2 h-2 rounded-full bg-indigo-500" /> Active Database
             </div>
           </div>
         </div>
 
         {/* 4 · Live Orders — Dark / Red gradient */}
-        <div className="relative overflow-hidden p-6 rounded-[28px] bg-gradient-to-br from-gray-800 via-gray-900 to-red-900 text-white shadow-xl shadow-gray-900/30 group hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-gray-800 via-gray-900 to-red-900 text-white shadow-lg shadow-gray-900/30 group hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
           <div className="absolute top-0 right-0 -mt-6 -mr-6 w-28 h-28 bg-red-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
           <div className="relative z-10">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-400 text-[10px] font-black uppercase tracking-[2px] mb-2">Live Orders</p>
-                <h3 className="text-4xl font-black tracking-tight leading-none">{metrics.activeOrders}</h3>
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight leading-none">{metrics.activeOrders}</h3>
               </div>
               {/* Pulsing ring icon */}
               <div className="relative">
-                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                  <Clock size={22} className="text-white" />
+                <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <Clock size={20} className="text-white" />
                 </div>
                 {metrics.activeOrders > 0 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
                 )}
               </div>
             </div>
-            <div className="mt-5">
+            <div className="mt-4">
               <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${metrics.activeOrders > 0 ? 'bg-red-500/30 text-red-300 animate-pulse' : 'bg-white/10 text-gray-400'
                 }`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
