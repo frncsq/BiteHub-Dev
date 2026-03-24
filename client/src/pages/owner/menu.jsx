@@ -586,9 +586,9 @@ function OwnerMenu() {
 
       {/* Item Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh] animate-slide-up">
-            <div className="flex justify-between items-center p-5 sm:p-6 border-b border-gray-100 bg-gray-50/70 shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-gray-900/45 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xl w-full max-w-2xl flex flex-col max-h-[86vh] animate-slide-up">
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-gray-100 bg-gray-50/60 shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
                 {formData.category === 'Budget Meal' && (
@@ -602,17 +602,17 @@ function OwnerMenu() {
               </button>
             </div>
 
-            <div className="p-5 sm:p-6 overflow-y-auto">
+            <div className="p-4 sm:p-5 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Basic Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Item Name *</label>
                     <input required type="text" name="name" value={formData.name} onChange={handleChange}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                   </div>
 
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Category *</label>
                     <select required name="category" value={formData.category} onChange={handleChange}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition">
@@ -638,7 +638,7 @@ function OwnerMenu() {
                         <input required min="0" step="0.01" type="number" name="price" value={formData.price} onChange={handleChange}
                           className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
                       </div>
-                      <div className="col-span-2">
+                      <div className="sm:col-span-2">
                         <label className="block text-sm font-semibold text-gray-900 mb-1">Large Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="large_price" value={formData.large_price} onChange={handleChange}
                           className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition" />
@@ -662,7 +662,7 @@ function OwnerMenu() {
                   )}
 
                   {formData.category === 'Budget Meal' && (
-                    <div className="col-span-2">
+                    <div className="sm:col-span-2">
                       <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-700 mb-1">
                         <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                         <span>Pricing is set per combination below. The first combination's price will be saved as the item's base price for display.</span>
@@ -670,14 +670,14 @@ function OwnerMenu() {
                     </div>
                   )}
 
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Description</label>
                     <textarea rows="2" name="description" value={formData.description} onChange={handleChange}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition resize-none"></textarea>
                   </div>
 
                   {/* Photo Upload */}
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-900 mb-1">Menu Photo</label>
                     <div className="flex items-center gap-4">
                       {formData.image_url ? (
@@ -739,13 +739,13 @@ function OwnerMenu() {
                   </div>
                 )}
 
-                <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                <div className="pt-3 flex flex-col sm:flex-row gap-2.5">
                   <button type="button" onClick={handleCloseModal}
-                    className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition-all duration-200">
+                    className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition-all duration-200">
                     Cancel
                   </button>
                   <button type="submit" disabled={isSaving}
-                    className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+                    className="flex-1 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2">
                     {isSaving ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : (editingItem ? 'Save Changes' : 'Create Item')}
                   </button>
                 </div>
