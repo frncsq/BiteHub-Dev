@@ -1,12 +1,14 @@
 import CustomerSidebar from "../components/CustomerSidebar"
+import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { useTheme } from "../context/ThemeContext"
-import { Edit2, Camera, MapPin, Mail, Phone, User as UserIcon, Calendar, Briefcase, ShoppingBag, TrendingUp, DollarSign } from "lucide-react"
+import { Edit2, Camera, MapPin, Mail, Phone, User as UserIcon, Calendar, Briefcase, LayoutDashboard, Utensils, Package } from "lucide-react"
 import { createApiClient } from "../services/apiClient"
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 
 function Profile() {
 	const { isDarkMode } = useTheme()
+	const navigate = useNavigate()
 	const [profile, setProfile] = useState({
 		firstName: "",
 		lastName: "",
@@ -94,40 +96,6 @@ function Profile() {
 			console.error("Error fetching orders for analytics:", error)
 		}
 	}
-
-	const calculateAnalytics = () => {
-		const totalOrders = orders.length
-		const totalSpent = orders.reduce((sum, order) => sum + (parseFloat(order.total_amount) || 0), 0)
-		const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0
-
-		// Prepare chart data
-		const spendingByDate = orders.reduce((acc, order) => {
-			const date = new Date(order.created_at || new Date()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-			acc[date] = (acc[date] || 0) + (parseFloat(order.total_amount) || 0)
-			return acc
-		}, {})
-
-		const chartData = Object.entries(spendingByDate)
-			.map(([date, amount]) => ({ date, amount }))
-			.sort((a, b) => new Date(a.date) - new Date(b.date))
-			.slice(-7) // Last 7 days with data
-
-		const categoryCounts = orders.reduce((acc, order) => {
-			if (order.items) {
-				order.items.forEach(item => {
-					const cat = item.category || 'Other'
-					acc[cat] = (acc[cat] || 0) + (item.quantity || 1)
-				})
-			}
-			return acc
-		}, {})
-
-		const pieData = Object.entries(categoryCounts).map(([name, value]) => ({ name, value }))
-
-		return { totalOrders, totalSpent, avgOrderValue, chartData, pieData }
-	}
-
-	const COLORS = ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
 
 	const handleChange = (e) => {
 		const { name, value } = e.target
@@ -226,6 +194,13 @@ function Profile() {
 			})()
 		: null
 
+	const activityMetrics = buildProfileActivityMetrics(orders)
+	const displayName = `${profile.firstName} ${profile.lastName}`.trim() || "Member"
+
+	const scrollToUserActivity = () => {
+		document.getElementById("user-activity")?.scrollIntoView({ behavior: "smooth", block: "start" })
+	}
+
 	return (
 		<div className={`min-h-screen flex ${isDarkMode ? 'bg-zinc-950' : 'bg-gradient-to-b from-slate-50 to-slate-100/90'}`}>
 			<CustomerSidebar
@@ -236,6 +211,60 @@ function Profile() {
 
 			<main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
 				<div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 text-gray-900 overflow-hidden">
+					<div className="mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white shadow-lg sm:p-8">
+						<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+							<div className="min-w-0 flex-1">
+								<h3 className="text-xl font-bold tracking-tight sm:text-2xl">Profile of {displayName}</h3>
+								<p className="mt-2 max-w-xl text-xs leading-relaxed text-orange-100 sm:text-sm">
+									View your campus dining analytics, default delivery addresses, and recent activity.
+								</p>
+								<div className="mt-5 flex flex-wrap items-center gap-3">
+									<button
+										type="button"
+										onClick={scrollToUserActivity}
+										className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-orange-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-md"
+									>
+										<LayoutDashboard size={18} strokeWidth={2} aria-hidden />
+										Dashboard
+									</button>
+									<button
+										type="button"
+										onClick={() => navigate("/home")}
+										className="inline-flex items-center gap-2 rounded-full bg-orange-500/25 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-500/35 hover:shadow-md hover:-translate-y-0.5"
+									>
+										<Utensils size={18} strokeWidth={2} aria-hidden />
+										Browse food
+									</button>
+									<button
+										type="button"
+										onClick={() => navigate("/orders")}
+										className="inline-flex items-center gap-2 rounded-full bg-orange-500/25 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-500/35"
+									>
+										<Package size={18} strokeWidth={2} aria-hidden />
+										View orders
+									</button>
+								</div>
+							</div>
+							<div className="grid w-full grid-cols-3 gap-3 md:w-auto md:min-w-[280px]">
+								<div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
+									<p className="text-[10px] text-orange-100 sm:text-xs">Active orders</p>
+									<p className="text-xl font-bold tabular-nums sm:text-2xl">{activityMetrics.activeOrdersCount}</p>
+								</div>
+								<div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
+									<p className="text-[10px] text-orange-100 sm:text-xs">Saved items</p>
+									<p className="text-xl font-bold tabular-nums sm:text-2xl">0</p>
+								</div>
+								<div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
+									<p className="text-[10px] text-orange-100 sm:text-xs">This week</p>
+									<p className="text-lg font-bold tabular-nums sm:text-2xl">
+										₱
+										{Math.round(activityMetrics.thisWeekSpent).toLocaleString()}
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<header className="mb-8 space-y-1">
 						<h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
 							Profile
@@ -548,160 +577,7 @@ function Profile() {
 							</section>
 						</div>
 
-						<section className={`${cardBase} overflow-hidden`}>
-							<div
-								className={`flex flex-col gap-3 border-b px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
-									isDarkMode ? 'border-zinc-800/80 bg-zinc-900/40' : 'border-slate-100 bg-slate-50/50'
-								}`}
-							>
-								<div>
-									<h3 className={`font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Orders insights</h3>
-									<p className={`text-xs mt-0.5 ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>A quick snapshot of your activity</p>
-								</div>
-								<div
-									className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
-										isDarkMode ? 'bg-orange-500/15 text-orange-400' : 'bg-orange-500/10 text-orange-600'
-									}`}
-								>
-									<TrendingUp size={12} />
-									<span>Live data</span>
-								</div>
-							</div>
-
-							<div className="p-5 sm:p-6 space-y-8">
-								<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-									<div
-										className={`group rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
-											isDarkMode ? 'border-orange-500/20 bg-orange-500/[0.07]' : 'border-orange-100 bg-orange-50/80'
-										}`}
-									>
-										<div className="flex items-center gap-3 mb-2">
-											<div className="rounded-lg bg-orange-500 p-2 text-white shadow-md shadow-orange-500/20 transition-transform duration-300 group-hover:scale-105">
-												<ShoppingBag size={14} />
-											</div>
-											<span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">Total orders</span>
-										</div>
-										<p className={`text-2xl font-bold tabular-nums ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{calculateAnalytics().totalOrders}</p>
-									</div>
-
-									<div
-										className={`group rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${
-											isDarkMode ? 'border-sky-500/20 bg-sky-500/[0.07]' : 'border-sky-100 bg-sky-50/80'
-										}`}
-									>
-										<div className="flex items-center gap-3 mb-2">
-											<div className="rounded-lg bg-sky-500 p-2 text-white shadow-md shadow-sky-500/20 transition-transform duration-300 group-hover:scale-105">
-												<DollarSign size={14} />
-											</div>
-											<span className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">Total spent</span>
-										</div>
-										<p className={`text-2xl font-bold tabular-nums ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-											₱{calculateAnalytics().totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-										</p>
-									</div>
-
-									<div
-										className={`group rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md sm:col-span-1 ${
-											isDarkMode ? 'border-emerald-500/20 bg-emerald-500/[0.07]' : 'border-emerald-100 bg-emerald-50/80'
-										}`}
-									>
-										<div className="flex items-center gap-3 mb-2">
-											<div className="rounded-lg bg-emerald-500 p-2 text-white shadow-md shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-105">
-												<TrendingUp size={14} />
-											</div>
-											<span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Avg. value</span>
-										</div>
-										<p className={`text-2xl font-bold tabular-nums ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-											₱{calculateAnalytics().avgOrderValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-										</p>
-									</div>
-								</div>
-
-								<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-									<div className="h-[240px] min-h-[220px]">
-										<div className="mb-4 flex items-center justify-between">
-											<h4 className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Spending trend</h4>
-											<span className={`text-[10px] ${isDarkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Past 7 orders</span>
-										</div>
-										<ResponsiveContainer width="100%" height="90%">
-											<AreaChart data={calculateAnalytics().chartData}>
-												<defs>
-													<linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-														<stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-														<stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
-													</linearGradient>
-												</defs>
-												<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#333' : '#eee'} />
-												<XAxis
-													dataKey="date"
-													axisLine={false}
-													tickLine={false}
-													tick={{ fontSize: 10, fill: isDarkMode ? '#666' : '#999' }}
-													dy={10}
-												/>
-												<YAxis
-													axisLine={false}
-													tickLine={false}
-													tick={{ fontSize: 10, fill: isDarkMode ? '#666' : '#999' }}
-												/>
-												<Tooltip
-													contentStyle={{
-														backgroundColor: isDarkMode ? '#1a1a1a' : '#fff',
-														border: 'none',
-														borderRadius: '12px',
-														boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-														fontSize: '12px'
-													}}
-												/>
-												<Area
-													type="monotone"
-													dataKey="amount"
-													stroke="#f97316"
-													strokeWidth={3}
-													fillOpacity={1}
-													fill="url(#colorAmount)"
-												/>
-											</AreaChart>
-										</ResponsiveContainer>
-									</div>
-
-									<div className="h-[240px] min-h-[220px]">
-										<h4 className={`mb-4 text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Food preferences</h4>
-										<div className="flex flex-col items-stretch gap-4 min-[400px]:flex-row min-[400px]:items-center h-full">
-											<div className="min-h-[180px] flex-1">
-												<ResponsiveContainer width="100%" height="100%">
-													<PieChart>
-														<Pie
-															data={calculateAnalytics().pieData}
-															innerRadius={50}
-															outerRadius={70}
-															paddingAngle={5}
-															dataKey="value"
-														>
-															{calculateAnalytics().pieData.map((entry, index) => (
-																<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-															))}
-														</Pie>
-														<Tooltip />
-													</PieChart>
-												</ResponsiveContainer>
-											</div>
-											<div className="flex-1 space-y-2 min-w-[140px]">
-												{calculateAnalytics().pieData.slice(0, 4).map((entry, index) => (
-													<div key={index} className="flex items-center justify-between gap-2 text-[10px]">
-														<div className="flex min-w-0 items-center gap-2">
-															<div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-															<span className={`truncate ${isDarkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{entry.name}</span>
-														</div>
-														<span className={`shrink-0 font-bold tabular-nums ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.value}</span>
-													</div>
-												))}
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</section>
+						<UserActivityAnalytics orders={orders} isDarkMode={isDarkMode} />
 					</div>
 				</div>
 			</main>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import {
     Menu,
@@ -45,6 +45,7 @@ import { mockRestaurantsData, mockFoodItems, mockCategories, mockOrderService, m
 import { createApiClient } from "../services/apiClient"
 import biteLogo from "../assets/bite.png"
 import CustomerSidebar from "../components/CustomerSidebar"
+import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
 
 
 
@@ -73,6 +74,7 @@ const HomePage = () => {
     const [favorites, setFavorites] = useState(new Set())
     const [cart, setCart] = useState([])
     const [orders, setOrders] = useState([])
+    const profileActivityMetrics = useMemo(() => buildProfileActivityMetrics(orders), [orders])
     const [categories, setCategories] = useState([])
     const [restaurants, setRestaurants] = useState([])
     const [popularFoods, setPopularFoods] = useState([])
@@ -1332,42 +1334,62 @@ const HomePage = () => {
                     {/* Profile Tab */}
                     {activeTab === "profile" && (
                         <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">My Profile</h2>
-
-                            {/* Moved Dashboard Welcome Section */}
                             <section className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                                <div>
-                                    <h1 className="text-xl md:text-2xl font-bold mb-1">Profile of {userName}</h1>
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="text-xl md:text-2xl font-bold mb-1">Profile of {userName}</h3>
                                     <p className="text-orange-100 text-xs mb-4 max-w-xl">
                                         View your campus dining analytics, default delivery addresses, and recent activity.
                                     </p>
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <button onClick={() => { setActiveTab("dashboard"); setProfileDropdown(false); }} className="bg-white text-orange-600 px-6 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 hover:bg-orange-50 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setProfileDropdown(false)
+                                                document.getElementById("user-activity")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                                            }}
+                                            className="bg-white text-orange-600 px-6 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 hover:bg-orange-50 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                                        >
                                             <LayoutDashboard size={18} /> Dashboard
                                         </button>
-                                        <button onClick={() => { setActiveTab("dashboard"); setProfileDropdown(false); setTimeout(() => browseFoodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100) }} className="bg-orange-500/20 text-white px-6 py-2.5 flex items-center gap-2 rounded-full text-sm font-semibold hover:bg-orange-500/30 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setActiveTab("dashboard")
+                                                setProfileDropdown(false)
+                                                setTimeout(() => browseFoodRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100)
+                                            }}
+                                            className="bg-orange-500/20 text-white px-6 py-2.5 flex items-center gap-2 rounded-full text-sm font-semibold hover:bg-orange-500/30 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                                        >
                                             <Utensils size={18} /> Browse Food
                                         </button>
-                                        <button onClick={() => setActiveTab("orders")} className="bg-orange-500/20 text-white px-4 py-2.5 flex items-center gap-2 rounded-full text-sm font-medium hover:bg-orange-500/30 transition-all">
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab("orders")}
+                                            className="bg-orange-500/20 text-white px-4 py-2.5 flex items-center gap-2 rounded-full text-sm font-medium hover:bg-orange-500/30 transition-all"
+                                        >
                                             <Package size={18} /> View Orders
                                         </button>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-3 w-full md:w-auto">
-                                    <div className="bg-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                                        <p className="text-xs text-orange-100">Active Orders</p>
-                                        <p className="text-2xl font-bold">{orders.filter(o => o.status !== 'completed').length}</p>
+                                <div className="grid grid-cols-3 gap-3 w-full md:w-auto md:min-w-[280px]">
+                                    <div className="bg-white/10 rounded-2xl px-3 py-3 sm:px-4 backdrop-blur-sm">
+                                        <p className="text-[10px] sm:text-xs text-orange-100">Active Orders</p>
+                                        <p className="text-xl sm:text-2xl font-bold tabular-nums">{profileActivityMetrics.activeOrdersCount}</p>
                                     </div>
-                                    <div className="bg-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                                        <p className="text-xs text-orange-100">Saved Items</p>
-                                        <p className="text-2xl font-bold">{favorites.size}</p>
+                                    <div className="bg-white/10 rounded-2xl px-3 py-3 sm:px-4 backdrop-blur-sm">
+                                        <p className="text-[10px] sm:text-xs text-orange-100">Saved Items</p>
+                                        <p className="text-xl sm:text-2xl font-bold tabular-nums">{favorites.size}</p>
                                     </div>
-                                    <div className="bg-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                                        <p className="text-xs text-orange-100">This Week</p>
-                                        <p className="text-2xl font-bold">$54</p>
+                                    <div className="bg-white/10 rounded-2xl px-3 py-3 sm:px-4 backdrop-blur-sm">
+                                        <p className="text-[10px] sm:text-xs text-orange-100">This Week</p>
+                                        <p className="text-lg sm:text-2xl font-bold tabular-nums">
+                                            ₱{Math.round(profileActivityMetrics.thisWeekSpent).toLocaleString()}
+                                        </p>
                                     </div>
                                 </div>
                             </section>
+
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">My Profile</h2>
 
                             {userProfile && (
                                 <section className="bg-white border border-gray-100 shadow-sm rounded-3xl p-6 md:p-8">
@@ -1406,6 +1428,8 @@ const HomePage = () => {
                                     </div>
                                 </section>
                             )}
+
+                            <UserActivityAnalytics orders={orders} isDarkMode={isDarkMode} />
 
                             <section className="bg-white border border-gray-100 shadow-sm rounded-3xl p-6 md:p-8">
                                 <h3 className="font-bold text-gray-900 text-xl mb-4">Saved Contact Data</h3>
