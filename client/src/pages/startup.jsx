@@ -48,13 +48,13 @@ function StartUp() {
 					>
 						<div className="absolute inset-0 bg-orange-500/10 rounded-[32px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 						<div className={`relative bg-white/80 backdrop-blur-xl rounded-[32px] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 ${hoveredRole === 'customer'
-								? 'ring-2 ring-orange-500/50 -translate-y-1'
-								: 'hover:border-orange-200'
+							? 'ring-2 ring-orange-500/50 -translate-y-1'
+							: 'hover:border-orange-200'
 							}`}>
 							{/* Icon Container */}
 							<div className={`mx-auto md:mx-0 inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 transition-all duration-500 ${hoveredRole === 'customer'
-									? 'bg-orange-500 shadow-lg scale-110'
-									: 'bg-orange-50'
+								? 'bg-orange-500 shadow-lg scale-110'
+								: 'bg-orange-50'
 								}`}>
 								<Users size={32} className={hoveredRole === 'customer' ? 'text-white' : 'text-orange-600'} />
 							</div>
@@ -86,8 +86,8 @@ function StartUp() {
 							{/* Button */}
 							<button
 								className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group/btn ${hoveredRole === 'customer'
-										? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-										: 'bg-gray-50 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+									? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+									: 'bg-gray-50 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
 									}`}
 							>
 								<span>Continue as Customer</span>
@@ -105,13 +105,13 @@ function StartUp() {
 					>
 						<div className="absolute inset-0 bg-orange-500/10 rounded-[32px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 						<div className={`relative bg-white/80 backdrop-blur-xl rounded-[32px] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 ${hoveredRole === 'restaurant'
-								? 'ring-2 ring-orange-500/50 -translate-y-1'
-								: 'hover:border-orange-200'
+							? 'ring-2 ring-orange-500/50 -translate-y-1'
+							: 'hover:border-orange-200'
 							}`}>
 							{/* Icon Container */}
 							<div className={`mx-auto md:mx-0 inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 transition-all duration-500 ${hoveredRole === 'restaurant'
-									? 'bg-orange-500 shadow-lg scale-110'
-									: 'bg-orange-50'
+								? 'bg-orange-500 shadow-lg scale-110'
+								: 'bg-orange-50'
 								}`}>
 								<ChefHat size={32} className={hoveredRole === 'restaurant' ? 'text-white' : 'text-orange-600'} />
 							</div>
@@ -143,8 +143,8 @@ function StartUp() {
 							{/* Button */}
 							<button
 								className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 group/btn ${hoveredRole === 'restaurant'
-										? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-										: 'bg-gray-50 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+									? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+									: 'bg-gray-50 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
 									}`}
 							>
 								<span>Continue as Restaurant</span>
@@ -164,13 +164,7 @@ function StartUp() {
 						>
 							Create Account
 						</button>
-						<span className="text-gray-300">|</span>
-						<button
-							onClick={() => navigate('/login')}
-							className="font-bold text-orange-600 hover:text-orange-700 transition-colors"
-						>
-							Log in
-						</button>
+
 					</p>
 					<p className="text-sm text-gray-500 flex flex-wrap justify-center gap-2 items-center">
 						Restaurant owner?{' '}
@@ -180,13 +174,7 @@ function StartUp() {
 						>
 							Partner with us
 						</button>
-						<span className="text-gray-300">|</span>
-						<button
-							onClick={() => navigate('/restaurant-login')}
-							className="font-bold text-orange-600 hover:text-orange-700 transition-colors"
-						>
-							Owner Login
-						</button>
+
 					</p>
 				</div>
 			</div>
