@@ -85,7 +85,7 @@ const HomePage = () => {
     const [retryCount, setRetryCount] = useState(0)
     const [userRole, setUserRole] = useState("customer")
     const [viewMode, setViewMode] = useState("grid")
-    const [priceFilter, setPriceFilter] = useState(1000)
+    const [priceFilter, setPriceFilter] = useState(2000)
     const [minRating, setMinRating] = useState(0)
     const [maxDistance, setMaxDistance] = useState(10)
     const [featuredScrollIndex, setFeaturedScrollIndex] = useState(0)
@@ -96,6 +96,14 @@ const HomePage = () => {
         deliveryCity: "",
         phone: ""
     })
+    // Direct checkout state (Buy Now / Order Now without cart)
+    const [showDirectCheckout, setShowDirectCheckout] = useState(false)
+    const [directCheckoutItem, setDirectCheckoutItem] = useState(null)
+    const [directCheckoutQty, setDirectCheckoutQty] = useState(1)
+    const [directDepartment, setDirectDepartment] = useState("")
+    const [directCourse, setDirectCourse] = useState("")
+    const [directCheckoutProcessing, setDirectCheckoutProcessing] = useState(false)
+    const [directCheckoutError, setDirectCheckoutError] = useState("")
     const [userProfile, setUserProfile] = useState(null)
     const [emailNotifs, setEmailNotifs] = useState(true)
     const [pushNotifs, setPushNotifs] = useState(true)
@@ -194,12 +202,12 @@ const HomePage = () => {
 
     useEffect(() => {
         if (!localStorage.getItem('authToken')) return;
-        
+
         const interval = setInterval(() => {
             fetchOrders()
             fetchCartItems()
         }, 30000); // 30s interval for background updates
-        
+
         return () => clearInterval(interval);
     }, [])
 
@@ -446,9 +454,9 @@ const HomePage = () => {
                 console.warn('Failed to sync cart add:', err.message)
             })
 
-            // Navigate to cart if this was a checkout action
+            // Open direct checkout modal if this was a checkout action
             if (goToCart) {
-                navigate('/cart');
+                openDirectCheckout(cartItem);
             }
         } catch (error) {
             console.warn('Failed to add to cart:', error.message)
@@ -539,7 +547,9 @@ const HomePage = () => {
         // Sync with backend
         apiClient.post('/cart/add', { foodId: budgetFood.id, quantity: 1, budgetMeal: budgetMeta }).catch(() => { })
         closeBudgetModal()
-        if (budgetGoToCart) navigate('/cart')
+        if (budgetGoToCart) {
+            openDirectCheckout(cartItem);
+        }
     }
 
     // Remove from cart with backend sync
@@ -614,7 +624,7 @@ const HomePage = () => {
         return isNaN(numericDistance) ? true : numericDistance <= maxDistance
     })
 
-    // Handle checkout
+    // Handle checkout (legacy – cart checkout dialog)
     const handleCheckout = async () => {
         try {
             if (cart.length === 0) {
@@ -638,7 +648,6 @@ const HomePage = () => {
                 setMessage("Order placed successfully! 🎉")
                 setMessageType("success")
                 setCart([])
-                setCartOpen(false)
                 setShowCheckoutDialog(false)
                 // Refresh orders
                 await fetchOrders()
@@ -655,6 +664,84 @@ const HomePage = () => {
             setMessageType("error")
             setShowCheckoutDialog(false)
             console.error("Checkout error:", error)
+        }
+    }
+
+    // ── Direct Checkout (Buy Now / Order Now) ──────────────────────────────
+    const openDirectCheckout = (item) => {
+        setDirectCheckoutItem(item)
+        setDirectCheckoutQty(1)
+        setDirectDepartment("")
+        setDirectCourse("")
+        setDirectCheckoutError("")
+        setDirectCheckoutProcessing(false)
+        setShowDirectCheckout(true)
+        // Close other modals
+        setShowFoodModal(false)
+        setShowSizeModal(false)
+    }
+
+    const closeDirectCheckout = () => {
+        setShowDirectCheckout(false)
+        setDirectCheckoutItem(null)
+        setDirectCheckoutError("")
+    }
+
+    const handleDirectCheckoutSubmit = async () => {
+        if (!directCheckoutItem) return
+
+        if (!directDepartment || !directCourse) {
+            setDirectCheckoutError("Please fill in both Building / Department and Course & Room")
+            return
+        }
+
+        setDirectCheckoutProcessing(true)
+        setDirectCheckoutError("")
+
+        const itemPrice = Number(directCheckoutItem.price || 0)
+        const itemSubtotal = itemPrice * directCheckoutQty
+        const deliveryFeeVal = 25
+        const promoDiscount = itemSubtotal > 1000 ? 100 : 0
+        const orderTotal = itemSubtotal + deliveryFeeVal - promoDiscount
+
+        const orderData = {
+            items: [{
+                id: directCheckoutItem.baseId || directCheckoutItem.id,
+                quantity: directCheckoutQty,
+                price: itemPrice,
+                name: directCheckoutItem.name,
+                restaurantId: directCheckoutItem.restaurantId || directCheckoutItem.restaurant_id || 1
+            }],
+            subtotal: itemSubtotal,
+            total: orderTotal,
+            department: directDepartment,
+            course: directCourse,
+            tax: 0,
+            deliveryFee: deliveryFeeVal
+        }
+
+        try {
+            const response = await apiClient.post('/orders/create', orderData)
+            if (response.data?.success) {
+                // Remove item from local cart state if it was added
+                const removeId = directCheckoutItem.id
+                setCart(prev => prev.filter(i => i.id !== removeId))
+
+                setMessage(`Order for ${directCheckoutItem.name} placed successfully! 🎉`)
+                setMessageType('success')
+                closeDirectCheckout()
+                await fetchOrders()
+                await fetchCartItems()
+                setTimeout(() => setMessage(''), 4000)
+            } else {
+                setDirectCheckoutError(response.data?.message || 'Failed to place order')
+            }
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to place order'
+            setDirectCheckoutError(errorMsg)
+            console.error('Direct checkout error:', err)
+        } finally {
+            setDirectCheckoutProcessing(false)
         }
     }
 
@@ -690,8 +777,8 @@ const HomePage = () => {
                 <div className={`absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full blur-[120px] ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-400/15'}`} />
             </div>
 
-            <CustomerSidebar 
-                activeTab={activeTab === 'dashboard' ? 'home' : activeTab} 
+            <CustomerSidebar
+                activeTab={activeTab === 'dashboard' ? 'home' : activeTab}
                 onTabChange={(tabId) => {
                     if (tabId === 'home') setActiveTab('dashboard')
                     else setActiveTab(tabId)
@@ -772,25 +859,27 @@ const HomePage = () => {
 
                 {/* PAGE CONTENT */}
                 <main className="p-4 md:p-8 pb-20">
-                    {/* Error/Success Messages */}
+                    {/* Error/Success Messages - Floating Toast */}
                     {(error || message) && (
-                        <div className={`mb-4 rounded-lg border px-4 py-3 text-sm shadow-sm flex items-center justify-between ${messageType === 'success'
-                            ? 'border-green-200 bg-green-50 text-green-700'
-                            : 'border-red-200 bg-red-50 text-red-700'
+                        <div className={`fixed top-24 right-6 z-[100] min-w-[300px] rounded-2xl border px-4 py-3 text-sm shadow-xl flex items-center justify-between animate-fade-in font-medium transition-all ${messageType === 'success'
+                            ? 'border-green-200 bg-green-50 text-green-700 shadow-green-500/20'
+                            : 'border-red-200 bg-red-50 text-red-700 shadow-red-500/20'
                             }`}>
-                            <div className="flex items-center gap-2">
-                                {messageType === 'success' ? <Check size={18} /> : <AlertCircle size={18} />}
-                                <span>{message || error}</span>
-                                {retryCount > 0 && <span className="text-xs ml-2">(Attempt {retryCount}/{MAX_RETRIES})</span>}
+                            <div className="flex items-center gap-3">
+                                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${messageType === 'success' ? 'bg-green-100' : 'bg-red-100'}`}>
+                                    {messageType === 'success' ? <Check size={18} className="text-green-600" /> : <AlertCircle size={18} className="text-red-600" />}
+                                </div>
+                                <span className="pr-4">{message || error}</span>
+                                {retryCount > 0 && <span className="text-xs ml-1 opacity-75">(Attempt {retryCount}/{MAX_RETRIES})</span>}
                             </div>
                             <button
                                 onClick={() => {
                                     setMessage("")
                                     setError("")
                                 }}
-                                className="ml-4 hover:opacity-70 transition"
+                                className="ml-2 hover:bg-black/5 p-1.5 rounded-full transition-colors flex-shrink-0"
                             >
-                                <X size={18} />
+                                <X size={16} className={messageType === 'success' ? 'text-green-600' : 'text-red-600'} />
                             </button>
                         </div>
                     )}
@@ -976,11 +1065,11 @@ const HomePage = () => {
                                         }`}>
                                         <span className="font-medium text-xs">Price Range</span>
                                         <input
-                                            type="range" min="5" max="1000" value={priceFilter}
+                                            type="range" min="5" max="2000" value={priceFilter}
                                             onChange={(e) => setPriceFilter(Number(e.target.value))}
                                             className="w-20 accent-orange-500"
                                         />
-                                        <span className="text-orange-600 font-bold text-xs">{priceFilter === 1000 ? 'Any Price' : `≤₱${priceFilter}`}</span>
+                                        <span className="text-orange-600 font-bold text-xs">{priceFilter === 2000 ? 'Any Price' : `≤₱${priceFilter}`}</span>
                                     </div>
 
                                     {/* Cuisine */}
@@ -1014,10 +1103,10 @@ const HomePage = () => {
                                     </span>
                                 </div>
 
-                                {/* Two-column layout: Main Grid + Right Panel */}
-                                <div className="flex gap-6">
+                                {/* Main Content Layout */}
+                                <div className="w-full">
                                     {/* Main Food Grid */}
-                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
                                         {filteredFoods.length === 0 ? (
                                             <div className="col-span-full flex flex-col items-center justify-center py-20 gap-3">
                                                 <Utensils size={40} className="text-gray-300" />
@@ -1038,11 +1127,11 @@ const HomePage = () => {
                                                     key={food.id}
                                                     onMouseEnter={() => setHoveredFoodId(food.id)}
                                                     onMouseLeave={() => setHoveredFoodId(null)}
-                                                    className={`relative rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer group ${isOOS
-                                                        ? isDarkMode ? 'bg-gray-800/50 border-gray-700 opacity-75' : 'bg-gray-50 border-gray-200 opacity-75'
+                                                    className={`relative border rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group flex flex-col h-full ${isOOS
+                                                        ? isDarkMode ? 'bg-gray-800/30 border-gray-800 opacity-75' : 'bg-gray-50 border-gray-100 opacity-75'
                                                         : isDarkMode
-                                                            ? 'bg-gray-800/80 border-gray-700 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/5'
-                                                            : 'bg-white border-gray-100 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100 hover:-translate-y-0.5'
+                                                            ? 'bg-gray-800/50 border-gray-800 hover:border-gray-700 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1'
+                                                            : 'bg-white border-gray-100/50 shadow-sm hover:shadow-xl hover:shadow-gray-200/40 hover:border-gray-200 hover:-translate-y-1'
                                                         }`}
                                                 >
                                                     {/* Food Image */}
@@ -1083,37 +1172,37 @@ const HomePage = () => {
                                                     </div>
 
                                                     <div className="p-2.5" onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}>
-                                                        <div className="flex items-start justify-between gap-2 mb-0.5">
-                                                            <h3 className={`font-black text-xs leading-tight truncate flex-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>{food.name}</h3>
-                                                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                                            <h3 className={`font-bold text-[13px] leading-tight truncate flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</h3>
+                                                            <div className={`flex items-center gap-1 flex-shrink-0 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
                                                                 <Star size={10} className="text-yellow-400 fill-yellow-400" />
-                                                                <span className={`text-[10px] font-black ${isDarkMode ? 'text-white' : 'text-black'}`}>{food.rating}</span>
+                                                                <span className={`text-[10px] font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.rating}</span>
                                                             </div>
                                                         </div>
-                                                        <p className={`text-[10px] font-bold mb-2 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                                        <p className={`text-[11px] font-medium mb-3 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                             {food.description || food.restaurant}
                                                         </p>
 
-                                                        <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-end justify-between mb-1 mt-auto">
                                                             <div className="flex flex-col">
                                                                 {food.category === 'Drinks' ? (
                                                                     <>
-                                                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-0.5 w-fit ${isDarkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-50 text-blue-600'
-                                                                            }`}>🧋 Multiple Sizes</span>
-                                                                        <span className={`text-xs font-black ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
+                                                                        <span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50/80 text-blue-600'
+                                                                            }`}>🧋 View Sizes</span>
+                                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                                                             ₱{Number(food.half_price || food.price || 0).toFixed(2)}–₱{Number(food.large_price || food.price || 0).toFixed(2)}
                                                                         </span>
                                                                     </>
                                                                 ) : food.category === 'Budget Meal' ? (
                                                                     <>
-                                                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-0.5 w-fit ${isDarkMode ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-50 text-purple-600'
-                                                                            }`}>🍱 Budget Meal</span>
-                                                                        <span className={`text-xs font-black ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
+                                                                        <span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50/80 text-purple-600'
+                                                                            }`}>🍱 Combo</span>
+                                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                                                             From ₱{Number(food.price || 0).toFixed(2)}
                                                                         </span>
                                                                     </>
                                                                 ) : (
-                                                                    <span className={`text-sm font-black ${isDarkMode ? 'text-orange-400' : 'text-gray-900'}`}>
+                                                                    <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                                                         ₱{((food.price || 0) * (1 - (food.discount || 0) / 100)).toFixed(2)}
                                                                     </span>
                                                                 )}
@@ -1121,25 +1210,25 @@ const HomePage = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="px-2.5 pb-2.5 flex gap-1.5">
+                                                    <div className="px-3 pb-3 mt-auto flex gap-2">
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }}
                                                             disabled={isOOS}
-                                                            className={`flex-1 flex items-center justify-center gap-1 text-[8.5px] font-bold py-1.5 rounded-lg transition-all border ${isOOS
-                                                                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                                                            className={`flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold py-2 rounded-xl transition-all ${isOOS
+                                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-transparent'
                                                                 : isDarkMode
-                                                                    ? 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white'
-                                                                    : 'bg-gray-50 border-gray-100 text-gray-600 hover:bg-gray-100'
+                                                                    ? 'bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:text-white'
+                                                                    : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:bg-gray-50'
                                                                 }`}
                                                         >
-                                                            <Plus size={10} /> {food.category === 'Drinks' ? 'Size' : food.category === 'Budget Meal' ? 'Combo' : 'Add'}
+                                                            <Plus size={12} /> {food.category === 'Drinks' ? 'Size' : food.category === 'Budget Meal' ? 'Combo' : 'Add'}
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }}
                                                             disabled={isOOS}
-                                                            className={`flex-1 text-[8.5px] font-bold py-1.5 rounded-lg transition-all shadow-sm ${isOOS
+                                                            className={`flex-1 flex items-center justify-center text-[11px] font-semibold py-2 rounded-xl transition-all shadow-sm ${isOOS
                                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                : 'bg-orange-500 text-white hover:bg-orange-600'
+                                                                : 'bg-gray-900 text-white hover:bg-black hover:shadow-md dark:bg-orange-500 dark:text-white dark:hover:bg-orange-600'
                                                                 }`}
                                                         >
                                                             {food.category === 'Budget Meal' ? 'Order' : 'Checkout'}
@@ -1148,37 +1237,6 @@ const HomePage = () => {
                                                 </div>
                                             );
                                         })}
-                                    </div>
-
-                                    {/* Right Quick-View Panel */}
-                                    <div className="hidden xl:flex flex-col gap-4 w-56 flex-shrink-0">
-                                        <div className={`p-3 rounded-2xl border ${isDarkMode ? 'bg-gray-800/80 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
-                                            }`}>
-                                            <h3 className={`font-bold text-xs mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Quick Picks</h3>
-                                            <div className="flex flex-col gap-3">
-                                                {popularFoods.slice(0, 4).map(food => (
-                                                    <div key={food.id} className={`flex gap-2 items-center p-2 rounded-xl border transition ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'
-                                                        }`}>
-                                                        <img
-                                                            src={food.image}
-                                                            alt={food.name}
-                                                            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                                                            onError={e => e.target.style.display = 'none'}
-                                                        />
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className={`text-[11px] font-bold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</p>
-                                                            <p className={`text-[10px] truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{food.restaurant}</p>
-                                                            <div className="flex items-center justify-between mt-0.5">
-                                                                <span className={`text-[11px] font-bold ${isDarkMode ? 'text-orange-400' : 'text-gray-800'}`}>₱{(food.price || 0).toFixed(2)}</span>
-                                                                <button onClick={() => addToCart(food)} className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-lg hover:bg-orange-600 transition">
-                                                                    Add
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -2461,6 +2519,122 @@ const HomePage = () => {
                         >
                             Cancel
                         </button>
+                    </div>
+                </div>
+            )}
+            {/* Direct Checkout Modal (Buy Now / Order Now without Cart) */}
+            {showDirectCheckout && directCheckoutItem && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={closeDirectCheckout}>
+                    <div
+                        className={`w-full max-w-lg rounded-[32px] overflow-hidden shadow-2xl animate-fade-in-scale relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white'}`}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className={`p-6 border-b flex justify-between items-center ${isDarkMode ? 'border-gray-800' : 'border-gray-100'}`}>
+                            <h2 className={`text-xl font-black flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                <Truck size={20} className="text-orange-500" />
+                                Direct Checkout
+                            </h2>
+                            <button onClick={closeDirectCheckout} className={`p-2 rounded-full transition-all ${isDarkMode ? 'bg-gray-800 text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-900'}`}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Order Summary */}
+                        <div className={`p-6 border-b ${isDarkMode ? 'bg-gray-800/20 border-gray-800' : 'bg-orange-50/50 border-gray-100'}`}>
+                            <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Order Summary</p>
+                            <div className="flex gap-4 items-center">
+                                <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md shrink-0">
+                                    <img src={directCheckoutItem.image || directCheckoutItem.image_url} alt={directCheckoutItem.name} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className={`font-black text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{directCheckoutItem.name}</h3>
+                                    <p className={`text-xs font-bold mt-1 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                                        {directCheckoutItem.restaurant || directCheckoutItem.restaurant_name}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Qty 1</p>
+                                    <p className="font-black text-orange-500">₱{Number(directCheckoutItem.price).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Delivery Destination (Cart Style) */}
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-slate-200 text-slate-600'}`}>
+                                        <Truck size={14} />
+                                    </div>
+                                    Delivery destination
+                                </h3>
+                                <span className={`text-[10px] uppercase font-bold tracking-wider ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>Abra University Main</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 mb-2">
+                                <div className="space-y-1.5">
+                                    <label className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Building / Department</label>
+                                    <div className="relative group">
+                                        <MapPin className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDarkMode ? 'text-zinc-500 group-focus-within:text-white' : 'text-slate-400 group-focus-within:text-slate-800'}`} size={16} />
+                                        <input
+                                            type="text"
+                                            value={directDepartment}
+                                            onChange={(e) => { setDirectDepartment(e.target.value); setDirectCheckoutError(""); }}
+                                            placeholder="e.g. CAS / CAFC"
+                                            className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium outline-none border-2 transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-700/50 focus:border-orange-500/50 text-white placeholder-zinc-600' : 'bg-white border-slate-200 focus:border-orange-400 text-slate-900 placeholder-slate-400'}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Course & Room</label>
+                                    <div className="relative group">
+                                        <MapPin className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDarkMode ? 'text-zinc-500 group-focus-within:text-white' : 'text-slate-400 group-focus-within:text-slate-800'}`} size={16} />
+                                        <input
+                                            type="text"
+                                            value={directCourse}
+                                            onChange={(e) => { setDirectCourse(e.target.value); setDirectCheckoutError(""); }}
+                                            placeholder="e.g. BSIT 3A / Lec Rm 2"
+                                            className={`w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium outline-none border-2 transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-700/50 focus:border-orange-500/50 text-white placeholder-zinc-600' : 'bg-white border-slate-200 focus:border-orange-400 text-slate-900 placeholder-slate-400'}`}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {directCheckoutError && (
+                                <p className="mt-4 text-xs font-bold text-red-500 flex items-center gap-1.5 bg-red-50 dark:bg-red-500/10 p-3 rounded-xl">⚠️ {directCheckoutError}</p>
+                            )}
+
+                            {/* Total & Action */}
+                            <div className="mt-6 flex items-center gap-4">
+                                <div className="flex-1">
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Total including ₱25 DeliveryFee</p>
+                                    <p className="text-xl font-black text-orange-500">₱{(Number(directCheckoutItem.price) + 25).toFixed(2)}</p>
+                                </div>
+                                <button
+                                    onClick={handleDirectCheckoutSubmit}
+                                    disabled={directCheckoutProcessing || !directDepartment || !directCourse}
+                                    className={`px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${directCheckoutProcessing
+                                            ? 'bg-orange-400 text-white cursor-not-allowed shadow-orange-500/20'
+                                            : (!directDepartment || !directCourse)
+                                                ? (isDarkMode ? 'bg-gray-800 text-gray-500 cursor-not-allowed border-2 border-gray-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200')
+                                                : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/30'
+                                        }`}
+                                >
+                                    {directCheckoutProcessing ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            <span>Processing...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CreditCard size={18} />
+                                            Confirm Order
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

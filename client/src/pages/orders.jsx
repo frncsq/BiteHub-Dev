@@ -121,57 +121,56 @@ function Orders() {
             <CustomerSidebar sidebarCollapsed={sidebarCollapsed} setSidebarCollapsed={setSidebarCollapsed} />
             
             <main className={`flex-1 min-h-screen relative overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-                {/* Ambient Glassmorphism Light Blobs */}
+                {/* Ambient Highlight */}
                 <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-                    <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px] ${isDarkMode ? 'bg-orange-500/10' : 'bg-orange-400/20'}`} />
-                    <div className={`absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full blur-[120px] ${isDarkMode ? 'bg-blue-500/10' : 'bg-blue-400/15'}`} />
+                    <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[150px] ${isDarkMode ? 'bg-orange-500/5' : 'bg-orange-400/10'}`} />
                 </div>
 
-
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 relative z-10">
+            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 relative z-10">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate("/home")}
-                    className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-md hover:-translate-y-0.5 hover:opacity-90 border border-gray-200"
-                    style={{ backgroundColor: isDarkMode ? colors.secondaryBg : '#f3f4f6', color: colors.text }}
+                    className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    style={{ color: colors.textSecondary }}
                 >
-                    <ArrowLeft size={16} /> Back to Home
+                    <ArrowLeft size={16} /> Back to Dashboard
                 </button>
 
-                {/* Compact Status Header */}
-                <section className={`mb-6 p-6 rounded-[32px] border flex flex-col md:flex-row items-center justify-between gap-6 transition-all ${isDarkMode ? 'bg-gray-900/40 border-gray-800' : 'bg-white border-gray-100 shadow-sm'}`}>
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-                            <Package size={24} />
+                {/* Minimalist Header */}
+                <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ color: colors.text }}>Order History</h1>
+                        <p className="text-sm font-medium" style={{ color: colors.textSecondary }}>View and track your recent orders.</p>
+                    </div>
+                    <div className="flex gap-8 items-center bg-white/50 dark:bg-black/20 p-5 rounded-2xl border backdrop-blur-sm" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Total Orders</span>
+                            <span className="text-3xl font-bold text-orange-500 leading-none">{orders.length}</span>
                         </div>
-                        <div>
-                            <h1 className="text-xl font-black tracking-tight leading-none mb-1">My Orders</h1>
-                            <p className={`text-[10px] font-black uppercase tracking-[2px] ${isDarkMode ? 'text-white' : 'text-black'}`}>Track Selections</p>
+                        <div className="w-px h-12 bg-gray-200 dark:bg-gray-800" />
+                        <div className="flex flex-col">
+                            <span className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">This Month</span>
+                            <span className="text-3xl font-bold leading-none" style={{ color: colors.text }}>
+                                {orders.filter(o => new Date(o.date).getMonth() === new Date().getMonth()).length}
+                            </span>
                         </div>
                     </div>
-                    <div className="flex gap-4">
-                        <div className="text-right">
-                            <p className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>Total Records</p>
-                            <p className="text-xl font-black leading-none">{orders.length}</p>
-                        </div>
-                        <div className="w-px h-8 bg-gray-200 dark:bg-gray-800" />
-                        <div className="text-right">
-                            <p className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>This Month</p>
-                            <p className="text-xl font-black leading-none">{orders.filter(o => new Date(o.date).getMonth() === new Date().getMonth()).length}</p>
-                        </div>
-                    </div>
-                </section>
+                </div>
 
                 {/* Minimalist Filter Bar */}
-                <div className="mb-6 flex gap-2 flex-wrap px-1">
+                <div className="mb-8 flex gap-3 flex-wrap">
                     {['all', 'preparing', 'out for delivery', 'delivered', 'cancelled'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setStatusFilter(status)}
-                            className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === status
-                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 active:scale-95'
-                                    : isDarkMode ? 'text-gray-100 border border-gray-800 hover:bg-gray-800' : 'text-black border border-gray-100 hover:bg-gray-50'
+                            className={`px-5 py-2 rounded-full text-sm font-medium capitalize transition-all duration-200 ${statusFilter === status
+                                    ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+                                    : 'bg-transparent border hover:bg-black/5 dark:hover:bg-white/5'
                                 }`}
+                            style={statusFilter !== status ? {
+                                color: colors.textSecondary,
+                                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                            } : {}}
                         >
                             {status}
                         </button>
@@ -180,31 +179,33 @@ function Orders() {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="mb-6 p-4 rounded-lg border border-red-200 bg-red-50 text-red-700 flex items-center justify-between">
-                        <span>{error}</span>
+                    <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-center justify-between">
+                        <span className="text-sm font-medium">{error}</span>
                         <button onClick={() => setError("")} className="hover:opacity-70">
-                            <ArrowLeft size={18} className="rotate-180" />
+                            <X size={18} />
                         </button>
                     </div>
                 )}
 
                 {/* Empty State */}
                 {!loading && filteredOrders.length === 0 && (
-                    <div className="text-center py-20">
-                        <div className="text-6xl mb-4">📦</div>
-                        <h2 className="text-2xl font-bold mb-2" style={{ color: colors.text }}>
+                    <div className="text-center py-24 flex flex-col items-center justify-center rounded-3xl border border-dashed" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.5)' }}>
+                        <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mb-6">
+                            <ShoppingBag className="text-orange-500" size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-3" style={{ color: colors.text }}>
                             No orders found
                         </h2>
-                        <p style={{ color: colors.textSecondary }} className="mb-6 max-w-md mx-auto">
+                        <p style={{ color: colors.textSecondary }} className="mb-8 max-w-md mx-auto text-sm font-medium leading-relaxed">
                             {statusFilter === 'all'
-                                ? "You haven't placed any orders yet. Start ordering your favorite food now!"
-                                : `No ${statusFilter} orders. Check other order statuses.`}
+                                ? "You haven't placed any orders yet. Discover delicious meals and place your first order today!"
+                                : `No ${statusFilter} orders at the moment. Check back later or adjust your filters.`}
                         </p>
                         <button
                             onClick={() => navigate('/home')}
-                            className="px-6 py-3 rounded-full font-semibold transition-all hover:shadow-md hover:-translate-y-0.5 inline-flex items-center gap-2 bg-orange-500 text-white hover:bg-orange-600"
+                            className="px-8 py-3.5 rounded-full text-sm font-semibold transition-all hover:shadow-lg hover:-translate-y-0.5 inline-flex items-center gap-2 bg-orange-500 text-white hover:bg-orange-600"
                         >
-                            <Utensils size={18} /> Order Food Now
+                            <Utensils size={16} /> Start Exploring
                         </button>
                     </div>
                 )}
@@ -212,56 +213,61 @@ function Orders() {
                 {/* Orders Grid */}
                 {!loading && filteredOrders.length > 0 && (
                     <div>
-                        <div className="mb-4">
-                            <p style={{ color: colors.textSecondary }} className="text-sm">
+                        <div className="mb-6">
+                            <p style={{ color: colors.textSecondary }} className="text-sm font-medium">
                                 Showing {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
                             </p>
-                        </div>                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                             {filteredOrders.map((order) => (
                                 <div
                                     key={order.id}
-                                    className={`rounded-[28px] border transition-all duration-300 group hover:-translate-y-1 ${isDarkMode ? 'bg-gray-900/30 border-gray-800 hover:bg-gray-900/50' : 'bg-white border-gray-100/50 hover:shadow-xl shadow-sm'}`}
+                                    className="rounded-2xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden"
+                                    style={{ 
+                                        backgroundColor: isDarkMode ? '#111827' : '#ffffff', 
+                                        borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' 
+                                    }}
                                 >
-                                    {/* Compact Card Header */}
-                                    <div className={`p-4 border-b ${isDarkMode ? 'border-gray-800/50' : 'border-gray-100/50'}`}>
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>ID: #{order.id}</p>
-                                            <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest text-white shadow-sm" style={{ backgroundColor: getStatusColor(order.status) }}>
+                                    {/* Card Header */}
+                                    <div className="p-5 border-b" style={{ borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' }}>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className="text-xs font-semibold text-gray-500 tracking-wider">ORDER #{order.id}</span>
+                                            <span 
+                                                className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-sm" 
+                                                style={{ backgroundColor: getStatusColor(order.status) }}
+                                            >
                                                 {order.status || 'unknown'}
                                             </span>
                                         </div>
-                                        <h3 className={`text-[15px] font-black tracking-tight leading-tight truncate ${isDarkMode ? 'text-white' : 'text-black'}`}>{order.restaurantName}</h3>
+                                        <h3 className="text-lg font-bold truncate mb-1" style={{ color: colors.text }}>{order.restaurantName}</h3>
+                                        <p className="text-xs font-medium flex items-center gap-2" style={{ color: colors.textSecondary }}>
+                                            <Clock size={12} className="text-orange-500" />
+                                            {formatDate(order.date)}
+                                        </p>
                                     </div>
                                     
-                                    {/* High-density Content */}
-                                    <div className="p-4 space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                                <Clock size={12} />
-                                            </div>
-                                            <p className={`text-[11px] font-bold ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>{formatDate(order.date)}</p>
-                                        </div>
-
-                                        <div className="pt-3 border-t border-dashed border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                                            <span className={`text-[9px] font-bold uppercase tracking-[1px] ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>Amount</span>
-                                            <span className="text-lg font-black text-orange-500">
+                                    {/* Content Info */}
+                                    <div className="p-5">
+                                        <div className="flex justify-between items-center mb-5">
+                                            <span className="text-sm font-medium" style={{ color: colors.textSecondary }}>Total Amount</span>
+                                            <span className="text-xl font-bold text-orange-500">
                                                 ₱{(order.total || 0).toFixed(2)}
                                             </span>
                                         </div>
 
-                                        {/* Expandable Order Details (Drop Down) */}
-                                        {expandedOrderId === order.id && (
-                                            <div className="pt-4 border-t space-y-4 animate-fade-in" style={{ borderColor: colors.border }}>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-2">Order Breakdown</p>
-                                                    <div className="space-y-2">
+                                        {/* Expandable Order Details */}
+                                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${expandedOrderId === order.id ? 'max-h-[800px] opacity-100 mb-5' : 'max-h-0 opacity-0'}`}>
+                                            <div className="pt-4 border-t border-dashed" style={{ borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
+                                                <div className="mb-5">
+                                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Order Details</p>
+                                                    <div className="space-y-2.5">
                                                         {order.items?.map((item, idx) => (
-                                                            <div key={idx} className={`flex justify-between items-center p-2 rounded-xl ${isDarkMode ? 'bg-white/5' : 'bg-gray-50'}`}>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-xs font-black text-orange-500">{item.quantity}x</span>
-                                                                    <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{item.name}</span>
+                                                            <div key={idx} className="flex justify-between items-start">
+                                                                <div className="flex items-start gap-2">
+                                                                    <span className="text-xs font-bold text-orange-500 mt-0.5">{item.quantity}x</span>
+                                                                    <span className="text-sm font-medium" style={{ color: colors.text }}>{item.name}</span>
                                                                 </div>
-                                                                <span className={`text-xs font-black ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                                                                <span className="text-sm font-semibold" style={{ color: colors.text }}>
                                                                     ₱{(Number(item.price_at_order || 0) * item.quantity).toFixed(2)}
                                                                 </span>
                                                             </div>
@@ -269,65 +275,69 @@ function Orders() {
                                                     </div>
                                                 </div>
 
-                                                <div className="p-3 rounded-xl border flex flex-col gap-2" style={{ borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)' }}>
-                                                    <div className="flex items-start gap-2">
-                                                        <MapPin size={14} className="text-orange-500 flex-shrink-0 mt-0.5" />
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <p className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>
+                                                <div className="p-3.5 rounded-xl flex flex-col gap-3 border" style={{ backgroundColor: isDarkMode ? 'rgba(0,0,0,0.2)' : '#f9fafb', borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                                                    <div className="flex items-start gap-2.5">
+                                                        <MapPin size={16} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                                                        <div>
+                                                            <p className="text-sm font-medium" style={{ color: colors.text }}>
                                                                 {order.deliveryAddress || "University Main Campus"}
                                                             </p>
                                                             {(order.department || order.course) && (
-                                                                <p className={`text-[9px] font-black uppercase tracking-tight text-orange-500`}>
+                                                                <p className="text-xs font-semibold text-gray-500 mt-0.5">
                                                                     {order.department}{order.course ? ` • ${order.course}` : ''}
                                                                 </p>
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock size={14} className="text-orange-500" />
-                                                        <p className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>
+                                                    <div className="flex items-center gap-2.5">
+                                                        <Clock size={16} className="text-orange-500" />
+                                                        <p className="text-sm font-medium" style={{ color: colors.text }}>
                                                             Arriving in {order.deliveryTime || "25-30 min"}
                                                         </p>
                                                     </div>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
 
-                                    {/* Card Footer */}
-                                    <div className="px-5 pb-5 space-y-3">
-                                        <button
-                                            onClick={() => toggleOrderExpansion(order.id)}
-                                            className={`w-full px-4 py-2.5 rounded-full font-black text-[11px] uppercase tracking-widest transition-all border flex items-center justify-center gap-2 ${expandedOrderId === order.id ? 'bg-orange-500 text-white border-orange-500' : 'hover:bg-gray-50 border-gray-200'}`}
-                                            style={expandedOrderId !== order.id ? { color: colors.text } : {}}
-                                        >
-                                            {expandedOrderId === order.id ? (
-                                                <><ChevronUp size={16} /> Hide Details</>
+                                        {/* Actions */}
+                                        <div className="space-y-2.5">
+                                            <button
+                                                onClick={() => toggleOrderExpansion(order.id)}
+                                                className="w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors border"
+                                                style={{ 
+                                                    color: colors.text,
+                                                    borderColor: expandedOrderId === order.id ? '#f97316' : (isDarkMode ? '#374151' : '#e5e7eb'),
+                                                    backgroundColor: expandedOrderId === order.id ? 'rgba(249, 115, 22, 0.05)' : 'transparent'
+                                                }}
+                                            >
+                                                {expandedOrderId === order.id ? (
+                                                    <><ChevronUp size={16} className="text-orange-500" /> Hide Details</>
+                                                ) : (
+                                                    <><ChevronDown size={16} /> View Details</>
+                                                )}
+                                            </button>
+
+                                            {['delivered', 'completed'].includes(order.status?.toLowerCase()) ? (
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    <button
+                                                        onClick={() => navigate('/home')}
+                                                        className="w-full py-2.5 rounded-xl font-semibold text-xs transition-all text-white bg-orange-500 hover:bg-orange-600 flex items-center justify-center gap-1.5 shadow-sm"
+                                                    >
+                                                        <ShoppingBag size={14} /> Reorder
+                                                    </button>
+                                                    <button
+                                                        onClick={() => alert("Review functionality coming soon! Thank you for your feedback.")}
+                                                        className="w-full py-2.5 rounded-xl font-semibold text-xs transition-all border border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100 dark:border-none dark:bg-orange-500/10 dark:text-orange-400 dark:hover:bg-orange-500/20 flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <Star size={14} /> Review
+                                                    </button>
+                                                </div>
                                             ) : (
-                                                <><ChevronDown size={16} /> Order Details</>
+                                                <div className="w-full py-2.5 rounded-xl text-center font-semibold text-xs flex items-center justify-center gap-1.5 text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 mt-2">
+                                                    <Clock size={16} /> {order.status === 'cancelled' ? 'Order Cancelled' : 'Order in Progress'}
+                                                </div>
                                             )}
-                                        </button>
-
-                                        {['delivered', 'completed'].includes(order.status?.toLowerCase()) ? (
-                                            <div className="space-y-3">
-                                                <button
-                                                    onClick={() => navigate('/home')}
-                                                    className="w-full px-4 py-2.5 rounded-full font-semibold transition-all text-white hover:shadow-md hover:-translate-y-0.5 bg-orange-500 hover:bg-orange-600 flex items-center justify-center gap-2"
-                                                >
-                                                    <ShoppingBag size={18} /> Order Again
-                                                </button>
-                                                <button
-                                                    onClick={() => alert("Review functionality coming soon! Thank you for your feedback.")}
-                                                    className="w-full px-4 py-2.5 rounded-full font-semibold transition-all border border-orange-500 text-orange-500 hover:bg-orange-50 flex items-center justify-center gap-2"
-                                                >
-                                                    <Star size={18} /> Review Order
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="w-full px-4 py-2.5 rounded-full text-center font-semibold text-white flex items-center justify-center gap-2" style={{ backgroundColor: '#f97316', opacity: 0.7 }}>
-                                                <Clock size={18} /> {order.status === 'cancelled' ? 'Order Cancelled' : 'In Progress'}
-                                            </div>
-                                        )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -336,86 +346,85 @@ function Orders() {
                 )}
             </div>
 
-            {/* Order Details Modal */}
+            {/* Modal Order Details */}
             {selectedOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
                     <div
-                        className="w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-slide-up border max-h-[90vh] flex flex-col"
-                        style={{ backgroundColor: colors.secondaryBg, borderColor: colors.border }}
+                        className="w-full max-w-xl rounded-[2rem] shadow-2xl overflow-hidden animate-slide-up border max-h-[90vh] flex flex-col"
+                        style={{ backgroundColor: isDarkMode ? '#111827' : '#ffffff', borderColor: isDarkMode ? '#1f2937' : '#e5e7eb' }}
                     >
                         {/* Modal Header */}
-                        <div className="p-6 border-b flex justify-between items-center" style={{ borderColor: colors.border, backgroundColor: colors.tertiary }}>
+                        <div className="px-8 py-6 border-b flex justify-between items-center" style={{ borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' }}>
                             <div>
-                                <h2 className="text-2xl font-bold" style={{ color: colors.text }}>Order Details</h2>
-                                <p className="text-sm" style={{ color: colors.textSecondary }}>Order #{selectedOrder.id}</p>
+                                <h2 className="text-2xl font-bold mb-1" style={{ color: colors.text }}>Order Details</h2>
+                                <p className="text-sm font-medium tracking-wide text-gray-500">ORDER #{selectedOrder.id}</p>
                             </div>
                             <button
                                 onClick={() => setSelectedOrder(null)}
-                                className="p-2 rounded-full hover:bg-black/10 transition-colors"
+                                className="p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                                 style={{ color: colors.text }}
                             >
-                                <X size={24} />
+                                <X size={20} />
                             </button>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6 overflow-y-auto space-y-6">
+                        <div className="px-8 py-6 overflow-y-auto space-y-8 flex-1">
                             {/* Restaurant & Status */}
-                            <div className="flex justify-between items-start gap-4 p-4 rounded-2xl border" style={{ borderColor: colors.border, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
+                            <div className="flex justify-between items-start gap-4">
                                 <div>
-                                    <h3 className="text-xl font-bold mb-1" style={{ color: colors.text }}>{selectedOrder.restaurantName}</h3>
-                                    <p className="text-sm flex items-center gap-2" style={{ color: colors.textSecondary }}>
-                                        <Clock size={16} /> {formatDate(selectedOrder.date)}
+                                    <h3 className="text-2xl font-bold mb-2" style={{ color: colors.text }}>{selectedOrder.restaurantName}</h3>
+                                    <p className="text-sm font-medium flex items-center gap-2" style={{ color: colors.textSecondary }}>
+                                        <Clock size={16} className="text-orange-500" /> {formatDate(selectedOrder.date)}
                                     </p>
                                 </div>
-                                <span className="px-4 py-1.5 rounded-full text-sm font-bold text-white shadow-sm" style={{ backgroundColor: getStatusColor(selectedOrder.status) }}>
-                                    {selectedOrder.status.toUpperCase()}
+                                <span className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-sm" style={{ backgroundColor: getStatusColor(selectedOrder.status) }}>
+                                    {selectedOrder.status}
                                 </span>
                             </div>
 
                             {/* Order Items */}
                             <div>
-                                <h4 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: colors.text }}>
-                                    <Receipt size={20} className="text-orange-500" />
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-5">
                                     Order Summary
                                 </h4>
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                                         selectedOrder.items.map((item, idx) => (
-                                            <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                                                        {item.quantity}x
+                                            <div key={idx} className="flex justify-between items-center">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-600 font-bold shadow-sm">
+                                                        {item.quantity}
                                                     </div>
                                                     <div>
-                                                        <p className="font-semibold" style={{ color: colors.text }}>{item.name}</p>
-                                                        <p className="text-xs" style={{ color: colors.textSecondary }}>₱{Number(item.price_at_order || 0).toFixed(2)} each</p>
+                                                        <p className="font-semibold text-md" style={{ color: colors.text }}>{item.name}</p>
+                                                        <p className="text-sm font-medium mt-0.5" style={{ color: colors.textSecondary }}>₱{Number(item.price_at_order || 0).toFixed(2)} each</p>
                                                     </div>
                                                 </div>
-                                                <p className="font-bold" style={{ color: colors.text }}>
+                                                <p className="font-bold text-lg" style={{ color: colors.text }}>
                                                     ₱{(Number(item.price_at_order || 0) * item.quantity).toFixed(2)}
                                                 </p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-center py-4 text-gray-400 italic">No item details available</p>
+                                        <p className="text-center py-4 text-gray-400 italic font-medium">No items available</p>
                                     )}
                                 </div>
                             </div>
 
                             {/* Delivery Info */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t" style={{ borderColor: colors.border }}>
-                                <div className="space-y-1">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Delivery Address</p>
-                                    <p className="text-sm font-medium flex items-start gap-2" style={{ color: colors.text }}>
-                                        <MapPin size={16} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t" style={{ borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' }}>
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Delivery Address</p>
+                                    <p className="text-sm font-medium flex items-start gap-2 leading-relaxed" style={{ color: colors.text }}>
+                                        <MapPin size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
                                         {selectedOrder.deliveryAddress}, {selectedOrder.deliveryCity}
                                     </p>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Est. Delivery Time</p>
+                                <div className="space-y-2">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Est. Delivery Time</p>
                                     <p className="text-sm font-medium flex items-center gap-2" style={{ color: colors.text }}>
-                                        <TrendingUp size={16} className="text-orange-500" />
+                                        <TrendingUp size={18} className="text-orange-500" />
                                         {selectedOrder.estimatedDeliveryTime ? `${selectedOrder.estimatedDeliveryTime} mins` : '30-45 mins'}
                                     </p>
                                 </div>
@@ -423,8 +432,8 @@ function Orders() {
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="p-6 border-t bg-orange-500/5 flex justify-between items-center" style={{ borderColor: colors.border }}>
-                            <span className="text-lg font-bold" style={{ color: colors.text }}>Total Paid</span>
+                        <div className="px-8 py-6 border-t bg-gray-50 dark:bg-black/20 flex justify-between items-center" style={{ borderColor: isDarkMode ? '#1f2937' : '#e5e7eb' }}>
+                            <span className="text-lg font-bold" style={{ color: colors.textSecondary }}>Total Paid</span>
                             <span className="text-3xl font-black text-orange-500">
                                 ₱{selectedOrder.total.toFixed(2)}
                             </span>

@@ -211,54 +211,53 @@ function Profile() {
 
 			<main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
 				<div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 text-gray-900 overflow-hidden">
-					<div className="mb-8 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white shadow-lg sm:p-8">
+					<div className={`mb-8 overflow-hidden rounded-2xl border p-6 shadow-sm sm:p-8 transition-all duration-300 ${isDarkMode ? 'bg-zinc-900/40 border-zinc-800/80 shadow-black/20' : 'bg-white border-slate-200 shadow-sm'}`}>
 						<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 							<div className="min-w-0 flex-1">
-								<h3 className="text-xl font-bold tracking-tight sm:text-2xl">Profile of {displayName}</h3>
-								<p className="mt-2 max-w-xl text-xs leading-relaxed text-orange-100 sm:text-sm">
+								<h3 className={`text-xl font-semibold tracking-tight sm:text-2xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Profile of {displayName}</h3>
+								<p className={`mt-2 max-w-xl text-xs leading-relaxed sm:text-sm ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
 									View your campus dining analytics, default delivery addresses, and recent activity.
 								</p>
 								<div className="mt-5 flex flex-wrap items-center gap-3">
 									<button
 										type="button"
 										onClick={scrollToUserActivity}
-										className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-orange-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-md"
+										className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 border ${isDarkMode ? 'bg-zinc-800/80 text-white border-zinc-700 hover:border-zinc-500' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300 hover:shadow-sm'}`}
 									>
-										<LayoutDashboard size={18} strokeWidth={2} aria-hidden />
+										<LayoutDashboard size={16} strokeWidth={2} aria-hidden />
 										Dashboard
 									</button>
 									<button
 										type="button"
 										onClick={() => navigate("/home")}
-										className="inline-flex items-center gap-2 rounded-full bg-orange-500/25 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-500/35 hover:shadow-md hover:-translate-y-0.5"
+										className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-sm hover:-translate-y-0.5"
 									>
-										<Utensils size={18} strokeWidth={2} aria-hidden />
+										<Utensils size={16} strokeWidth={2} aria-hidden />
 										Browse food
 									</button>
 									<button
 										type="button"
 										onClick={() => navigate("/orders")}
-										className="inline-flex items-center gap-2 rounded-full bg-orange-500/25 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-500/35"
+										className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white' : 'border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
 									>
-										<Package size={18} strokeWidth={2} aria-hidden />
+										<Package size={16} strokeWidth={2} aria-hidden />
 										View orders
 									</button>
 								</div>
 							</div>
 							<div className="grid w-full grid-cols-3 gap-3 md:w-auto md:min-w-[280px]">
-								<div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
-									<p className="text-[10px] text-orange-100 sm:text-xs">Active orders</p>
-									<p className="text-xl font-bold tabular-nums sm:text-2xl">{activityMetrics.activeOrdersCount}</p>
+								<div className={`rounded-xl border px-3 py-3 sm:px-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/50' : 'bg-slate-50 border-slate-100'}`}>
+									<p className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Active orders</p>
+									<p className={`text-xl font-bold tabular-nums sm:text-2xl mt-0.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.activeOrdersCount}</p>
 								</div>
-								<div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
-									<p className="text-[10px] text-orange-100 sm:text-xs">Saved items</p>
-									<p className="text-xl font-bold tabular-nums sm:text-2xl">0</p>
+								<div className={`rounded-xl border px-3 py-3 sm:px-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/50' : 'bg-slate-50 border-slate-100'}`}>
+									<p className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Total orders</p>
+									<p className={`text-xl font-bold tabular-nums sm:text-2xl mt-0.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.totalOrders}</p>
 								</div>
-								<div className="rounded-2xl bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
-									<p className="text-[10px] text-orange-100 sm:text-xs">This week</p>
-									<p className="text-lg font-bold tabular-nums sm:text-2xl">
-										₱
-										{Math.round(activityMetrics.thisWeekSpent).toLocaleString()}
+								<div className={`rounded-xl border px-3 py-3 sm:px-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/50' : 'bg-slate-50 border-slate-100'}`}>
+									<p className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Total spent</p>
+									<p className={`text-lg font-bold tabular-nums sm:text-2xl mt-0.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+										₱{Math.round(activityMetrics.totalSpent).toLocaleString()}
 									</p>
 								</div>
 							</div>

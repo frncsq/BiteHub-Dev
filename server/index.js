@@ -154,6 +154,22 @@ const ensureBudgetMealTables = async () => {
   }
 };
 
+const ensureRestaurantIsActiveColumn = async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE restaurants
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+    `);
+    // Backfill: any approved restaurant that was already active should remain active
+    await pool.query(`
+      UPDATE restaurants SET is_active = TRUE WHERE is_active IS NULL;
+    `);
+    console.log('✅ Ensured restaurants.is_active column exists');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure restaurants.is_active column:', err.message);
+  }
+};
+
 const ensureRestaurantLogoUrlColumnIsText = async () => {
   try {
     await pool.query(`
@@ -218,6 +234,7 @@ const seedDatabase = async () => {
     await ensureMenuItemSizeColumns();
     await ensureStockColumns();
     await ensureBudgetMealTables();
+    await ensureRestaurantIsActiveColumn();
     await seedDatabase();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();
@@ -345,7 +362,13 @@ publicCatalogRouter.get('/categories', async (req, res) => {
 
 publicCatalogRouter.get('/restaurants', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM restaurants');
+    // Only return restaurants that are approved AND admin-enabled (is_active = true)
+    const result = await pool.query(
+      `SELECT * FROM restaurants
+       WHERE approval_status = 'approved'
+         AND is_active = TRUE
+       ORDER BY business_name ASC`
+    );
     const restaurants = result.rows.map(r => ({
       id: r.id,
       name: r.business_name,
@@ -373,7 +396,9 @@ publicCatalogRouter.get('/food', async (req, res) => {
     const result = await pool.query(`
       SELECT m.*, r.business_name as restaurant 
       FROM menu_items m 
-      LEFT JOIN restaurants r ON m.restaurant_id = r.id
+      INNER JOIN restaurants r ON m.restaurant_id = r.id
+      WHERE r.approval_status = 'approved'
+        AND r.is_active = TRUE
     `);
     const foods = result.rows.map(f => ({
       id: f.id,
@@ -402,11 +427,21 @@ publicCatalogRouter.get('/food', async (req, res) => {
 publicCatalogRouter.get('/food/:restaurantId', async (req, res) => {
   try {
     const restaurantId = Number.parseInt(req.params.restaurantId, 10);
+    // Block access if the restaurant is inactive or not approved
+    const restCheck = await pool.query(
+      `SELECT id FROM restaurants WHERE id = $1 AND approval_status = 'approved' AND is_active = TRUE`,
+      [restaurantId]
+    );
+    if (restCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Restaurant not found or currently unavailable.' });
+    }
     const result = await pool.query(`
       SELECT m.*, r.business_name as restaurant 
       FROM menu_items m 
-      LEFT JOIN restaurants r ON m.restaurant_id = r.id
+      INNER JOIN restaurants r ON m.restaurant_id = r.id
       WHERE m.restaurant_id = $1
+        AND r.approval_status = 'approved'
+        AND r.is_active = TRUE
     `, [restaurantId]);
     const foods = result.rows.map(f => ({
       id: f.id,
@@ -626,8 +661,20 @@ app.post('/api/orders/create', verifyToken, async (req, res) => {
         );
       }
 
+      const itemFoodIds = items.map(i => parseInt(i.id || i.foodId, 10)).filter(id => !isNaN(id));
+      if (itemFoodIds.length > 0) {
+        await client.query(
+          'DELETE FROM cart WHERE user_id = $1 AND menu_item_id = ANY($2::int[])',
+          [userId, itemFoodIds]
+        );
+      }
+
       await client.query('COMMIT');
-      req.session.cart = [];
+      if (req.session.cart) {
+        req.session.cart = req.session.cart.filter(c => !itemFoodIds.includes(parseInt(c.foodId, 10)));
+      } else {
+        req.session.cart = [];
+      }
       res.status(201).json({ success: true, order: newOrder });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -652,7 +699,15 @@ app.post('/api/orders/create', verifyToken, async (req, res) => {
 
     const orders = getSessionOrders(req);
     orders.unshift(order);
-    req.session.cart = [];
+    
+    // session fallback: filter out downloaded items instead of clearing all
+    const itemFoodIds = items.map(i => String(i.id || i.foodId));
+    if (req.session.cart) {
+      req.session.cart = req.session.cart.filter(c => !itemFoodIds.includes(String(c.foodId)));
+    } else {
+      req.session.cart = [];
+    }
+    
     res.status(201).json({ success: true, order });
   }
 });

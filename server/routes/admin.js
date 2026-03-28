@@ -188,7 +188,7 @@ router.patch('/users/:id/reset-password', isSuperAdmin, async (req, res) => {
 
 router.get('/restaurants', isAdmin, async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, business_name, owner_name, business_email, owner_phone, city, cuisine_type, is_verified, is_open, rating, approval_status, created_at FROM restaurants ORDER BY created_at DESC');
+        const result = await pool.query('SELECT id, business_name, owner_name, business_email, owner_phone, city, cuisine_type, is_verified, is_open, is_active, rating, approval_status, created_at FROM restaurants ORDER BY created_at DESC');
         
         // Add performance data
         const restaurants = result.rows;
@@ -217,6 +217,23 @@ router.put('/restaurants/:id', isAdmin, async (req, res) => {
             [business_name, owner_name, owner_phone, city, is_verified, is_open, req.params.id]
         );
         res.json({ success: true, message: 'Restaurant updated successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// PATCH: Toggle admin-level visibility (Active / Inactive) for a restaurant
+router.patch('/restaurants/:id/status', isAdmin, async (req, res) => {
+    const { is_active } = req.body;
+    if (typeof is_active !== 'boolean') {
+        return res.status(400).json({ success: false, message: 'is_active must be a boolean.' });
+    }
+    try {
+        await pool.query(
+            `UPDATE restaurants SET is_active=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2`,
+            [is_active, req.params.id]
+        );
+        res.json({ success: true, message: `Restaurant ${is_active ? 'activated' : 'deactivated'} successfully.` });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

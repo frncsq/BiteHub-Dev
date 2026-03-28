@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getApiBaseUrl } from '../../services/apiClient';
-import { Search, MapPin, Award, Store, CheckCircle, XCircle, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Search, MapPin, Store, CheckCircle, XCircle, Clock, RefreshCw, AlertTriangle, Power } from 'lucide-react';
 
 const STATUS_TABS = [
   { key: 'pending',  label: 'Pending Review', color: 'amber'   },
@@ -28,13 +28,22 @@ function AdminRestaurants() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [actionLoading, setActionLoading] = useState(null);
+  const [statusTogglingId, setStatusTogglingId] = useState(null);
 
   const baseURL = getApiBaseUrl();
+
+  // Build auth config — attach JWT bearer token + session cookie
+  const authConfig = () => {
+    const token = localStorage.getItem('authToken');
+    const headers = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return { withCredentials: true, headers };
+  };
 
   const fetchRestaurants = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${baseURL}/api/admin/restaurants`, { withCredentials: true });
+      const res = await axios.get(`${baseURL}/api/admin/restaurants`, authConfig());
       if (res.data.success) setRestaurants(res.data.restaurants);
     } catch (err) {
       console.error(err);
@@ -48,7 +57,7 @@ function AdminRestaurants() {
   const handleApproval = async (id, action) => {
     setActionLoading(`${id}-${action}`);
     try {
-      await axios.patch(`${baseURL}/api/admin/restaurants/${id}/approval`, { action }, { withCredentials: true });
+      await axios.patch(`${baseURL}/api/admin/restaurants/${id}/approval`, { action }, authConfig());
       fetchRestaurants();
     } catch (err) {
       console.error(err);
@@ -66,9 +75,34 @@ function AdminRestaurants() {
         city: restaurant.city,
         is_verified: restaurant.is_verified,
         is_open: !restaurant.is_open,
-      }, { withCredentials: true });
+      }, authConfig());
       fetchRestaurants();
     } catch (err) { console.error(err); }
+  };
+
+  // Toggle admin-side is_active (controls user-side visibility)
+  const toggleActiveStatus = async (restaurant) => {
+    const newStatus = !(restaurant.is_active !== false);
+    // Optimistic UI update
+    setRestaurants(prev =>
+      prev.map(r => r.id === restaurant.id ? { ...r, is_active: newStatus } : r)
+    );
+    setStatusTogglingId(restaurant.id);
+    try {
+      await axios.patch(
+        `${baseURL}/api/admin/restaurants/${restaurant.id}/status`,
+        { is_active: newStatus },
+        authConfig()
+      );
+    } catch (err) {
+      console.error(err);
+      // Rollback on failure
+      setRestaurants(prev =>
+        prev.map(r => r.id === restaurant.id ? { ...r, is_active: !newStatus } : r)
+      );
+    } finally {
+      setStatusTogglingId(null);
+    }
   };
 
   const counts = {
@@ -92,7 +126,7 @@ function AdminRestaurants() {
       <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Vendor Management</h1>
-          <p className="text-slate-500 mt-1 text-sm">Review applications and monitor partner restaurants</p>
+          <p className="text-slate-500 mt-1 text-sm">Review applications and control restaurant visibility</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -154,13 +188,24 @@ function AdminRestaurants() {
           </div>
         ) : filtered.map(r => {
           const rStatus = r.approval_status || 'pending';
-          return (
-            <div key={r.id} className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow flex flex-col gap-4">
+          const isActive = r.is_active !== false; // default true for legacy rows
+          const isToggling = statusTogglingId === r.id;
 
+          return (
+            <div
+              key={r.id}
+              className={`bg-white rounded-3xl p-5 shadow-sm border transition-all flex flex-col gap-4 ${
+                isActive ? 'border-slate-100 hover:shadow-md' : 'border-slate-200 opacity-60 grayscale-[30%]'
+              }`}
+            >
               {/* Card header */}
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 border border-orange-200">
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border ${
+                    isActive
+                      ? 'bg-orange-100 text-orange-600 border-orange-200'
+                      : 'bg-slate-100 text-slate-400 border-slate-200'
+                  }`}>
                     <Store size={20} />
                   </div>
                   <div>
@@ -193,6 +238,38 @@ function AdminRestaurants() {
                 </div>
               </div>
 
+              {/* Admin Visibility Toggle — only for approved restaurants */}
+              {rStatus === 'approved' && (
+                <div className="flex items-center justify-between bg-slate-50 rounded-2xl px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Power size={14} className={isActive ? 'text-emerald-500' : 'text-slate-400'} />
+                    <span className="text-xs font-semibold text-slate-600">User Visibility</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold ${isActive ? 'text-emerald-600' : 'text-slate-400'}`}>
+                      {isToggling ? '...' : isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    {/* Toggle switch */}
+                    <button
+                      onClick={() => toggleActiveStatus(r)}
+                      disabled={isToggling}
+                      title={isActive ? 'Click to Deactivate (hide from users)' : 'Click to Activate (show to users)'}
+                      className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 ${
+                        isActive
+                          ? 'bg-emerald-500 focus:ring-emerald-400'
+                          : 'bg-slate-300 focus:ring-slate-400'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-300 ${
+                          isActive ? 'translate-x-6' : 'translate-x-1'
+                        } ${isToggling ? 'animate-pulse' : ''}`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex gap-2 mt-auto">
                 {rStatus === 'pending' && (
@@ -221,7 +298,7 @@ function AdminRestaurants() {
                       onClick={() => toggleOpen(r)}
                       className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${r.is_open ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}`}
                     >
-                      {r.is_open ? '🟢 Active' : '🔴 Closed'}
+                      {r.is_open ? '🟢 Open' : '🔴 Closed'}
                     </button>
                     <button
                       onClick={() => handleApproval(r.id, 'rejected')}

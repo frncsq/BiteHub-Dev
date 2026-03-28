@@ -52,7 +52,7 @@ function AdminOrders() {
     <div className="space-y-6 animate-fade-in w-full h-full flex flex-col">
       <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Global Orders Tracking</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Global Orders history</h1>
           <p className="text-slate-500 mt-1 text-sm">Monitor system-wide order fulfillment and disputes</p>
         </div>
         <button onClick={fetchOrders} className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors">
