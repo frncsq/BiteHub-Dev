@@ -1214,14 +1214,14 @@ const HomePage = () => {
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }}
                                                             disabled={isOOS}
-                                                            className={`flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold py-2 rounded-xl transition-all ${isOOS
+                                                            className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all ${isOOS
                                                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-transparent'
                                                                 : isDarkMode
-                                                                    ? 'bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:text-white'
-                                                                    : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:bg-gray-50'
+                                                                    ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20'
+                                                                    : 'bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100'
                                                                 }`}
                                                         >
-                                                            <Plus size={12} /> {food.category === 'Drinks' ? 'Size' : food.category === 'Budget Meal' ? 'Combo' : 'Add'}
+                                                            <ShoppingCart size={16} strokeWidth={2.5} />
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }}
@@ -2043,146 +2043,143 @@ const HomePage = () => {
             )}
             {/* Food Detail Modal (Matching Modern Aesthetic) */}
             {showFoodModal && selectedFood && !showSizeModal && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setShowFoodModal(false)}>
-                    <div className={`w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowFoodModal(false)}>
+                    <div className={`w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col md:flex-row relative ${isDarkMode ? 'bg-[#0f0f13] border border-gray-800' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
+                        
+                        {/* Left: Big Image */}
+                        <div className="w-full md:w-5/12 h-64 md:h-auto overflow-hidden relative bg-gray-100 dark:bg-gray-900">
+                            <img src={selectedFood.image} alt={selectedFood.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-700" />
+                            
+                            {/* Inner Close Button on mobile */}
+                            <button onClick={() => setShowFoodModal(false)} className={`md:hidden absolute top-4 right-4 z-10 p-2 rounded-full backdrop-blur-md transition-all bg-black/30 hover:bg-black/50 text-white`}>
+                                <X size={18} strokeWidth={2.5} />
+                            </button>
 
-                        {/* Close Button */}
-                        <button onClick={() => setShowFoodModal(false)} className="absolute top-6 right-6 z-10 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-md transition-all active:scale-90">
-                            <X size={20} />
-                        </button>
+                            {selectedFood.discount > 0 && (
+                                <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-md border border-white/10">
+                                    -{selectedFood.discount}% OFF
+                                </div>
+                            )}
+                        </div>
 
-                        <div className="flex flex-col md:flex-row h-full">
-                            {/* Left: Big Image */}
-                            <div className="w-full md:w-1/2 h-64 md:h-auto overflow-hidden relative">
-                                <img src={selectedFood.image} alt={selectedFood.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-700" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                                {selectedFood.discount > 0 && (
-                                    <div className="absolute bottom-6 left-6 bg-red-500 text-white px-3 py-1 rounded-xl font-black text-sm shadow-lg">
-                                        -{selectedFood.discount}% OFF
-                                    </div>
-                                )}
-                            </div>
+                        {/* Right: Details */}
+                        <div className="p-6 md:p-10 md:w-7/12 flex flex-col w-full h-full relative">
+                            {/* Close Button Desktop */}
+                            <button onClick={() => setShowFoodModal(false)} className={`hidden md:flex absolute top-6 right-6 z-10 p-2.5 rounded-full transition-all ${isDarkMode ? 'bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900'}`}>
+                                <X size={18} strokeWidth={2.5} />
+                            </button>
 
-                            {/* Right: Details */}
-                            <div className="p-8 md:w-1/2 flex flex-col">
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-widest">{selectedFood.restaurant}</span>
-                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-400">
-                                            <Star size={14} className="text-yellow-400 fill-yellow-400" /> {selectedFood.rating}
-                                        </div>
-                                    </div>
-                                    <h2 className={`text-3xl font-black tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{selectedFood.name}</h2>
-                                    <p className={`text-sm leading-relaxed mb-6 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {selectedFood.description || "A delicious meticulously prepared meal using farm-fresh ingredients and traditional recipes to ensure the perfect taste in every bite."}
-                                    </p>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h4 className={`text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Ingredients</h4>
-                                            <p className={`text-[11px] font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {selectedFood.ingredients || "Fresh produce, signature spices, premium herbs, and heart-healthy oils."}
-                                            </p>
-                                        </div>
+                            <div className="mb-8 md:pr-10">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className={`px-2.5 py-1 ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'} text-[10px] font-bold rounded-lg uppercase tracking-wider`}>
+                                        {selectedFood.restaurant}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
+                                        <Star size={14} className="text-yellow-500 fill-yellow-500" /> {selectedFood.rating || "4.5"}
                                     </div>
                                 </div>
+                                <h2 className={`text-2xl md:text-3xl font-bold tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{selectedFood.name}</h2>
+                                <p className={`text-sm leading-relaxed font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {selectedFood.description || "A meticulously prepared meal featuring farm-fresh ingredients and traditional recipes to ensure perfect taste in every bite."}
+                                </p>
+                            </div>
 
-                                <div className="mt-auto space-y-6">
-                                    {/* Pricing Section */}
-                                    {selectedFood.category === 'Drinks' ? (
-                                        <div>
-                                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-3">Select Size</span>
-                                            <div className="flex gap-2">
-                                                {[
-                                                    { label: 'Small', price: selectedFood.half_price, icon: 'S' },
-                                                    { label: 'Medium', price: selectedFood.price, icon: 'M' },
-                                                    { label: 'Large', price: selectedFood.large_price, icon: 'L' }
-                                                ].filter(s => s.price != null && Number(s.price) > 0).map((size) => (
-                                                    <button
-                                                        key={size.label}
-                                                        onClick={() => setSelectedModalSize(size.label)}
-                                                        className={`flex-1 flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all ${selectedModalSize === size.label
-                                                            ? isDarkMode
-                                                                ? 'border-orange-500 bg-orange-500/10 text-orange-400'
-                                                                : 'border-orange-500 bg-orange-50 text-orange-600'
-                                                            : isDarkMode
-                                                                ? 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                                                                : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300'
-                                                            }`}
-                                                    >
-                                                        <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm ${selectedModalSize === size.label ? 'bg-orange-500 text-white' : isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                                                            }`}>{size.icon}</span>
-                                                        <span className="text-[10px] font-black uppercase tracking-wide">{size.label}</span>
-                                                        <span className="text-sm font-black">₱{Number(size.price).toFixed(2)}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            {/* Show selected price */}
-                                            <div className="mt-4 flex items-center justify-between">
-                                                <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Selected Price:</span>
-                                                <span className="text-2xl font-black text-orange-500">
-                                                    ₱{Number(
-                                                        selectedModalSize === 'Small' ? (selectedFood.half_price || selectedFood.price) :
-                                                            selectedModalSize === 'Large' ? (selectedFood.large_price || selectedFood.price) :
-                                                                selectedFood.price || 0
-                                                    ).toFixed(2)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Price</span>
-                                                <span className="text-3xl font-black text-orange-500">
-                                                    ₱{((selectedFood.price || 0) * (1 - (selectedFood.discount || 0) / 100)).toFixed(2)}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-2xl border border-gray-100 dark:border-gray-700">
+                            <div className="mt-auto space-y-6 pt-6 border-t border-gray-100 dark:border-gray-800/50">
+                                {/* Pricing Section */}
+                                {selectedFood.category === 'Drinks' ? (
+                                    <div>
+                                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-4">Select Size</span>
+                                        <div className="flex gap-3">
+                                            {[
+                                                { label: 'Small', price: selectedFood.half_price, icon: 'S' },
+                                                { label: 'Medium', price: selectedFood.price, icon: 'M' },
+                                                { label: 'Large', price: selectedFood.large_price, icon: 'L' }
+                                            ].filter(s => s.price != null && Number(s.price) > 0).map((size) => (
                                                 <button
-                                                    onClick={() => updateQuantity(selectedFood.id, (cart.find(c => c.id === selectedFood.id)?.quantity || 0) - 1)}
-                                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm text-gray-400 hover:text-orange-500 transition-all active:scale-90"
+                                                    key={size.label}
+                                                    onClick={() => setSelectedModalSize(size.label)}
+                                                    className={`flex-1 flex items-center justify-between p-3.5 rounded-xl transition-all ${selectedModalSize === size.label
+                                                        ? isDarkMode
+                                                            ? 'bg-white text-black shadow-lg shadow-white/5 border border-white'
+                                                            : 'bg-gray-900 text-white shadow-xl shadow-black/10 border border-gray-900'
+                                                        : isDarkMode
+                                                            ? 'border border-gray-800 bg-transparent text-gray-400 hover:bg-gray-800 hover:text-white'
+                                                            : 'border border-gray-200 bg-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                                        }`}
                                                 >
-                                                    <Minus size={18} />
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider`}>{size.label}</span>
+                                                    <span className={`text-sm font-bold`}>₱{Number(size.price).toFixed(2)}</span>
                                                 </button>
-                                                <span className="w-6 text-center font-black text-lg">
-                                                    {cart.find(c => c.id === selectedFood.id)?.quantity || 0}
-                                                </span>
-                                                <button
-                                                    onClick={() => addToCart(selectedFood)}
-                                                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-gray-800 shadow-sm text-gray-400 hover:text-orange-500 transition-all active:scale-90"
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
-                                            </div>
+                                            ))}
                                         </div>
-                                    )}
-
-                                    <div className="flex gap-4">
-                                        <button
-                                            onClick={() => {
-                                                if (selectedFood.category === 'Drinks') {
-                                                    addToCart(selectedFood, selectedModalSize, false);
-                                                } else {
-                                                    addToCart(selectedFood);
-                                                }
-                                            }}
-                                            className="flex-1 py-4 bg-gray-900 hover:bg-black text-white rounded-2xl font-black transition-all active:scale-[0.98] shadow-lg shadow-gray-400/20"
-                                        >
-                                            Add to Cart
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (selectedFood.category === 'Drinks') {
-                                                    addToCart(selectedFood, selectedModalSize, true);
-                                                } else {
-                                                    addToCart(selectedFood, null, true);
-                                                }
-                                            }}
-                                            className="flex-1 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black transition-all active:scale-[0.98] shadow-lg shadow-orange-500/30"
-                                        >
-                                            Order Now
-                                        </button>
+                                        {/* Show selected price */}
+                                        <div className="mt-8 flex items-center justify-between">
+                                            <span className={`text-[11px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Total Price</span>
+                                            <span className={`text-3xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                <span className="text-xl text-gray-400 mr-1.5">₱</span>
+                                                {Number(
+                                                    selectedModalSize === 'Small' ? (selectedFood.half_price || selectedFood.price) :
+                                                        selectedModalSize === 'Large' ? (selectedFood.large_price || selectedFood.price) :
+                                                            selectedFood.price || 0
+                                                ).toFixed(2)}
+                                            </span>
+                                        </div>
                                     </div>
+                                ) : (
+                                    <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                                        <div className="flex flex-col">
+                                            <span className={`text-[11px] font-bold uppercase tracking-widest mb-1.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Total Price</span>
+                                            <span className={`text-3xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                <span className="text-xl text-gray-400 mr-1.5">₱</span>
+                                                {((selectedFood.price || 0) * (1 - (selectedFood.discount || 0) / 100)).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className={`flex items-center gap-5 px-5 py-2.5 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
+                                            <button
+                                                onClick={() => updateQuantity(selectedFood.id, (cart.find(c => c.id === selectedFood.id)?.quantity || 0) - 1)}
+                                                className={`p-1.5 transition-colors hover:text-black dark:hover:text-white ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                                            >
+                                                <Minus size={18} strokeWidth={2.5} />
+                                            </button>
+                                            <span className={`w-6 text-center font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                {cart.find(c => c.id === selectedFood.id)?.quantity || 0}
+                                            </span>
+                                            <button
+                                                onClick={() => addToCart(selectedFood)}
+                                                className={`p-1.5 transition-colors hover:text-black dark:hover:text-white ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                                            >
+                                                <Plus size={18} strokeWidth={2.5} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => {
+                                            if (selectedFood.category === 'Drinks') {
+                                                addToCart(selectedFood, selectedModalSize, false);
+                                            } else {
+                                                addToCart(selectedFood);
+                                            }
+                                        }}
+                                        className={`w-14 shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-[0.98] border ${isDarkMode ? 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-orange-50 hover:bg-orange-100 text-orange-600 border-orange-200'}`}
+                                    >
+                                        <ShoppingCart size={22} strokeWidth={2.5} />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (selectedFood.category === 'Drinks') {
+                                                addToCart(selectedFood, selectedModalSize, true);
+                                            } else {
+                                                addToCart(selectedFood, null, true);
+                                            }
+                                        }}
+                                        className="flex-1 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-orange-500/30"
+                                    >
+                                        Order Now
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2218,68 +2215,68 @@ const HomePage = () => {
             ════════════════════════════════════════════════════════ */}
             {showBudgetModal && budgetFood && (
                 <div
-                    className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in"
+                    className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-sm animate-fade-in"
                     onClick={closeBudgetModal}
                 >
                     <div
-                        className={`w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-slide-up flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white'
+                        className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col relative ${isDarkMode ? 'bg-[#0f0f13] border border-gray-800' : 'bg-white'
                             }`}
                         style={{ maxHeight: '90vh' }}
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'border-gray-700/50' : 'border-gray-100'
+                        <div className={`flex items-center justify-between px-8 py-6 border-b ${isDarkMode ? 'border-gray-800/50' : 'border-gray-100'
                             }`}>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-4">
                                 {budgetStep > 1 && (
                                     <button
                                         onClick={() => setBudgetStep(s => s - 1)}
-                                        className={`p-1.5 rounded-xl transition ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                        className={`p-2 rounded-xl transition-all ${isDarkMode ? 'bg-gray-800/50 hover:bg-gray-700 text-gray-300' : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
                                             }`}
                                     >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M15 18l-6-6 6-6" /></svg>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6" /></svg>
                                     </button>
                                 )}
                                 <div>
-                                    <h2 className={`font-black text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                        {budgetStep === 1 && '🍱 Choose Combination'}
-                                        {budgetStep === 2 && '🥩 Select Your Options'}
-                                        {budgetStep === 3 && '✅ Confirm Order'}
+                                    <h2 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        {budgetStep === 1 && 'Choose Combination'}
+                                        {budgetStep === 2 && 'Select Your Options'}
+                                        {budgetStep === 3 && 'Order Summary'}
                                     </h2>
-                                    <p className={`text-[10px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                                    <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'
                                         }`}>
-                                        {budgetFood.name} · Step {budgetStep} of 3
+                                        Step {budgetStep} of 3
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={closeBudgetModal} className={`p-2 rounded-xl transition ${isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                            <button onClick={closeBudgetModal} className={`p-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-gray-800 text-gray-500 hover:text-gray-300' : 'hover:bg-gray-100 text-gray-400 hover:text-gray-800'
                                 }`}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                                <X size={20} strokeWidth={2.5} />
                             </button>
                         </div>
 
                         {/* Progress Dots */}
-                        <div className="flex justify-center gap-2 py-3">
+                        <div className="flex justify-center gap-2 py-5">
                             {[1, 2, 3].map(step => (
                                 <div
                                     key={step}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${step === budgetStep ? 'w-8 bg-orange-500' :
-                                        step < budgetStep ? 'w-4 bg-orange-300' :
-                                            'w-4 bg-gray-200'
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${step === budgetStep ? 'w-8 bg-gray-900 dark:bg-white' :
+                                        step < budgetStep ? 'w-4 bg-gray-300 dark:bg-gray-600' :
+                                            'w-4 bg-gray-100 dark:bg-gray-800'
                                         }`}
                                 />
                             ))}
                         </div>
 
                         {/* Modal Body – scrollable */}
-                        <div className="overflow-y-auto flex-1 px-6 pb-4">
+                        <div className="overflow-y-auto flex-1 px-8 pb-8">
 
                             {/* ── Step 1: Choose Combination Type ── */}
                             {budgetStep === 1 && (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     {budgetLoadingCombos ? (
                                         <div className="flex flex-col items-center py-12 gap-3">
-                                            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                                            <div className="w-8 h-8 border-4 border-gray-900 dark:border-white border-t-transparent rounded-full animate-spin" />
                                             <p className={`text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading options...</p>
                                         </div>
                                     ) : budgetCombinations.length === 0 ? (
@@ -2294,28 +2291,31 @@ const HomePage = () => {
                                             <button
                                                 key={combo.id}
                                                 onClick={() => budgetSelectCombo(combo)}
-                                                className={`w-full group flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-200 ${budgetSelectedCombo?.id === combo.id
-                                                    ? isDarkMode ? 'border-orange-500 bg-orange-500/10' : 'border-orange-500 bg-orange-50'
-                                                    : isDarkMode ? 'border-gray-700 bg-gray-800/40 hover:border-orange-500/50' : 'border-gray-100 bg-white hover:border-orange-200 hover:shadow-md'
+                                                className={`w-full group flex items-center justify-between p-5 rounded-2xl border transition-all duration-200 ${budgetSelectedCombo?.id === combo.id
+                                                    ? isDarkMode ? 'border-transparent bg-gray-800 text-white shadow-lg' : 'border-transparent bg-gray-900 text-white shadow-xl shadow-black/5'
+                                                    : isDarkMode ? 'border-gray-800 bg-transparent hover:bg-gray-800/50' : 'border-gray-200 bg-transparent hover:bg-gray-50'
                                                     }`}
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all ${isDarkMode ? 'bg-gray-700 group-hover:bg-orange-500/20' : 'bg-orange-50 group-hover:bg-orange-100'
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${budgetSelectedCombo?.id === combo.id
+                                                            ? isDarkMode ? 'bg-gray-700' : 'bg-gray-800'
+                                                            : isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
                                                         }`}>
                                                         🍱
                                                     </div>
                                                     <div className="text-left">
-                                                        <p className={`font-black text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                        <p className={`font-bold text-sm ${budgetSelectedCombo?.id === combo.id ? 'text-white' : isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                                                             {combo.label}
                                                         </p>
-                                                        <p className={`text-[11px] font-medium mt-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                        <p className={`text-[11px] font-bold tracking-wide mt-1 ${budgetSelectedCombo?.id === combo.id ? 'text-gray-400' : isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                                                             {combo.slots.map(s => s.component_type).join(' + ')}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-lg font-black text-orange-500">₱{Number(combo.price).toFixed(2)}</span>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-all ${isDarkMode ? 'text-gray-600 group-hover:text-orange-400' : 'text-gray-300 group-hover:text-orange-500'}`}><path d="M9 18l6-6-6-6" /></svg>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={`text-lg font-bold ${budgetSelectedCombo?.id === combo.id ? 'text-white' : isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                                                        ₱{Number(combo.price).toFixed(2)}
+                                                    </span>
                                                 </div>
                                             </button>
                                         ))
@@ -2325,33 +2325,33 @@ const HomePage = () => {
 
                             {/* ── Step 2: Select Options per Slot ── */}
                             {budgetStep === 2 && budgetSelectedCombo && (
-                                <div className="space-y-5">
+                                <div className="space-y-6">
                                     {/* Combo summary badge */}
-                                    <div className={`flex items-center justify-between p-3 rounded-2xl ${isDarkMode ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-orange-50 border border-orange-100'
+                                    <div className={`flex items-center justify-between p-4 rounded-2xl ${isDarkMode ? 'bg-gray-800/50 border border-gray-700/50' : 'bg-gray-50 border border-gray-200'
                                         }`}>
                                         <div>
-                                            <p className={`text-xs font-black uppercase tracking-widest mb-0.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Selected</p>
-                                            <p className={`font-black text-sm ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>{budgetSelectedCombo.label}</p>
+                                            <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Selected</p>
+                                            <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{budgetSelectedCombo.label}</p>
                                         </div>
-                                        <span className="font-black text-lg text-orange-500">₱{Number(budgetSelectedCombo.price).toFixed(2)}</span>
+                                        <span className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>₱{Number(budgetSelectedCombo.price).toFixed(2)}</span>
                                     </div>
 
                                     {budgetSelectedCombo.slots.map((slot, idx) => (
-                                        <div key={idx}>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${budgetSelections[budgetSlotKey(budgetSelectedCombo, slot)]
-                                                    ? 'bg-orange-500 text-white'
-                                                    : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+                                        <div key={idx} className="pt-2">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold ${budgetSelections[budgetSlotKey(budgetSelectedCombo, slot)]
+                                                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                                                    : isDarkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-400'
                                                     }`}>{idx + 1}</div>
-                                                <p className={`text-sm font-black uppercase tracking-wide ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                <p className={`text-sm font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                                     Choose your {slot.component_type}
                                                 </p>
                                                 {budgetSelections[budgetSlotKey(budgetSelectedCombo, slot)] && (
-                                                    <span className={`ml-auto text-[10px] font-black px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-50 text-green-600'
+                                                    <span className={`ml-auto text-[10px] font-bold px-2.5 py-1 rounded-md ${isDarkMode ? 'bg-gray-800/80 text-gray-300' : 'bg-gray-100 text-gray-600'
                                                         }`}> ✓ Selected</span>
                                                 )}
                                             </div>
-                                            <div className="grid grid-cols-2 gap-2">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 {slot.options.map(opt => {
                                                     const key = budgetSlotKey(budgetSelectedCombo, slot)
                                                     const isChosen = budgetSelections[key] === opt.name
@@ -2359,16 +2359,12 @@ const HomePage = () => {
                                                         <button
                                                             key={opt.id}
                                                             onClick={() => setBudgetSelections(prev => ({ ...prev, [key]: opt.name }))}
-                                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border-2 text-sm font-bold transition-all duration-200 ${isChosen
-                                                                ? isDarkMode ? 'border-orange-500 bg-orange-500/15 text-orange-300' : 'border-orange-500 bg-orange-50 text-orange-700'
-                                                                : isDarkMode ? 'border-gray-700 bg-gray-800/40 text-gray-300 hover:border-gray-600' : 'border-gray-100 bg-white text-gray-700 hover:border-orange-300 hover:shadow-sm'
+                                                            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all duration-200 ${isChosen
+                                                                ? isDarkMode ? 'border-white bg-gray-800 text-white shadow-lg' : 'border-gray-900 bg-gray-900 text-white shadow-lg'
+                                                                : isDarkMode ? 'border-gray-800 bg-transparent text-gray-400 hover:border-gray-700 hover:bg-gray-800/30' : 'border-gray-200 bg-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                                                                 }`}
                                                         >
-                                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isChosen ? 'border-orange-500 bg-orange-500' : isDarkMode ? 'border-gray-600' : 'border-gray-300'
-                                                                }`}>
-                                                                {isChosen && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                                                            </div>
-                                                            {opt.name}
+                                                            <span className="font-bold text-sm text-center">{opt.name}</span>
                                                         </button>
                                                     )
                                                 })}
@@ -2379,9 +2375,9 @@ const HomePage = () => {
                                     <button
                                         onClick={() => { if (budgetAllSelected()) setBudgetStep(3) }}
                                         disabled={!budgetAllSelected()}
-                                        className={`w-full py-4 rounded-2xl font-black text-sm transition-all ${budgetAllSelected()
-                                            ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30 active:scale-[0.98]'
-                                            : isDarkMode ? 'bg-gray-800 text-gray-600 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wide transition-all mt-6 ${budgetAllSelected()
+                                            ? isDarkMode ? 'bg-white text-black shadow-lg shadow-white/10 active:scale-[0.98]' : 'bg-gray-900 text-white shadow-xl shadow-black/10 active:scale-[0.98]'
+                                            : isDarkMode ? 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-800/50' : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-transparent'
                                             }`}
                                     >
                                         {budgetAllSelected() ? 'Review My Order →' : `Select all ${budgetSelectedCombo.slots.length} item${budgetSelectedCombo.slots.length > 1 ? 's' : ''} to continue`}
@@ -2391,26 +2387,26 @@ const HomePage = () => {
 
                             {/* ── Step 3: Confirm Summary ── */}
                             {budgetStep === 3 && budgetSelectedCombo && (
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     {/* Food image + name */}
                                     {budgetFood.image && (
-                                        <div className="w-full h-36 rounded-2xl overflow-hidden">
+                                        <div className="w-full h-40 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-900">
                                             <img src={budgetFood.image} alt={budgetFood.name} className="w-full h-full object-cover" />
                                         </div>
                                     )}
 
-                                    <div className={`p-4 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'
+                                    <div className={`p-6 rounded-2xl border ${isDarkMode ? 'bg-gray-800/30 border-gray-800' : 'bg-gray-50/50 border-gray-200'
                                         }`}>
-                                        <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Order Summary</p>
+                                        <p className={`text-[10px] font-bold uppercase tracking-widest mb-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Order Summary</p>
 
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             <div className="flex justify-between">
-                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Item</span>
-                                                <span className={`text-sm font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{budgetFood.name}</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Item</span>
+                                                <span className={`text-sm font-bold tracking-wide ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{budgetFood.name}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Combo</span>
-                                                <span className={`text-sm font-black text-orange-500`}>{budgetSelectedCombo.label}</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Combo</span>
+                                                <span className={`text-sm font-bold tracking-wide ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{budgetSelectedCombo.label}</span>
                                             </div>
 
                                             {/* Selected options */}
@@ -2418,35 +2414,35 @@ const HomePage = () => {
                                                 const key = budgetSlotKey(budgetSelectedCombo, slot)
                                                 return (
                                                     <div key={idx} className="flex justify-between">
-                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{slot.component_type}</span>
-                                                        <span className={`text-sm font-black ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{budgetSelections[key]}</span>
+                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{slot.component_type}</span>
+                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{budgetSelections[key]}</span>
                                                     </div>
                                                 )
                                             })}
                                         </div>
 
-                                        <div className={`mt-4 pt-4 border-t flex justify-between items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                                            <span className={`text-sm font-black uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total</span>
-                                            <span className="text-2xl font-black text-orange-500">₱{Number(budgetSelectedCombo.price).toFixed(2)}</span>
+                                        <div className={`mt-6 pt-5 border-t flex justify-between items-end ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+                                            <span className={`text-[11px] font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Total Price</span>
+                                            <span className={`text-2xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>₱{Number(budgetSelectedCombo.price).toFixed(2)}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-3 pt-2">
                                         <button
                                             onClick={addBudgetMealToCart}
-                                            className="flex-1 py-4 bg-gray-900 hover:bg-black text-white rounded-2xl font-black text-sm transition-all active:scale-[0.98] shadow-lg"
+                                            className={`w-14 shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-[0.98] border ${isDarkMode ? 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-orange-50 hover:bg-orange-100 text-orange-600 border-orange-200'}`}
                                         >
-                                            Add to Cart
+                                            <ShoppingCart size={22} strokeWidth={2.5} />
                                         </button>
                                         <button
                                             onClick={() => { addBudgetMealToCart() }}
-                                            className="flex-1 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm transition-all active:scale-[0.98] shadow-lg shadow-orange-500/30"
+                                            className="flex-1 py-4 rounded-2xl font-bold text-sm tracking-wide transition-all active:scale-[0.98] shadow-lg shadow-orange-500/30 border border-transparent bg-orange-500 hover:bg-orange-600 text-white"
                                         >
-                                            Order Now 🚀
+                                            Order Now
                                         </button>
                                     </div>
-                                    <p className={`text-center text-[10px] font-medium ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
-                                        You can adjust quantity from the cart
+                                    <p className={`text-center text-[11px] font-bold mt-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                                        You can adjust quantity directly from the cart
                                     </p>
                                 </div>
                             )}
@@ -2458,7 +2454,7 @@ const HomePage = () => {
             {/* Size Selection Modal (For Drinks) */}
             {showSizeModal && foodForSize && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={() => setShowSizeModal(false)}>
-                    <div className={`w-full max-w-sm rounded-[35px] overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white p-8 px-6'}`} onClick={e => e.stopPropagation()}>
+                    <div className={`w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col relative ${isDarkMode ? 'bg-[#1a1a2e] border border-gray-700/50' : 'bg-white p-8 px-6'}`} onClick={e => e.stopPropagation()}>
 
                         <div className="text-center mb-6">
                             {/* Drink Image if available */}
