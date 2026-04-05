@@ -38,7 +38,9 @@ import {
     Moon,
     LayoutDashboard,
     Receipt,
-    Trash2
+    Trash2,
+    Info,
+    CheckCircle
 } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
 import { mockRestaurantsData, mockFoodItems, mockCategories, mockOrderService, mockCartService, mockAuthService } from "../services/mockData"
@@ -74,6 +76,56 @@ const HomePage = () => {
     const [favorites, setFavorites] = useState(new Set())
     const [cart, setCart] = useState([])
     const [orders, setOrders] = useState([])
+    const [notifications, setNotifications] = useState([])
+    const [unreadCount, setUnreadCount] = useState(0)
+
+    useEffect(() => {
+        const notifs = orders.map(o => {
+            const status = o.status || 'pending';
+            let message = `Your order is in progress.`;
+
+            if (status === 'pending') message = `Your order is pending confirmation.`;
+            else if (status === 'preparing') message = `Your order is currently being prepared.`;
+            else if (status === 'prepared') message = `Your order is ready.`;
+            else if (status === 'out_for_delivery') message = `Your order is out for delivery!`;
+            else if (status === 'delivered') message = `Your order has been delivered! Enjoy your meal.`;
+            else if (status === 'cancelled') message = `Your order has been cancelled.`;
+            else if (status === 'accepted') message = `Your order was accepted.`;
+
+            return {
+                id: o.id,
+                title: `Order Update ${o.id}`,
+                message,
+                time: o.createdAt || new Date().toISOString(),
+                status: status,
+                type: 'order'
+            };
+        });
+
+        // Sort by time descending
+        notifs.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        const active = notifs.filter(n => !['delivered', 'cancelled'].includes(n.status));
+        setUnreadCount(active.length);
+
+        setNotifications([
+            {
+                id: 'sys-1',
+                title: 'Welcome to BiteHub!',
+                message: 'Explore our wide variety of restaurants and place your first order today!',
+                time: new Date().toISOString(),
+                type: 'system',
+                status: 'info'
+            },
+            ...notifs
+        ].slice(0, 15));
+    }, [orders]);
+
+    const formatNotifTime = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     const profileActivityMetrics = useMemo(() => buildProfileActivityMetrics(orders), [orders])
     const [categories, setCategories] = useState([])
     const [restaurants, setRestaurants] = useState([])
@@ -133,6 +185,7 @@ const HomePage = () => {
     const [budgetSelections, setBudgetSelections] = useState({}) // slotKey -> chosen option name
     const [budgetLoadingCombos, setBudgetLoadingCombos] = useState(false)
     const [budgetGoToCart, setBudgetGoToCart] = useState(false)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
     const fetchLiveOrders = async () => {
         if (userRole !== 'owner') return;
@@ -342,6 +395,7 @@ const HomePage = () => {
                     id: `ORD-${o.id}`,
                     status: o.order_status || o.status || "pending",
                     date: o.created_at ? new Date(o.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
+                    createdAt: o.created_at,
                     total: Number(o.total_amount || 0).toFixed(2),
                     items: o.items_count || (o.items ? o.items.length : 1)
                 }));
@@ -839,16 +893,54 @@ const HomePage = () => {
                                     className={`relative p-2 rounded-lg transition hover:shadow-sm hover:-translate-y-0.5 ${isDarkMode ? 'hover:bg-gray-800/50 text-gray-300' : 'hover:bg-white/50 text-gray-600'}`}
                                 >
                                     <Bell size={20} />
-                                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-1 ring-white">
+                                            {unreadCount}
+                                        </span>
+                                    )}
                                 </button>
                                 {notificationDropdown && (
-                                    <div className={`absolute right-0 mt-2 w-80 border rounded-2xl shadow-xl p-4 animate-fade-in space-y-3 backdrop-blur-2xl ${isDarkMode ? 'bg-gray-900/80 border-gray-700/50' : 'bg-white/80 border-white/50'
+                                    <div className={`absolute right-0 mt-2 w-96 border rounded-2xl shadow-2xl p-0 animate-fade-in flex flex-col z-50 backdrop-blur-3xl overflow-hidden ${isDarkMode ? 'bg-gray-900/95 border-gray-700/50' : 'bg-white/95 border-white/50'
                                         }`}>
-                                        <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
-                                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                            <div className="p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl text-sm text-gray-700 backdrop-blur-sm shadow-sm">Your order #1234 is ready for delivery</div>
-                                            <div className="p-3 bg-green-50/50 border border-green-100/50 rounded-xl text-sm text-gray-700 backdrop-blur-sm shadow-sm">Special offer: 20% off on Pizza!</div>
-                                            <div className="p-3 bg-orange-50/50 border border-orange-100/50 rounded-xl text-sm text-gray-700 backdrop-blur-sm shadow-sm">New restaurant added near you</div>
+                                        <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+                                            <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
+                                            {unreadCount > 0 && (
+                                                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                    {unreadCount} New
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="max-h-80 overflow-y-auto w-full">
+                                            {notifications.length > 0 ? notifications.map((notif, idx) => (
+                                                <div key={idx} className={`p-4 border-b transition-colors ${isDarkMode ? 'border-gray-800 hover:bg-gray-800/80' : 'border-gray-100 hover:bg-gray-50'}`}>
+                                                    <div className="flex gap-3">
+                                                        <div className={`mt-1 p-2 rounded-lg flex-shrink-0 h-8 w-8 flex items-center justify-center ${notif.status === 'delivered' ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' :
+                                                            notif.status === 'cancelled' ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400' :
+                                                                notif.type === 'system' ? 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' :
+                                                                    'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
+                                                            }`}>
+                                                            {notif.status === 'delivered' ? <CheckCircle size={14} /> :
+                                                                notif.status === 'cancelled' ? <X size={14} /> :
+                                                                    notif.type === 'system' ? <Info size={14} /> :
+                                                                        <Clock size={14} />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex justify-between items-start mb-0.5">
+                                                                <h4 className={`font-semibold text-sm truncate pr-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{notif.title}</h4>
+                                                                <span className={`text-[10px] whitespace-nowrap font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatNotifTime(notif.time)}</span>
+                                                            </div>
+                                                            <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{notif.message}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )) : (
+                                                <div className="flex flex-col items-center justify-center text-center p-8">
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                                                        <Bell size={20} className={isDarkMode ? 'text-gray-600' : 'text-gray-400'} />
+                                                    </div>
+                                                    <p className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>No notifications yet</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -1555,19 +1647,48 @@ const HomePage = () => {
                                 <h3 className="font-bold text-gray-900 text-xl mb-4">App Preferences</h3>
                                 <div className="space-y-4 max-w-lg">
 
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm("Are you sure you want to logout?")) {
-                                                navigate("/login")
-                                            }
-                                        }}
-                                        className="w-full text-left px-5 py-3.5 rounded-2xl border border-red-100 hover:border-red-200 hover:bg-red-50 text-sm font-semibold text-red-600 flex items-center justify-between transition-all group"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <LogOut size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" /> Logout
+                                    {!showLogoutConfirm ? (
+                                        <button
+                                            onClick={() => setShowLogoutConfirm(true)}
+                                            className="w-full text-left px-5 py-3.5 rounded-2xl border border-red-100 hover:border-red-200 hover:bg-red-50 text-sm font-semibold text-red-600 flex items-center justify-between transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <LogOut size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" /> Logout
+                                            </div>
+                                            <ChevronRight size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                                        </button>
+                                    ) : (
+                                        <div className="rounded-2xl border border-red-200 bg-red-50/60 p-5 animate-fade-in">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                                    <LogOut size={18} className="text-red-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900">Are you sure you want to logout?</p>
+                                                    <p className="text-xs text-gray-500">You'll need to sign in again to access your account.</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 ml-12">
+                                                <button
+                                                    onClick={() => {
+                                                        localStorage.removeItem('authToken');
+                                                        setMessage("Logged out successfully!");
+                                                        setMessageType("success");
+                                                        setTimeout(() => navigate("/login"), 600);
+                                                    }}
+                                                    className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-700 transition-all hover:shadow-md"
+                                                >
+                                                    Logout
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowLogoutConfirm(false)}
+                                                    className="px-4 py-2 bg-white text-gray-600 text-xs font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
                                         </div>
-                                        <ChevronRight size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
-                                    </button>
+                                    )}
                                 </div>
                             </section>
 
@@ -2045,11 +2166,11 @@ const HomePage = () => {
             {showFoodModal && selectedFood && !showSizeModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowFoodModal(false)}>
                     <div className={`w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl animate-fade-in-scale flex flex-col md:flex-row relative ${isDarkMode ? 'bg-[#0f0f13] border border-gray-800' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-                        
+
                         {/* Left: Big Image */}
                         <div className="w-full md:w-5/12 h-64 md:h-auto overflow-hidden relative bg-gray-100 dark:bg-gray-900">
                             <img src={selectedFood.image} alt={selectedFood.name} className="w-full h-full object-cover transition-transform hover:scale-105 duration-700" />
-                            
+
                             {/* Inner Close Button on mobile */}
                             <button onClick={() => setShowFoodModal(false)} className={`md:hidden absolute top-4 right-4 z-10 p-2 rounded-full backdrop-blur-md transition-all bg-black/30 hover:bg-black/50 text-white`}>
                                 <X size={18} strokeWidth={2.5} />
@@ -2134,7 +2255,7 @@ const HomePage = () => {
                                                 {((selectedFood.price || 0) * (1 - (selectedFood.discount || 0) / 100)).toFixed(2)}
                                             </span>
                                         </div>
-                                        
+
                                         <div className={`flex items-center gap-5 px-5 py-2.5 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
                                             <button
                                                 onClick={() => updateQuantity(selectedFood.id, (cart.find(c => c.id === selectedFood.id)?.quantity || 0) - 1)}
@@ -2298,8 +2419,8 @@ const HomePage = () => {
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${budgetSelectedCombo?.id === combo.id
-                                                            ? isDarkMode ? 'bg-gray-700' : 'bg-gray-800'
-                                                            : isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+                                                        ? isDarkMode ? 'bg-gray-700' : 'bg-gray-800'
+                                                        : isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
                                                         }`}>
                                                         🍱
                                                     </div>
@@ -2611,10 +2732,10 @@ const HomePage = () => {
                                     onClick={handleDirectCheckoutSubmit}
                                     disabled={directCheckoutProcessing || !directDepartment || !directCourse}
                                     className={`px-8 py-3.5 rounded-2xl font-black text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${directCheckoutProcessing
-                                            ? 'bg-orange-400 text-white cursor-not-allowed shadow-orange-500/20'
-                                            : (!directDepartment || !directCourse)
-                                                ? (isDarkMode ? 'bg-gray-800 text-gray-500 cursor-not-allowed border-2 border-gray-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200')
-                                                : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/30'
+                                        ? 'bg-orange-400 text-white cursor-not-allowed shadow-orange-500/20'
+                                        : (!directDepartment || !directCourse)
+                                            ? (isDarkMode ? 'bg-gray-800 text-gray-500 cursor-not-allowed border-2 border-gray-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200')
+                                            : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/30'
                                         }`}
                                 >
                                     {directCheckoutProcessing ? (

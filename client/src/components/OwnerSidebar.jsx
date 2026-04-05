@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Package, BarChart3, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Package, BarChart3, Settings } from 'lucide-react';
 import { createApiClient } from '../services/apiClient';
 import { useNavigate } from 'react-router-dom';
 import biteLogo from '../assets/bite.png';
@@ -17,20 +17,7 @@ function OwnerSidebar() {
     { name: 'Settings', path: '/owner/settings', icon: Settings },
   ];
 
-  const handleLogout = async () => {
-    try {
-      const apiClient = createApiClient();
-      await apiClient.post('/owner/logout');
-      localStorage.removeItem('authToken');
-      console.log("✅ Auth token cleared on logout");
-      navigate('/restaurant-login');
-    } catch (err) {
-      console.error("Logout failed:", err);
-      // Even if API fails, clear local token and navigate
-      localStorage.removeItem('authToken');
-      navigate('/restaurant-login');
-    }
-  };
+
 
   return (
     <div className="w-64 bg-white/60 backdrop-blur-2xl border-r border-white/50 h-screen fixed left-0 top-0 flex flex-col shadow-[8px_0_32px_rgba(0,0,0,0.03)] z-50 transition-all duration-300 ease-in-out">
@@ -73,16 +60,7 @@ function OwnerSidebar() {
           );
         })}
       </div>
-      <div className="p-4 border-t border-white/40 mb-4 relative z-20">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-red-600 hover:bg-white/60 hover:shadow-sm border border-transparent hover:border-white/60 transition-all duration-300 font-medium group relative overflow-hidden hover:-translate-y-0.5"
-        >
-          <div className="absolute inset-0 bg-red-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-          <LogOut size={20} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110 text-red-500" />
-          <span className="transition-transform duration-300 group-hover:translate-x-1">Logout</span>
-        </button>
-      </div>
+
     </div>
   );
 }

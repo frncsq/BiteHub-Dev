@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, Settings, LogOut, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, Settings, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
 import { getApiBaseUrl } from '../services/apiClient';
 import biteLogo from '../assets/bite.png';
@@ -17,20 +17,7 @@ function AdminSidebar() {
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 }
   ];
 
-  const handleLogout = async () => {
-    try {
-      const baseURL = getApiBaseUrl();
-      // Try to notify the backend, but clear local token regardless
-      await axios.post(`${baseURL}/api/admin/logout`, {}, { withCredentials: true }).catch(() => {});
-      localStorage.removeItem('authToken');
-      console.log("✅ Admin auth token cleared");
-      navigate('/admin-login');
-    } catch (err) {
-      console.error(err);
-      localStorage.removeItem('authToken');
-      navigate('/admin-login');
-    }
-  };
+
 
   return (
     <div className="w-64 bg-slate-900/95 backdrop-blur-3xl border-r border-white/10 h-screen fixed left-0 top-0 flex flex-col shadow-2xl z-50 transition-all duration-300 ease-in-out text-slate-300">
@@ -78,15 +65,7 @@ function AdminSidebar() {
         })}
       </div>
 
-      <div className="p-4 border-t border-white/10 mb-4 relative z-20">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 border border-transparent hover:border-red-500/30 transition-all duration-300 font-medium group relative overflow-hidden"
-        >
-          <LogOut size={20} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110 text-red-500" />
-          <span className="transition-transform duration-300 group-hover:translate-x-1">Logout</span>
-        </button>
-      </div>
+
     </div>
   );
 }

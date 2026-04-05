@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { getApiBaseUrl } from "../services/apiClient"
 
 function Header() {
@@ -8,21 +8,37 @@ function Header() {
     const location = useLocation()
     const API_URL = getApiBaseUrl()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+    const logoutRef = useRef(null)
+
+    // Close logout confirm when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (logoutRef.current && !logoutRef.current.contains(e.target)) {
+                setShowLogoutConfirm(false)
+            }
+        }
+        if (showLogoutConfirm) {
+            document.addEventListener("mousedown", handleClickOutside)
+        }
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [showLogoutConfirm])
 
     const handleLogout = async () => {
-        if (!window.confirm("Are you sure you want to logout?")) return
-
         try {
             const response = await axios.post(`${API_URL}/api/customer/logout`, {}, {
                 withCredentials: true
             })
             if (response.data.success) {
+                localStorage.removeItem('authToken');
                 navigate("/") 
             } else {
                 console.error("Logout failed:", response.data.message)
             }
         } catch (error) {
             console.error("Logout failed:", error)
+            localStorage.removeItem('authToken');
+            navigate("/")
         }
     }
 
@@ -71,14 +87,37 @@ function Header() {
                         ))}
                     </nav>
 
-                    {/* Logout Button */}
-                    <button
-                        onClick={handleLogout}
-                        className="hidden md:block rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:shadow-lg"
-                        style={{backgroundColor: '#8b0000', color: '#fff'}}
-                    >
-                        Logout
-                    </button>
+                    {/* Logout Button with Confirmation */}
+                    <div className="hidden md:block relative" ref={logoutRef}>
+                        <button
+                            onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
+                            className="rounded-lg px-4 py-2 text-sm font-semibold transition-all hover:shadow-lg"
+                            style={{backgroundColor: '#8b0000', color: '#fff'}}
+                        >
+                            Logout
+                        </button>
+                        {showLogoutConfirm && (
+                            <div className="absolute right-0 top-full mt-2 w-64 rounded-xl shadow-2xl border border-white/10 p-4 z-50" style={{background: 'rgba(20, 20, 40, 0.97)', backdropFilter: 'blur(12px)'}}>
+                                <p className="text-sm font-bold text-white mb-1">Are you sure?</p>
+                                <p className="text-xs text-gray-400 mb-3">You'll need to sign in again to access your account.</p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => { setShowLogoutConfirm(false); handleLogout(); }}
+                                        className="flex-1 px-3 py-2 text-xs font-bold rounded-lg transition-all hover:shadow-md"
+                                        style={{backgroundColor: '#8b0000', color: '#fff'}}
+                                    >
+                                        Yes, Logout
+                                    </button>
+                                    <button
+                                        onClick={() => setShowLogoutConfirm(false)}
+                                        className="flex-1 px-3 py-2 bg-white/10 text-gray-300 text-xs font-bold rounded-lg border border-white/10 hover:bg-white/20 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Mobile Menu Button */}
                     <button
@@ -114,16 +153,35 @@ function Header() {
                                 {link.label}
                             </button>
                         ))}
-                        <button
-                            onClick={() => {
-                                handleLogout()
-                                setIsMobileMenuOpen(false)
-                            }}
-                            className="w-full text-left py-3 px-4 text-sm font-semibold mt-2"
-                            style={{backgroundColor: '#8b0000', color: '#fff', borderTop: '1px solid rgba(139, 0, 0, 0.3)'}}
-                        >
-                            Logout
-                        </button>
+                        {!showLogoutConfirm ? (
+                            <button
+                                onClick={() => setShowLogoutConfirm(true)}
+                                className="w-full text-left py-3 px-4 text-sm font-semibold mt-2"
+                                style={{backgroundColor: '#8b0000', color: '#fff', borderTop: '1px solid rgba(139, 0, 0, 0.3)'}}
+                            >
+                                Logout
+                            </button>
+                        ) : (
+                            <div className="mx-4 mt-2 p-4 rounded-xl border border-red-900/30" style={{background: 'rgba(139, 0, 0, 0.15)'}}>
+                                <p className="text-sm font-bold text-white mb-1">Are you sure?</p>
+                                <p className="text-xs text-gray-400 mb-3">You'll need to sign in again.</p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => { setShowLogoutConfirm(false); setIsMobileMenuOpen(false); handleLogout(); }}
+                                        className="flex-1 px-3 py-2 text-xs font-bold rounded-lg"
+                                        style={{backgroundColor: '#8b0000', color: '#fff'}}
+                                    >
+                                        Yes, Logout
+                                    </button>
+                                    <button
+                                        onClick={() => setShowLogoutConfirm(false)}
+                                        className="flex-1 px-3 py-2 text-xs font-bold rounded-lg border border-white/20 text-gray-300 hover:bg-white/10 transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </nav>
                 )}
             </div>

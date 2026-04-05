@@ -166,16 +166,16 @@ function Cart() {
                     const itemStoreId = item.restaurant_id || item.restaurantId || item.restaurant || 'Unknown Store';
                     return String(itemStoreId) !== String(storeId);
                 });
-                
+
                 setError("");
-                
+
                 alert(`Order for ${storeGroup.storeName} placed successfully!`);
-                
+
                 if (remainingItems.length === 0) {
-                     navigate("/orders");
+                    navigate("/orders");
                 } else {
-                     setCartItems(remainingItems);
-                     setActiveCheckoutStore(null);
+                    setCartItems(remainingItems);
+                    setActiveCheckoutStore(null);
                 }
             }
         } catch (err) {
@@ -196,33 +196,46 @@ function Cart() {
 
     return (
         <div className={`min-h-screen flex font-sans transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-slate-50 text-slate-900'}`}>            <CustomerSidebar
-                activeTab="cart"
-                sidebarCollapsed={sidebarCollapsed}
-                setSidebarCollapsed={setSidebarCollapsed}
-            />
+            activeTab="cart"
+            sidebarCollapsed={sidebarCollapsed}
+            setSidebarCollapsed={setSidebarCollapsed}
+        />
 
             {/* Main Content Area */}
             <main className={`flex-1 flex flex-col relative z-20 overflow-x-hidden h-screen overflow-y-auto scroll-smooth transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-                {/* Professional Compact Header */}
-                <header className={`sticky top-0 z-40 backdrop-blur-md border-b h-16 px-6 flex items-center justify-between ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800/50' : 'bg-white/80 border-slate-200'}`}>
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/home')} className={`p-1.5 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-slate-200 hover:bg-slate-50'} border shadow-sm block`}>
-                            <ArrowLeft size={16} />
-                        </button>
+                {/* Ambient Highlight */}
+                <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                    <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[150px] ${isDarkMode ? 'bg-orange-500/10' : 'bg-orange-500/5'}`} />
+                </div>
+
+                <div className="p-6 md:p-10 max-w-5xl mx-auto w-full space-y-8 relative z-10">
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate("/home")}
+                        className={`mb-2 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isDarkMode ? 'hover:bg-white/5 text-zinc-400' : 'hover:bg-black/5 text-slate-500'}`}
+                    >
+                        <ArrowLeft size={16} /> Back to Dashboard
+                    </button>
+
+                    {/* Minimalist Header */}
+                    <div className={`mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b ${isDarkMode ? 'border-white/10' : 'border-black/5'}`}>
                         <div>
-                            <h1 className={`text-lg font-semibold tracking-tight leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Shopping Cart</h1>
-                            <p className={`text-[10px] font-medium uppercase tracking-widest leading-none ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Checkout Process</p>
+                            <h1 className={`text-3xl md:text-4xl font-bold tracking-tight mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Bite Cart</h1>
+                            <p className={`text-sm font-medium ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Review your items and complete checkout.</p>
+                        </div>
+                        <div className={`flex gap-6 items-center p-4 rounded-2xl border backdrop-blur-sm ${isDarkMode ? 'bg-black/20 border-white/5' : 'bg-white/50 border-black/5'}`}>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-medium uppercase tracking-wide mb-1 text-gray-500">Cart Items</span>
+                                <span className="text-2xl font-bold text-orange-500 leading-none">{cartItems.length}</span>
+                            </div>
                         </div>
                     </div>
-                </header>
-
-                <div className="p-6 md:p-10 max-w-5xl mx-auto w-full space-y-8">
                     {/* Cart Items Area */}
                     <div className="w-full animate-fade-in space-y-6">
                         {cartItems.length === 0 ? (
                             <div className={`rounded-2xl p-16 sm:p-24 text-center border shadow-sm ${isDarkMode ? 'bg-zinc-900/40 border-zinc-800/80' : 'bg-white border-slate-200'} flex flex-col items-center justify-center`}>
                                 <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700 text-zinc-500' : 'bg-slate-50 border-slate-100 text-slate-400'} shadow-sm`}>
-                                    <ShoppingCart size={32} />
+                                    <ShoppingCart size={30} />
                                 </div>
                                 <h2 className={`text-xl font-semibold mb-2 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Your cart is empty</h2>
                                 <p className={`text-sm mb-8 max-w-sm ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Browse our robust selection of meals and add something to your cart.</p>
@@ -238,7 +251,7 @@ function Cart() {
                                 {Object.values(groupedCart).map((group) => {
                                     const storeSubtotal = calculateStoreSubtotal(group.items);
                                     const deliveryFee = deliveryFeeBase;
-                                    const promoDiscount = storeSubtotal > 1000 ? 100 : 0;
+                                    const promoDiscount = storeSubtotal > 1000 ? 10 : 0;
                                     const storeTotal = storeSubtotal + deliveryFee - promoDiscount;
 
                                     return (
@@ -292,18 +305,18 @@ function Cart() {
                                                                 </p>
                                                             </div>
 
-                                                            <div className="flexItems-center justify-center sm:justify-start gap-4 mt-3">
-                                                                <div className={`flex items-center gap-3 p-1 rounded-lg border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
-                                                                    <button onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)} className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-white text-slate-500 hover:text-slate-800'} border border-transparent hover:border-black/5 dark:hover:border-white/5`}>
-                                                                        <Minus size={14} />
+                                                            <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                                                                <div className={`flex items-center gap-1 p-0.5 rounded-md border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-slate-50 border-slate-200 shadow-sm'}`}>
+                                                                    <button onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)} className={`w-6 h-6 flex items-center justify-center rounded transition-all ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-white text-slate-500 hover:text-slate-800'} border border-transparent hover:border-black/5 dark:hover:border-white/5`}>
+                                                                        <Minus size={12} />
                                                                     </button>
-                                                                    <span className="text-sm font-semibold min-w-[20px] text-center">{item.quantity}</span>
-                                                                    <button onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)} className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-white text-slate-500 hover:text-slate-800'} border border-transparent hover:border-black/5 dark:hover:border-white/5`}>
-                                                                        <Plus size={14} />
+                                                                    <span className="text-xs font-semibold min-w-[16px] text-center">{item.quantity}</span>
+                                                                    <button onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)} className={`w-6 h-6 flex items-center justify-center rounded transition-all ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-white text-slate-500 hover:text-slate-800'} border border-transparent hover:border-black/5 dark:hover:border-white/5`}>
+                                                                        <Plus size={12} />
                                                                     </button>
                                                                 </div>
-                                                                <button onClick={() => handleRemoveItem(item.id)} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'text-zinc-500 hover:text-red-400 hover:bg-red-500/10' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`} aria-label="Remove item">
-                                                                    <Trash2 size={16} />
+                                                                <button onClick={() => handleRemoveItem(item.id)} className={`p-1.5 rounded-md transition-all ${isDarkMode ? 'text-zinc-500 hover:text-red-400 hover:bg-red-500/10' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`} aria-label="Remove item">
+                                                                    <Trash2 size={14} />
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -361,7 +374,7 @@ function Cart() {
                                                         </h3>
                                                         <span className={`text-[10px] uppercase font-bold tracking-wider ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>Abra University Main</span>
                                                     </div>
-                                                    
+
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div className="space-y-1.5">
                                                             <label className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Building / Department</label>
@@ -390,13 +403,13 @@ function Cart() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     {error && activeCheckoutStore === group.storeId && (
                                                         <p className="mt-4 text-xs font-medium text-red-500 flex items-center gap-1.5">⚠️ {error}</p>
                                                     )}
-                                                    
+
                                                     <div className="mt-5 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800/50">
-                                                        <button 
+                                                        <button
                                                             onClick={() => setActiveCheckoutStore(null)}
                                                             className={`w-full sm:w-auto px-5 py-2 rounded-lg text-sm font-semibold transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                                         >

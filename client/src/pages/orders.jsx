@@ -1,7 +1,7 @@
 import CustomerSidebar from "../components/CustomerSidebar"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Package, MapPin, Clock, Phone, ArrowLeft, TrendingUp, Utensils, Info, X, Receipt, ShoppingBag, Star, Bell, Search, User, ChevronDown, ChevronUp } from "lucide-react"
+import { Package, MapPin, Clock, Phone, ArrowLeft, TrendingUp, Utensils, Info, X, Receipt, ShoppingBag, Star, Bell, Search, User, ChevronDown, ChevronUp, LayoutGrid, List } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
 import { createApiClient } from "../services/apiClient"
 
@@ -13,6 +13,7 @@ function Orders() {
     const [selectedOrder, setSelectedOrder] = useState(null)
     const [expandedOrderId, setExpandedOrderId] = useState(null)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+    const [viewFormat, setViewFormat] = useState('grid')
     const navigate = useNavigate()
     const { isDarkMode, colors } = useTheme()
 
@@ -157,24 +158,42 @@ function Orders() {
                     </div>
                 </div>
 
-                {/* Minimalist Filter Bar */}
-                <div className="mb-8 flex gap-3 flex-wrap">
-                    {['all', 'preparing', 'out for delivery', 'delivered', 'cancelled'].map((status) => (
-                        <button
-                            key={status}
-                            onClick={() => setStatusFilter(status)}
-                            className={`px-5 py-2 rounded-full text-sm font-medium capitalize transition-all duration-200 ${statusFilter === status
-                                    ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                                    : 'bg-transparent border hover:bg-black/5 dark:hover:bg-white/5'
-                                }`}
-                            style={statusFilter !== status ? {
-                                color: colors.textSecondary,
-                                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                            } : {}}
+                {/* Minimalist Filter Bar & Format Toggle */}
+                <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                    <div className="flex gap-3 flex-wrap">
+                        {['all', 'preparing', 'out for delivery', 'delivered', 'cancelled'].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={`px-5 py-2 rounded-full text-sm font-medium capitalize transition-all duration-200 ${statusFilter === status
+                                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
+                                        : 'bg-transparent border hover:bg-black/5 dark:hover:bg-white/5'
+                                    }`}
+                                style={statusFilter !== status ? {
+                                    color: colors.textSecondary,
+                                    borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                } : {}}
+                            >
+                                {status}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-1.5 p-1 rounded-xl border bg-white/50 dark:bg-black/20 backdrop-blur-sm self-end sm:self-auto" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                        <button 
+                            onClick={() => setViewFormat('grid')} 
+                            className={`p-2 rounded-lg transition-all duration-200 ${viewFormat === 'grid' ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                            title="Grid View"
                         >
-                            {status}
+                            <LayoutGrid size={18} />
                         </button>
-                    ))}
+                        <button 
+                            onClick={() => setViewFormat('table')} 
+                            className={`p-2 rounded-lg transition-all duration-200 ${viewFormat === 'table' ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                            title="Table View"
+                        >
+                            <List size={18} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Error Message */}
@@ -218,8 +237,10 @@ function Orders() {
                                 Showing {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
                             </p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                            {filteredOrders.map((order) => (
+                        
+                        {viewFormat === 'grid' ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                {filteredOrders.map((order) => (
                                 <div
                                     key={order.id}
                                     className="rounded-2xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden"
@@ -342,6 +363,45 @@ function Orders() {
                                 </div>
                             ))}
                         </div>
+                        ) : (
+                            <div className="overflow-x-auto rounded-2xl border shadow-sm" style={{ backgroundColor: isDarkMode ? '#111827' : '#ffffff', borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' }}>
+                                <table className="w-full text-left border-collapse min-w-[800px]">
+                                    <thead>
+                                        <tr className="border-b text-xs font-semibold uppercase tracking-wider text-gray-500" style={{ borderColor: isDarkMode ? '#1f2937' : '#e5e7eb', backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : '#f9fafb' }}>
+                                            <th className="p-5 font-bold">Order ID</th>
+                                            <th className="p-5 font-bold">Restaurant</th>
+                                            <th className="p-5 font-bold">Date & Time</th>
+                                            <th className="p-5 font-bold">Total</th>
+                                            <th className="p-5 font-bold">Status</th>
+                                            <th className="p-5 font-bold text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {filteredOrders.map(order => (
+                                            <tr key={order.id} className="border-b last:border-none transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ borderColor: isDarkMode ? '#1f2937' : '#f3f4f6', color: colors.text }}>
+                                                <td className="p-5 font-medium text-gray-500">{order.id}</td>
+                                                <td className="p-5 font-bold">{order.restaurantName}</td>
+                                                <td className="p-5 font-medium flex items-center gap-2" style={{ color: colors.textSecondary }}>
+                                                    <Clock size={14} className="text-orange-500" />
+                                                    {formatDate(order.date)}
+                                                </td>
+                                                <td className="p-5 font-bold text-orange-500">₱{(order.total || 0).toFixed(2)}</td>
+                                                <td className="p-5">
+                                                    <span className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-sm inline-block" style={{ backgroundColor: getStatusColor(order.status) }}>
+                                                        {order.status || 'unknown'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-5 text-center">
+                                                    <button onClick={() => setSelectedOrder(order)} className="px-4 py-2 rounded-xl text-xs font-bold bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-500/10 dark:text-orange-400 dark:hover:bg-orange-500/20 transition-colors shadow-sm whitespace-nowrap">
+                                                        View Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

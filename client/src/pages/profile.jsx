@@ -160,28 +160,28 @@ function Profile() {
 		)
 	}
 
-	const cardBase = `rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-md ${isDarkMode ? 'border-zinc-800/80 bg-zinc-900/60' : 'border-slate-200/80 bg-white'}`
+	const cardBase = `rounded-[1.5rem] border transition-all duration-300 ${isDarkMode ? 'border-white/[0.08] bg-zinc-900/40 backdrop-blur-md' : 'border-black/[0.04] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]'}`
 
-	const inputClass = `w-full rounded-xl px-3.5 py-2.5 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/25 focus:border-orange-500 ${
-		isDarkMode ? 'border border-zinc-700 bg-zinc-950/50 text-zinc-100 placeholder:text-zinc-500' : 'border border-slate-200 bg-slate-50/80 text-slate-900 placeholder:text-slate-400'
+	const inputClass = `w-full rounded-2xl px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 bg-transparent ${
+		isDarkMode ? 'border border-white/10 text-zinc-100 placeholder:text-zinc-600 focus:bg-white/5' : 'border border-black/10 text-slate-900 placeholder:text-slate-400 focus:bg-black/5'
 	}`
 
-	const labelClass = `mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`
+	const labelClass = `mb-1.5 block text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`
 
-	const valueClass = `text-sm font-medium leading-snug ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`
+	const valueClass = `text-sm font-medium leading-relaxed ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`
 
-	const secondaryBtn = `inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+	const secondaryBtn = `inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
 		isDarkMode
-			? 'border-zinc-700 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800/80'
-			: 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+			? 'border-white/10 text-zinc-300 hover:bg-white/5'
+			: 'border-black/10 text-slate-700 hover:bg-black/5'
 	}`
 
 	const primaryBtnBase =
-		'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm shadow-orange-500/10 transition-all duration-200 hover:-translate-y-px hover:shadow-md hover:shadow-orange-500/15 active:scale-[0.98]'
+		'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98]'
 
 	const primaryBtnClass = (editing) =>
 		`${primaryBtnBase} ${
-			editing ? 'bg-orange-600 text-white hover:bg-orange-500' : 'bg-orange-500 text-white hover:bg-orange-600'
+			editing ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20' : isDarkMode ? 'bg-white text-zinc-950 hover:bg-zinc-200' : 'bg-slate-900 text-white hover:bg-slate-800'
 		}`
 
 	const joinLabel = profile.joinDate
@@ -211,52 +211,52 @@ function Profile() {
 
 			<main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
 				<div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 text-gray-900 overflow-hidden">
-					<div className={`mb-8 overflow-hidden rounded-2xl border p-6 shadow-sm sm:p-8 transition-all duration-300 ${isDarkMode ? 'bg-zinc-900/40 border-zinc-800/80 shadow-black/20' : 'bg-white border-slate-200 shadow-sm'}`}>
-						<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+					<div className={`mb-8 overflow-hidden rounded-[2rem] border p-6 sm:p-8 transition-all duration-300 ${isDarkMode ? 'bg-zinc-900/40 border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40' : 'bg-white border-black/[0.04] shadow-[0_20px_40px_rgb(0,0,0,0.04)]'}`}>
+						<div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
 							<div className="min-w-0 flex-1">
-								<h3 className={`text-xl font-semibold tracking-tight sm:text-2xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Profile of {displayName}</h3>
-								<p className={`mt-2 max-w-xl text-xs leading-relaxed sm:text-sm ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+								<h3 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Profile of {displayName}</h3>
+								<p className={`mt-2.5 max-w-xl text-sm leading-relaxed sm:text-base ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
 									View your campus dining analytics, default delivery addresses, and recent activity.
 								</p>
-								<div className="mt-5 flex flex-wrap items-center gap-3">
+								<div className="mt-6 flex flex-wrap items-center gap-3">
 									<button
 										type="button"
 										onClick={scrollToUserActivity}
-										className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 border ${isDarkMode ? 'bg-zinc-800/80 text-white border-zinc-700 hover:border-zinc-500' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300 hover:shadow-sm'}`}
+										className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 border ${isDarkMode ? 'bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-white/20' : 'bg-white text-slate-800 border-black/10 hover:bg-black/5'}`}
 									>
-										<LayoutDashboard size={16} strokeWidth={2} aria-hidden />
+										<LayoutDashboard size={18} strokeWidth={2} aria-hidden />
 										Dashboard
 									</button>
 									<button
 										type="button"
 										onClick={() => navigate("/home")}
-										className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-sm hover:-translate-y-0.5"
+										className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/25 hover:-translate-y-0.5"
 									>
-										<Utensils size={16} strokeWidth={2} aria-hidden />
+										<Utensils size={18} strokeWidth={2} aria-hidden />
 										Browse food
 									</button>
 									<button
 										type="button"
 										onClick={() => navigate("/orders")}
-										className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${isDarkMode ? 'border-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white' : 'border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+										className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-medium transition-all duration-200 ${isDarkMode ? 'text-zinc-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'}`}
 									>
-										<Package size={16} strokeWidth={2} aria-hidden />
+										<Package size={18} strokeWidth={2} aria-hidden />
 										View orders
 									</button>
 								</div>
 							</div>
-							<div className="grid w-full grid-cols-3 gap-3 md:w-auto md:min-w-[280px]">
-								<div className={`rounded-xl border px-3 py-3 sm:px-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/50' : 'bg-slate-50 border-slate-100'}`}>
-									<p className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Active orders</p>
-									<p className={`text-xl font-bold tabular-nums sm:text-2xl mt-0.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.activeOrdersCount}</p>
+							<div className="grid w-full grid-cols-3 gap-3 md:w-auto md:min-w-[320px]">
+								<div className={`rounded-2xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]'}`}>
+									<p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Active orders</p>
+									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.activeOrdersCount}</p>
 								</div>
-								<div className={`rounded-xl border px-3 py-3 sm:px-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/50' : 'bg-slate-50 border-slate-100'}`}>
-									<p className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Total orders</p>
-									<p className={`text-xl font-bold tabular-nums sm:text-2xl mt-0.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.totalOrders}</p>
+								<div className={`rounded-2xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]'}`}>
+									<p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Total orders</p>
+									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.totalOrders}</p>
 								</div>
-								<div className={`rounded-xl border px-3 py-3 sm:px-4 ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800/50' : 'bg-slate-50 border-slate-100'}`}>
-									<p className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Total spent</p>
-									<p className={`text-lg font-bold tabular-nums sm:text-2xl mt-0.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+								<div className={`rounded-2xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]'}`}>
+									<p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Total spent</p>
+									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
 										₱{Math.round(activityMetrics.totalSpent).toLocaleString()}
 									</p>
 								</div>
@@ -372,31 +372,31 @@ function Profile() {
 
 									<dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2">
 										<div
-											className={`flex items-start gap-3 rounded-xl px-4 py-3 transition-colors duration-200 ${
-												isDarkMode ? 'bg-zinc-950/40' : 'bg-slate-50/90'
+											className={`flex items-start gap-4 rounded-2xl px-5 py-4 transition-colors duration-200 ${
+												isDarkMode ? 'bg-white/5' : 'bg-black/[0.02]'
 											}`}
 										>
-											<div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-zinc-800 text-orange-400' : 'bg-white text-orange-600 shadow-sm'}`}>
-												<Mail size={16} />
+											<div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDarkMode ? 'bg-white/5 text-orange-400' : 'bg-white text-orange-600 shadow-sm'}`}>
+												<Mail size={18} />
 											</div>
 											<div className="min-w-0">
-												<dt className={`text-[11px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Email</dt>
-												<dd className={`mt-0.5 truncate text-sm font-medium ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`}>
+												<dt className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Email</dt>
+												<dd className={`mt-1 truncate text-sm font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`}>
 													{profile.email || '—'}
 												</dd>
 											</div>
 										</div>
 										<div
-											className={`flex items-start gap-3 rounded-xl px-4 py-3 transition-colors duration-200 ${
-												isDarkMode ? 'bg-zinc-950/40' : 'bg-slate-50/90'
+											className={`flex items-start gap-4 rounded-2xl px-5 py-4 transition-colors duration-200 ${
+												isDarkMode ? 'bg-white/5' : 'bg-black/[0.02]'
 											}`}
 										>
-											<div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-zinc-800 text-orange-400' : 'bg-white text-orange-600 shadow-sm'}`}>
-												<Phone size={16} />
+											<div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDarkMode ? 'bg-white/5 text-orange-400' : 'bg-white text-orange-600 shadow-sm'}`}>
+												<Phone size={18} />
 											</div>
 											<div className="min-w-0">
-												<dt className={`text-[11px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Phone</dt>
-												<dd className={`mt-0.5 truncate text-sm font-medium ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`}>
+												<dt className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Phone</dt>
+												<dd className={`mt-1 truncate text-sm font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`}>
 													{profile.phone || '—'}
 												</dd>
 											</div>
@@ -409,17 +409,17 @@ function Profile() {
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
 							<section className={`${cardBase} overflow-hidden`}>
 								<div
-									className={`flex flex-col gap-4 border-b px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
-										isDarkMode ? 'border-zinc-800/80 bg-zinc-900/40' : 'border-slate-100 bg-slate-50/50'
+									className={`flex flex-col gap-4 border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between ${
+										isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'
 									}`}
 								>
-									<div className="flex items-center gap-3 min-w-0">
-										<div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDarkMode ? 'bg-orange-500/15 text-orange-400' : 'bg-orange-500/10 text-orange-600'}`}>
-											<UserIcon size={20} strokeWidth={2} />
+									<div className="flex items-center gap-4 min-w-0">
+										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isDarkMode ? 'bg-orange-500/15 text-orange-400' : 'bg-orange-500/10 text-orange-600'}`}>
+											<UserIcon size={22} strokeWidth={2} />
 										</div>
 										<div className="min-w-0">
-											<h3 className={`font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Personal information</h3>
-											<p className={`text-xs mt-0.5 ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Name, school details, and contact</p>
+											<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Personal information</h3>
+											<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Name, school details, and contact</p>
 										</div>
 									</div>
 									<div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -514,17 +514,17 @@ function Profile() {
 
 							<section className={`${cardBase} overflow-hidden`}>
 								<div
-									className={`flex flex-col gap-4 border-b px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
-										isDarkMode ? 'border-zinc-800/80 bg-zinc-900/40' : 'border-slate-100 bg-slate-50/50'
+									className={`flex flex-col gap-4 border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between ${
+										isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'
 									}`}
 								>
-									<div className="flex items-center gap-3 min-w-0">
-										<div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDarkMode ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-500/10 text-sky-600'}`}>
-											<MapPin size={20} strokeWidth={2} />
+									<div className="flex items-center gap-4 min-w-0">
+										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isDarkMode ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-500/10 text-sky-600'}`}>
+											<MapPin size={22} strokeWidth={2} />
 										</div>
 										<div className="min-w-0">
-											<h3 className={`font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Address</h3>
-											<p className={`text-xs mt-0.5 ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>Where we can reach you</p>
+											<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Address</h3>
+											<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Where we can reach you</p>
 										</div>
 									</div>
 									<div className="flex flex-wrap items-center gap-2 sm:justify-end">
