@@ -301,6 +301,14 @@ function OwnerMenu() {
     inventory_count: -1
   });
   const [combinations, setCombinations] = useState([]);
+  const [collapsedCategories, setCollapsedCategories] = useState({});
+
+  const toggleCategory = (category) => {
+    setCollapsedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
 
   const fetchMenu = async () => {
     try {
@@ -501,73 +509,112 @@ function OwnerMenu() {
         </div>
 
         <div className="divide-y divide-gray-100">
-          {items.map(item => (
-            <div key={item.id} className="group px-4 sm:px-5 lg:px-6 py-4 transition-colors hover:bg-gray-50/70">
-              <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 lg:gap-6 items-start lg:items-center">
-                <div className="min-w-0 flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <ImageIcon size={20} className="text-gray-400" />
-                    )}
+          {(() => {
+            // Group items by category and sort alphabetically
+            const grouped = items.reduce((acc, item) => {
+              const cat = item.category || 'Uncategorized';
+              if (!acc[cat]) acc[cat] = [];
+              acc[cat].push(item);
+              return acc;
+            }, {});
+
+            // Sort categories alphabetically, sort items within each category by name
+            const sortedCategories = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+            sortedCategories.forEach(cat => {
+              grouped[cat].sort((a, b) => (a.item_name || '').localeCompare(b.item_name || ''));
+            });
+
+            return sortedCategories.map(category => (
+              <div key={category}>
+                {/* Category Header */}
+                <div 
+                  onClick={() => toggleCategory(category)}
+                  className="px-4 sm:px-5 lg:px-6 py-2.5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 sticky top-0 z-10 flex justify-between items-center cursor-pointer group/header hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600">{category}</span>
+                    <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{grouped[category].length} item{grouped[category].length !== 1 ? 's' : ''}</span>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{item.item_name}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-1">{item.description || 'No description provided'}</p>
+                  <div className="text-gray-400 group-hover/header:text-orange-500 transition-colors">
+                    {collapsedCategories[category] ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
                   </div>
                 </div>
 
-                <div className="lg:block flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Category</span>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-                    {item.category}
-                  </span>
-                </div>
+                {/* Category Items */}
+                {!collapsedCategories[category] && (
+                  <div className="divide-y divide-gray-100">
+                    {grouped[category].map(item => (
+                      <div key={item.id} className="group px-4 sm:px-5 lg:px-6 py-4 transition-colors hover:bg-gray-50/70 border-b border-gray-100 last:border-b-0">
+                        <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 lg:gap-6 items-start lg:items-center">
+                          <div className="min-w-0 flex items-center gap-3">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              {item.image_url ? (
+                                <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              ) : (
+                                <ImageIcon size={20} className="text-gray-400" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-gray-900 truncate">{item.item_name}</h3>
+                              <p className="text-sm text-gray-500 line-clamp-1">{item.description || 'No description provided'}</p>
+                            </div>
+                          </div>
 
-                <div className="lg:block flex items-start justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Price</span>
-                  <div className="text-left lg:text-left">
-                    {item.category === 'Budget Meal' ? (
-                      <span className="font-semibold text-gray-900 text-sm">From ₱{parseFloat(item.price).toFixed(2)}</span>
-                    ) : item.category === 'Drinks' ? (
-                      <div className="space-y-0.5">
-                        <p className="font-semibold text-gray-900 text-sm">₱{parseFloat(item.price).toFixed(2)} Med</p>
-                        {item.half_price && <p className="text-xs text-gray-500">S: ₱{parseFloat(item.half_price).toFixed(2)}</p>}
-                        {item.large_price && <p className="text-xs text-gray-500">L: ₱{parseFloat(item.large_price).toFixed(2)}</p>}
+                          <div className="lg:block flex items-center justify-between">
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Category</span>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                              {item.category}
+                            </span>
+                          </div>
+
+                          <div className="lg:block flex items-start justify-between">
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Price</span>
+                            <div className="text-left lg:text-left">
+                              {item.category === 'Budget Meal' ? (
+                                <span className="font-semibold text-gray-900 text-sm">From ₱{parseFloat(item.price).toFixed(2)}</span>
+                              ) : item.category === 'Drinks' ? (
+                                <div className="space-y-0.5">
+                                  <p className="font-semibold text-gray-900 text-sm">₱{parseFloat(item.price).toFixed(2)} Med</p>
+                                  {item.half_price && <p className="text-xs text-gray-500">S: ₱{parseFloat(item.half_price).toFixed(2)}</p>}
+                                  {item.large_price && <p className="text-xs text-gray-500">L: ₱{parseFloat(item.large_price).toFixed(2)}</p>}
+                                </div>
+                              ) : (
+                                <span className="font-semibold text-gray-900 text-sm">₱{parseFloat(item.price).toFixed(2)}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="lg:block flex items-center justify-between">
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Status</span>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${item.is_available ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                              {item.is_available ? 'Available' : 'Unavailable'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-end gap-2 pt-1 lg:pt-0">
+                            <button
+                              onClick={() => handleOpenModal(item)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 transition-all duration-200 text-sm font-medium"
+                            >
+                              <Edit2 size={14} />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-sm font-medium"
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="font-semibold text-gray-900 text-sm">₱{parseFloat(item.price).toFixed(2)}</span>
-                    )}
+                    ))}
                   </div>
-                </div>
-
-                <div className="lg:block flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:hidden">Status</span>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${item.is_available ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                    {item.is_available ? 'Available' : 'Unavailable'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-1 lg:pt-0">
-                  <button
-                    onClick={() => handleOpenModal(item)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 transition-all duration-200 text-sm font-medium"
-                  >
-                    <Edit2 size={14} />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-sm font-medium"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
+                )}
               </div>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
 
         {items.length === 0 && !isLoading && (

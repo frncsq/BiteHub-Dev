@@ -16,6 +16,8 @@ function Cart() {
     const [loading, setLoading] = useState(true)
     const [isProcessing, setIsProcessing] = useState(null)
     const [error, setError] = useState("")
+    const [message, setMessage] = useState("")
+    const [messageType, setMessageType] = useState("")
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const [department, setDepartment] = useState("")
     const [course, setCourse] = useState("")
@@ -36,6 +38,14 @@ function Cart() {
         fetchCartItems()
         fetchRecommendations()
     }, [])
+
+    // Auto-dismiss success/error message after 4 seconds
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => { setMessage(""); setMessageType(""); }, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [message])
 
     const fetchRecommendations = async () => {
         try {
@@ -169,7 +179,8 @@ function Cart() {
 
                 setError("");
 
-                alert(`Order for ${storeGroup.storeName} placed successfully!`);
+                setMessage(`Order for ${storeGroup.storeName} placed successfully!`);
+                setMessageType("success");
 
                 if (remainingItems.length === 0) {
                     navigate("/orders");
@@ -216,6 +227,19 @@ function Cart() {
                     >
                         <ArrowLeft size={16} /> Back to Dashboard
                     </button>
+
+                    {/* Toast Message */}
+                    {message && (
+                        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-3 animate-fade-in-scale ${
+                            messageType === 'success'
+                                ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                                : 'bg-red-500 text-white shadow-red-500/30'
+                        }`}>
+                            <span>{messageType === 'success' ? '✓' : '✕'}</span>
+                            <span>{message}</span>
+                            <button onClick={() => { setMessage(''); setMessageType(''); }} className="ml-2 opacity-70 hover:opacity-100 transition-opacity">✕</button>
+                        </div>
+                    )}
 
                     {/* Minimalist Header */}
                     <div className={`mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b ${isDarkMode ? 'border-white/10' : 'border-black/5'}`}>
