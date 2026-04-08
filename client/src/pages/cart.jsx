@@ -60,6 +60,22 @@ function Cart() {
         }
     }
 
+    const handleAddToCart = async (food) => {
+        try {
+            setIsProcessing(food.id)
+            await apiClient.post('/cart/add', { foodId: food.id, quantity: 1 })
+            setMessage(`Added "${food.name}" to cart!`)
+            setMessageType("success")
+            await fetchCartItems()
+        } catch (err) {
+            console.error("Failed to add to cart:", err)
+            setMessage("Failed to add item. Please try again.")
+            setMessageType("error")
+        } finally {
+            setIsProcessing(null)
+        }
+    }
+
     const fetchCartItems = async () => {
         try {
             setLoading(true)
@@ -489,8 +505,21 @@ function Cart() {
                                         </div>
                                         <p className={`text-[10px] font-medium mb-3 ${isDarkMode ? 'text-zinc-500' : 'text-slate-500'}`}>{food.restaurant}</p>
                                     </div>
-                                    <button className={`w-full py-2.5 rounded-lg text-[10px] font-semibold transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-300 hover:bg-orange-600 hover:text-white border border-zinc-700 hover:border-orange-500' : 'bg-slate-50 text-slate-600 hover:bg-orange-500 hover:text-white border border-slate-200 hover:border-orange-500'}`}>
-                                        Add to Cart
+                                    <button
+                                        onClick={() => handleAddToCart(food)}
+                                        disabled={isProcessing === food.id}
+                                        className={`w-full py-2.5 rounded-lg text-[10px] font-semibold transition-all flex items-center justify-center gap-1.5 ${isProcessing === food.id ? 'opacity-70 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-zinc-800 text-zinc-300 hover:bg-orange-600 hover:text-white border border-zinc-700 hover:border-orange-500' : 'bg-slate-50 text-slate-600 hover:bg-orange-500 hover:text-white border border-slate-200 hover:border-orange-500'}`}>
+                                        {isProcessing === food.id ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                                Adding...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus size={12} />
+                                                Add to Cart
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             ))}
