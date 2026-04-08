@@ -170,6 +170,30 @@ const ensureRestaurantIsActiveColumn = async () => {
   }
 };
 
+const ensureReviewsTable = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
+        menu_item_id INT REFERENCES menu_items(id),
+        order_id INT REFERENCES orders(id),
+        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_reviews_restaurant_id ON reviews(restaurant_id);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_reviews_menu_item_id ON reviews(menu_item_id);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_reviews_order_id ON reviews(order_id);`);
+    console.log('✅ Ensured reviews table exists');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure reviews table:', err.message);
+  }
+};
+
 const ensureRestaurantLogoUrlColumnIsText = async () => {
   try {
     await pool.query(`
@@ -235,6 +259,7 @@ const seedDatabase = async () => {
     await ensureStockColumns();
     await ensureBudgetMealTables();
     await ensureRestaurantIsActiveColumn();
+    await ensureReviewsTable();
     await seedDatabase();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();
@@ -394,9 +419,15 @@ publicCatalogRouter.get('/restaurants', async (req, res) => {
 publicCatalogRouter.get('/food', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT m.*, r.business_name as restaurant 
+      SELECT m.*, r.business_name as restaurant,
+        COALESCE(rv.avg_rating, 0) as avg_rating,
+        COALESCE(rv.review_count, 0) as review_count
       FROM menu_items m 
       INNER JOIN restaurants r ON m.restaurant_id = r.id
+      LEFT JOIN (
+        SELECT menu_item_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+        FROM reviews WHERE menu_item_id IS NOT NULL GROUP BY menu_item_id
+      ) rv ON rv.menu_item_id = m.id
       WHERE r.approval_status = 'approved'
         AND r.is_active = TRUE
     `);
@@ -407,8 +438,8 @@ publicCatalogRouter.get('/food', async (req, res) => {
       half_price: f.half_price != null ? Number(f.half_price) : null,
       large_price: f.large_price != null ? Number(f.large_price) : null,
       category: f.category || 'Main Course',
-      rating: Number(f.rating) || 4.5,
-      reviews: 10,
+      rating: Number(f.avg_rating) || Number(f.rating) || 0,
+      reviews: Number(f.review_count) || 0,
       discount: 0,
       image: f.image_url || 'https://via.placeholder.com/400x400',
       description: f.description || '',
@@ -443,6 +474,18 @@ publicCatalogRouter.get('/food/:restaurantId', async (req, res) => {
         AND r.approval_status = 'approved'
         AND r.is_active = TRUE
     `, [restaurantId]);
+    // Fetch review summaries for these items
+    const menuItemIds = result.rows.map(r => r.id);
+    let reviewMap = {};
+    if (menuItemIds.length > 0) {
+      try {
+        const rvRes = await pool.query(`
+          SELECT menu_item_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+          FROM reviews WHERE menu_item_id = ANY($1) GROUP BY menu_item_id
+        `, [menuItemIds]);
+        rvRes.rows.forEach(r => { reviewMap[r.menu_item_id] = r; });
+      } catch (_) { /* reviews table might not exist yet */ }
+    }
     const foods = result.rows.map(f => ({
       id: f.id,
       name: f.item_name,
@@ -450,8 +493,8 @@ publicCatalogRouter.get('/food/:restaurantId', async (req, res) => {
       half_price: f.half_price != null ? Number(f.half_price) : null,
       large_price: f.large_price != null ? Number(f.large_price) : null,
       category: f.category || 'Main Course',
-      rating: Number(f.rating) || 4.5,
-      reviews: 10,
+      rating: Number(reviewMap[f.id]?.avg_rating) || Number(f.rating) || 0,
+      reviews: Number(reviewMap[f.id]?.review_count) || 0,
       discount: 0,
       image: f.image_url || 'https://via.placeholder.com/400x400',
       description: f.description || '',
@@ -513,7 +556,113 @@ publicCatalogRouter.get('/food/budget-meal/:menuItemId', async (req, res) => {
   }
 });
 
+// ── Review summary endpoint (public, no auth needed) ──
+publicCatalogRouter.get('/reviews/summary', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT menu_item_id,
+        ROUND(AVG(rating)::numeric, 1) as avg_rating,
+        COUNT(*) as review_count
+      FROM reviews
+      WHERE menu_item_id IS NOT NULL
+      GROUP BY menu_item_id
+    `);
+    const summary = {};
+    result.rows.forEach(r => {
+      summary[r.menu_item_id] = {
+        avgRating: Number(r.avg_rating),
+        reviewCount: Number(r.review_count)
+      };
+    });
+    res.status(200).json({ success: true, summary });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ── Fetch reviews for a specific menu item (public) ──
+publicCatalogRouter.get('/reviews/menu-item/:menuItemId', async (req, res) => {
+  try {
+    const menuItemId = parseInt(req.params.menuItemId, 10);
+    const result = await pool.query(`
+      SELECT r.id, r.rating, r.comment, r.created_at, u.full_name as user_name
+      FROM reviews r
+      LEFT JOIN users u ON r.user_id = u.id
+      WHERE r.menu_item_id = $1
+      ORDER BY r.created_at DESC
+      LIMIT 50
+    `, [menuItemId]);
+    res.status(200).json({ success: true, reviews: result.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ── Submit a review (authenticated) ──
+publicCatalogRouter.post('/reviews', verifyToken, async (req, res) => {
+  const userId = req.userId;
+  const { order_id, menu_item_id, restaurant_id, rating, comment } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+  }
+  if (!menu_item_id) {
+    return res.status(400).json({ success: false, message: 'menu_item_id is required' });
+  }
+
+  try {
+    // Prevent duplicate review for same user + order + menu_item
+    if (order_id) {
+      const existing = await pool.query(
+        'SELECT id FROM reviews WHERE user_id = $1 AND order_id = $2 AND menu_item_id = $3',
+        [userId, order_id, menu_item_id]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(409).json({ success: false, message: 'You have already reviewed this item for this order' });
+      }
+    }
+
+    const result = await pool.query(
+      `INSERT INTO reviews (user_id, restaurant_id, menu_item_id, order_id, rating, comment)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, rating, comment, created_at`,
+      [userId, restaurant_id || null, menu_item_id, order_id || null, rating, comment || null]
+    );
+
+    // Update the menu_item's cached average rating
+    await pool.query(`
+      UPDATE menu_items SET rating = (
+        SELECT ROUND(AVG(rating)::numeric, 2) FROM reviews WHERE menu_item_id = $1
+      ) WHERE id = $1
+    `, [menu_item_id]);
+
+    res.status(201).json({ success: true, review: result.rows[0] });
+  } catch (error) {
+    console.error('Review submission error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ── Get reviews the current user has submitted for a specific order ──
+publicCatalogRouter.get('/reviews/order/:orderId', verifyToken, async (req, res) => {
+  const userId = req.userId;
+  const orderId = parseInt(req.params.orderId, 10);
+  try {
+    const result = await pool.query(
+      'SELECT id, menu_item_id, rating, comment, created_at FROM reviews WHERE user_id = $1 AND order_id = $2',
+      [userId, orderId]
+    );
+    // Return a map of menu_item_id -> review for easy lookup
+    const reviewed = {};
+    result.rows.forEach(r => { reviewed[r.menu_item_id] = r; });
+    res.status(200).json({ success: true, reviewed });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.use('/api', publicCatalogRouter);
+
+
 
 // ==========================================================
 // Customer activity endpoints used by the client app

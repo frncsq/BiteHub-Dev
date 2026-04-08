@@ -1299,7 +1299,10 @@ const HomePage = () => {
                                                             <h3 className={`font-bold text-[13px] leading-tight truncate flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</h3>
                                                             <div className={`flex items-center gap-1 flex-shrink-0 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
                                                                 <Star size={10} className="text-yellow-400 fill-yellow-400" />
-                                                                <span className={`text-[10px] font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.rating}</span>
+                                                                <span className={`text-[10px] font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.rating > 0 ? food.rating : 'New'}</span>
+                                                                {food.reviews > 0 && (
+                                                                    <span className={`text-[9px] font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>({food.reviews})</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <p className={`text-[11px] font-medium mb-3 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -2196,7 +2199,8 @@ const HomePage = () => {
                                         {selectedFood.restaurant}
                                     </span>
                                     <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
-                                        <Star size={14} className="text-yellow-500 fill-yellow-500" /> {selectedFood.rating || "4.5"}
+                                        <Star size={14} className="text-yellow-500 fill-yellow-500" /> {selectedFood.rating > 0 ? selectedFood.rating : 'New'}
+                                        {selectedFood.reviews > 0 && <span className="font-medium text-gray-400">({selectedFood.reviews})</span>}
                                     </div>
                                 </div>
                                 <h2 className={`text-2xl md:text-3xl font-bold tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{selectedFood.name}</h2>
