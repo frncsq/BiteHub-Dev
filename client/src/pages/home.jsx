@@ -1052,6 +1052,37 @@ const HomePage = () => {
                                 </div>
                             </section>
 
+                            {/* Special Offers */}
+                            <section>
+                                <h2 className="text-lg font-bold text-gray-900 mb-2">Special Offers</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-3 text-white">
+                                        <Zap className="mb-1.5" size={20} />
+                                        <h3 className="font-bold text-sm mb-0.5">Flash Sale</h3>
+                                        <p className="text-blue-100 text-[11px] mb-2.5">50% off selected items</p>
+                                        <button className="bg-white text-blue-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-blue-50 transition">
+                                            Shop Now
+                                        </button>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
+                                        <Star className="mb-1.5" size={20} />
+                                        <h3 className="font-bold text-sm mb-0.5">Top Rated</h3>
+                                        <p className="text-green-100 text-[11px] mb-2.5">Most popular this week</p>
+                                        <button className="bg-white text-green-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-green-50 transition">
+                                            Explore
+                                        </button>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-3 text-white">
+                                        <TrendingUp className="mb-1.5" size={20} />
+                                        <h3 className="font-bold text-sm mb-0.5">Trending</h3>
+                                        <p className="text-pink-100 text-[11px] mb-2.5">What everyone is ordering</p>
+                                        <button className="bg-white text-pink-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-pink-50 transition">
+                                            Discover
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+
                             {/* Featured Restaurants Carousel */}
                             <section>
                                 <div className="flex items-center justify-between mb-3">
@@ -1329,37 +1360,6 @@ const HomePage = () => {
                                                 </div>
                                             );
                                         })}
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Special Offers */}
-                            <section>
-                                <h2 className="text-lg font-bold text-gray-900 mb-2">Special Offers</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-3 text-white">
-                                        <Zap className="mb-1.5" size={20} />
-                                        <h3 className="font-bold text-sm mb-0.5">Flash Sale</h3>
-                                        <p className="text-blue-100 text-[11px] mb-2.5">50% off selected items</p>
-                                        <button className="bg-white text-blue-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-blue-50 transition">
-                                            Shop Now
-                                        </button>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
-                                        <Star className="mb-1.5" size={20} />
-                                        <h3 className="font-bold text-sm mb-0.5">Top Rated</h3>
-                                        <p className="text-green-100 text-[11px] mb-2.5">Most popular this week</p>
-                                        <button className="bg-white text-green-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-green-50 transition">
-                                            Explore
-                                        </button>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-3 text-white">
-                                        <TrendingUp className="mb-1.5" size={20} />
-                                        <h3 className="font-bold text-sm mb-0.5">Trending</h3>
-                                        <p className="text-pink-100 text-[11px] mb-2.5">What everyone is ordering</p>
-                                        <button className="bg-white text-pink-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-pink-50 transition">
-                                            Discover
-                                        </button>
                                     </div>
                                 </div>
                             </section>
