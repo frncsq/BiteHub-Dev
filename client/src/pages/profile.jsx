@@ -48,9 +48,13 @@ function Profile() {
 			
 			if (res.data?.success && res.data.profile) {
 				const user = res.data.profile
+				console.log("DEBUG: Profile data received:", user)
+				
 				// user is { id, fullName, email, phone, address, city, department, course, year }
-				const nameParts = (user.fullName || "User").split(" ")
-				const firstName = nameParts[0] || ""
+				// Sanitize fullName: if it's "N/A", null, or empty, fallback to "User"
+				const rawName = (user.fullName && user.fullName !== "N/A") ? user.fullName : "User"
+				const nameParts = rawName.split(" ")
+				const firstName = nameParts[0] || "User"
 				const lastName = nameParts.slice(1).join(" ") || ""
 
 				const profileData = {
@@ -209,8 +213,8 @@ function Profile() {
 				setSidebarCollapsed={setSidebarCollapsed}
 			/>
 
-			<main className={`flex-1 min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-				<div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 text-gray-900 overflow-hidden">
+			<main className={`flex-1 min-h-screen min-w-0 overflow-x-hidden transition-all duration-300 pb-24 md:pb-8 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
+				<div className="bh-container max-w-5xl py-8 sm:py-10 lg:py-12 text-gray-900">
 					<div className={`mb-8 overflow-hidden rounded-[2rem] border p-6 sm:p-8 transition-all duration-300 ${isDarkMode ? 'bg-zinc-900/40 border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40' : 'bg-white border-black/[0.04] shadow-[0_20px_40px_rgb(0,0,0,0.04)]'}`}>
 						<div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
 							<div className="min-w-0 flex-1">

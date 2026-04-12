@@ -1,12 +1,10 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, Settings, ShieldAlert } from 'lucide-react';
-import axios from 'axios';
-import { getApiBaseUrl } from '../services/apiClient';
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, X } from 'lucide-react';
 import biteLogo from '../assets/bite.png';
 
-function AdminSidebar() {
+function AdminSidebar({ mobileOpen = false, onNavigate }) {
   const location = useLocation();
-  const navigate = useNavigate();
+  const close = () => onNavigate?.();
 
   const links = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
@@ -17,56 +15,76 @@ function AdminSidebar() {
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 }
   ];
 
-
-
   return (
-    <div className="w-64 bg-slate-900/95 backdrop-blur-3xl border-r border-white/10 h-screen fixed left-0 top-0 flex flex-col shadow-2xl z-50 transition-all duration-300 ease-in-out text-slate-300">
-      {/* Decorative top gradient */}
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none -z-10" />
-      
-      <div className="p-6 border-b border-white/10 flex items-center gap-3 relative z-20">
-        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transform transition-transform hover:scale-105 duration-300 ring-1 ring-white/20">
-          <img src={biteLogo} alt="BiteHub Logo" className="w-full h-full object-contain" />
-        </div>
-        <div>
-           <span className="text-xl font-bold tracking-tight text-white block">System Admin</span>
-           <span className="text-xs text-blue-300 tracking-wider uppercase font-semibold">BiteHub Platform</span>
-        </div>
-      </div>
+    <>
+      <div
+        className={`fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={close}
+        aria-hidden
+      />
 
-      <div className="flex-1 py-6 flex flex-col gap-2 px-4 overflow-y-auto">
-        {links.map((link) => {
-          const Icon = link.icon;
-          const isActive = location.pathname.startsWith(link.path);
-          return (
-            <Link
-              key={link.name}
-              to={link.path}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium overflow-hidden group ${
-                isActive
-                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-inner'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
-              }`}
-            >
-              {isActive && (
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent pointer-events-none" />
-              )}
-              <Icon 
-                size={20} 
-                className={`transition-all duration-300 group-hover:scale-110 ${
-                  isActive ? 'text-blue-400 drop-shadow-sm' : 'text-slate-500 group-hover:text-slate-300'
+      <aside
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-white/10 bg-slate-900/95 shadow-2xl backdrop-blur-3xl transition-transform duration-300 ease-out text-slate-300 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0`}
+      >
+        <div className="pointer-events-none absolute top-0 left-0 -z-10 h-32 w-full bg-gradient-to-b from-blue-500/10 to-transparent" />
+
+        <div className="relative z-20 flex items-center justify-between border-b border-white/10 p-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-white/20 transition-transform duration-300 hover:scale-105">
+              <img src={biteLogo} alt="" className="h-full w-full object-contain" />
+            </div>
+            <div className="min-w-0">
+              <span className="block truncate text-lg font-bold tracking-tight text-white">System Admin</span>
+              <span className="text-xs font-semibold tracking-wider text-blue-300 uppercase">BiteHub</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="bh-touch flex shrink-0 items-center justify-center rounded-xl p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
+            onClick={close}
+            aria-label="Close menu"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        <nav className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-6">
+          {links.map((link) => {
+            const Icon = link.icon;
+            const isActive = location.pathname.startsWith(link.path);
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={close}
+                className={`relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-3 font-medium transition-all duration-300 group ${
+                  isActive
+                    ? 'border border-blue-500/30 bg-blue-600/20 text-blue-400 shadow-inner'
+                    : 'border border-transparent text-slate-400 hover:border-transparent hover:bg-white/5 hover:text-white'
                 }`}
-              />
-              <span className="relative z-10 translate-x-0 group-hover:translate-x-1 transition-transform duration-300">
-                {link.name}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-
-
-    </div>
+              >
+                {isActive && (
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent" />
+                )}
+                <Icon
+                  size={20}
+                  className={`transition-all duration-300 group-hover:scale-110 ${
+                    isActive ? 'text-blue-400 drop-shadow-sm' : 'text-slate-500 group-hover:text-slate-300'
+                  }`}
+                />
+                <span className="relative z-10 translate-x-0 transition-transform duration-300 group-hover:translate-x-1">
+                  {link.name}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }
 

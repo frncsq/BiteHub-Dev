@@ -1166,12 +1166,19 @@ app.get('/api/profile', verifyToken, async (req, res) => {
       const result = await pool.query('SELECT id, full_name, email, phone, address, city, department, course, year FROM users WHERE id = $1', [userId]);
       if (result.rows.length > 0) {
         const user = result.rows[0];
+        console.log(`DEBUG: Fetching profile for user ${userId}. DB full_name: "${user.full_name}"`);
+        
+        // Sanitize name: convert "N/A" or empty to "User"
+        const sanitizedFullName = (user.full_name && user.full_name.trim() !== "" && user.full_name !== "N/A") 
+          ? user.full_name 
+          : "User";
+
         // Synch session profile for legacy reasons if needed, but return DB data
         res.status(200).json({ 
           success: true, 
           profile: {
             id: user.id,
-            fullName: user.full_name,
+            fullName: sanitizedFullName,
             email: user.email,
             address: user.address || '',
             city: user.city || '',

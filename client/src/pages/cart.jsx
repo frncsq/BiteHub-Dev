@@ -229,17 +229,18 @@ function Cart() {
         />
 
             {/* Main Content Area */}
-            <main className={`flex-1 flex flex-col relative z-20 overflow-x-hidden h-screen overflow-y-auto scroll-smooth transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
+            <main className={`flex-1 flex flex-col relative z-20 overflow-x-hidden min-h-0 h-[100dvh] overflow-y-auto scroll-smooth transition-all duration-300 pb-24 md:pb-8 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
                 {/* Ambient Highlight */}
                 <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
                     <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[150px] ${isDarkMode ? 'bg-orange-500/10' : 'bg-orange-500/5'}`} />
                 </div>
 
-                <div className="p-6 md:p-10 max-w-5xl mx-auto w-full space-y-8 relative z-10">
+                <div className="bh-container max-w-5xl py-6 sm:py-8 md:py-10 w-full space-y-6 sm:space-y-8 relative z-10">
                     {/* Back Button */}
                     <button
+                        type="button"
                         onClick={() => navigate("/home")}
-                        className={`mb-2 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${isDarkMode ? 'hover:bg-white/5 text-zinc-400' : 'hover:bg-black/5 text-slate-500'}`}
+                        className={`mb-2 inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full text-sm font-medium transition-colors touch-manipulation ${isDarkMode ? 'hover:bg-white/5 text-zinc-400' : 'hover:bg-black/5 text-slate-500'}`}
                     >
                         <ArrowLeft size={16} /> Back to Dashboard
                     </button>

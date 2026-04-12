@@ -1,5 +1,42 @@
 @import "tailwindcss";
 
+/* ── BiteHub layout grid (container → row → columns) ─────────────────────── */
+.bh-container {
+  @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8;
+}
+
+.bh-row {
+  @apply flex flex-wrap -mx-2 sm:-mx-3;
+}
+
+.bh-col {
+  @apply w-full px-2 sm:px-3;
+}
+
+.bh-col-6 {
+  @apply w-full sm:w-1/2 px-2 sm:px-3;
+}
+
+.bh-col-4 {
+  @apply w-full md:w-1/3 px-2 sm:px-3;
+}
+
+.bh-col-3 {
+  @apply w-full sm:w-1/2 lg:w-1/4 px-2 sm:px-3;
+}
+
+/* Touch-friendly minimum tap targets (use with buttons/links on mobile) */
+.bh-touch {
+  @apply min-h-[44px] min-w-[44px] touch-manipulation;
+}
+
+/* Fluid media */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Hotel Management Theme */
 :root {
   --hotel-primary: #1a3a52;      /* Deep Navy Blue */
@@ -10,8 +47,18 @@
 }
 
 body {
+  margin: 0;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
   background: linear-gradient(135deg, #f5f1e8 0%, #faf8f4 100%);
   color: #1a3a52;
+}
+
+/* Fine-tune readable type on small phones */
+@media (max-width: 380px) {
+  html {
+    font-size: 15px;
+  }
 }
 
 /* Custom Hotel Theme Classes */

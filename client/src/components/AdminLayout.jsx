@@ -1,5 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Menu } from 'lucide-react';
 import { createApiClient } from '../services/apiClient.js';
 import AdminSidebar from './AdminSidebar';
 
@@ -7,6 +8,15 @@ function AdminLayout() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.matchMedia('(min-width: 1024px)').matches) setMobileNavOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -14,7 +24,7 @@ function AdminLayout() {
         const apiClient = createApiClient();
         await apiClient.get('/admin/me');
         setIsAuthenticated(true);
-      } catch (err) {
+      } catch {
         console.warn("🔐 Admin session invalid or expired.");
         navigate('/admin-login');
       } finally {
@@ -35,19 +45,33 @@ function AdminLayout() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans relative overflow-hidden">
-      {/* Background ambient light blobs for glassmorphism effect */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10 bg-slate-50">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-200/40 blur-[120px]" />
-        <div className="absolute top-[60%] right-[10%] w-[40%] h-[60%] rounded-full bg-indigo-200/30 blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] rounded-full bg-slate-300/40 blur-[100px]" />
+    <div className="relative flex min-h-[100dvh] overflow-x-hidden bg-slate-50 font-sans">
+      <div className="pointer-events-none fixed top-0 left-0 -z-10 h-full w-full overflow-hidden bg-slate-50">
+        <div className="absolute -top-[20%] -left-[10%] h-[50%] w-[50%] rounded-full bg-blue-200/40 blur-[120px]" />
+        <div className="absolute top-[60%] right-[10%] h-[60%] w-[40%] rounded-full bg-indigo-200/30 blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[20%] h-[30%] w-[30%] rounded-full bg-slate-300/40 blur-[100px]" />
       </div>
-      
-      <AdminSidebar />
-      
-      <div className="flex-1 ml-64 p-8 overflow-y-auto relative z-10 transition-all duration-300">
-        <div className="max-w-7xl mx-auto backdrop-blur-md bg-white/40 rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.04)] ring-1 ring-white/60 min-h-[calc(100vh-4rem)]">
-           <Outlet />
+
+      <AdminSidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
+
+      <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col lg:ml-64">
+        <header className="sticky top-0 z-[35] flex h-14 shrink-0 items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md lg:hidden">
+          <button
+            type="button"
+            className="bh-touch inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-sm"
+            onClick={() => setMobileNavOpen(true)}
+            aria-expanded={mobileNavOpen}
+            aria-label="Open admin navigation"
+          >
+            <Menu size={22} strokeWidth={2} />
+          </button>
+          <span className="truncate text-base font-bold text-slate-800">BiteHub Admin</span>
+        </header>
+
+        <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl min-h-[calc(100dvh-8rem)] rounded-3xl bg-white/40 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] ring-1 ring-white/60 backdrop-blur-md sm:p-6 lg:min-h-[calc(100dvh-4rem)]">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

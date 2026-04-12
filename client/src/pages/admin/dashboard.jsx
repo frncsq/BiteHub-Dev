@@ -57,8 +57,8 @@ function AdminDashboard() {
   return (
     <div className="space-y-8 animate-fade-in relative z-10 w-full h-full flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">System Status</h1>
+        <div className="min-w-0 pr-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-800 tracking-tight">System Status</h1>
           <p className="text-slate-500 mt-2 text-sm font-medium">BiteHub Platform Overview</p>
         </div>
       </div>

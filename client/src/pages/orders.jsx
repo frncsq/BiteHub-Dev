@@ -244,13 +244,13 @@ function Orders() {
         <div className="min-h-screen flex" style={{ backgroundColor: colors.background }}>
             <CustomerSidebar sidebarCollapsed={sidebarCollapsed} setSidebarCollapsed={setSidebarCollapsed} />
             
-            <main className={`flex-1 min-h-screen relative overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
+            <main className={`flex-1 min-h-screen min-w-0 relative overflow-x-hidden transition-all duration-300 pb-24 md:pb-8 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
                 {/* Ambient Highlight */}
                 <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
                     <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[150px] ${isDarkMode ? 'bg-orange-500/5' : 'bg-orange-400/10'}`} />
                 </div>
 
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 relative z-10">
+            <div className="bh-container max-w-7xl py-8 sm:py-10 md:py-12 relative z-10">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate("/home")}
@@ -495,7 +495,57 @@ function Orders() {
                             ))}
                         </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-2xl border shadow-sm" style={{ backgroundColor: isDarkMode ? '#111827' : '#ffffff', borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' }}>
+                            <>
+                            <div className="md:hidden space-y-4">
+                                {filteredOrders.map((order) => (
+                                    <div
+                                        key={order.id}
+                                        className="rounded-2xl border p-4 shadow-sm"
+                                        style={{
+                                            backgroundColor: isDarkMode ? '#111827' : '#ffffff',
+                                            borderColor: isDarkMode ? '#1f2937' : '#f3f4f6',
+                                        }}
+                                    >
+                                        <div className="flex justify-between items-start gap-2 mb-3">
+                                            <span className="text-xs font-semibold text-gray-500 tracking-wider">#{order.id}</span>
+                                            <span
+                                                className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shrink-0"
+                                                style={{ backgroundColor: getStatusColor(order.status) }}
+                                            >
+                                                {order.status || 'unknown'}
+                                            </span>
+                                        </div>
+                                        <p className="font-bold text-base mb-1 break-words" style={{ color: colors.text }}>{order.restaurantName}</p>
+                                        <p className="text-xs flex items-center gap-1.5 mb-3" style={{ color: colors.textSecondary }}>
+                                            <Clock size={12} className="text-orange-500 shrink-0" />
+                                            {formatDate(order.date)}
+                                        </p>
+                                        <div className="flex justify-between items-center pt-3 border-t" style={{ borderColor: isDarkMode ? '#374151' : '#e5e7eb' }}>
+                                            <span className="text-sm font-medium" style={{ color: colors.textSecondary }}>Total</span>
+                                            <span className="text-lg font-bold text-orange-500">₱{(order.total || 0).toFixed(2)}</span>
+                                        </div>
+                                        <div className="mt-3 flex flex-col gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedOrder(order)}
+                                                className="w-full min-h-[44px] py-2.5 rounded-xl text-sm font-bold bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400"
+                                            >
+                                                View Details
+                                            </button>
+                                            {['delivered', 'completed'].includes(order.status?.toLowerCase()) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openReviewModal(order)}
+                                                    className="w-full min-h-[44px] py-2.5 rounded-xl text-sm font-bold border border-yellow-200 text-yellow-800 bg-yellow-50 dark:border-none dark:bg-yellow-500/10 dark:text-yellow-400"
+                                                >
+                                                    Review
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="hidden md:block overflow-x-auto rounded-2xl border shadow-sm touch-pan-x" style={{ backgroundColor: isDarkMode ? '#111827' : '#ffffff', borderColor: isDarkMode ? '#1f2937' : '#f3f4f6' }}>
                                 <table className="w-full text-left border-collapse min-w-[800px]">
                                     <thead>
                                         <tr className="border-b text-xs font-semibold uppercase tracking-wider text-gray-500" style={{ borderColor: isDarkMode ? '#1f2937' : '#e5e7eb', backgroundColor: isDarkMode ? 'rgba(255,255,255,0.02)' : '#f9fafb' }}>
@@ -542,6 +592,7 @@ function Orders() {
                                     </tbody>
                                 </table>
                             </div>
+                            </>
                         )}
                     </div>
                 )}

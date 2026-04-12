@@ -50,12 +50,12 @@ function AdminOrders() {
 
   return (
     <div className="space-y-6 animate-fade-in w-full h-full flex flex-col">
-      <div className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Global Orders history</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Global Orders history</h1>
           <p className="text-slate-500 mt-1 text-sm">Monitor system-wide order fulfillment and disputes</p>
         </div>
-        <button onClick={fetchOrders} className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors">
+        <button type="button" onClick={fetchOrders} className="bh-touch shrink-0 self-end sm:self-auto p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors" aria-label="Refresh orders">
            <RefreshCw size={20} className={isLoading ? 'animate-spin text-blue-500' : ''} />
         </button>
       </div>
@@ -90,9 +90,44 @@ function AdminOrders() {
          </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex-1 min-h-[400px] flex flex-col">
-         <div className="overflow-x-auto flex-1 h-full">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
+      <div className="md:hidden space-y-4">
+        {isLoading ? (
+          <p className="text-center text-slate-400 py-8">Loading...</p>
+        ) : filteredOrders.length === 0 ? (
+          <p className="text-center text-slate-500 py-8 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">No orders found.</p>
+        ) : (
+          filteredOrders.map((order) => (
+            <div key={order.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <div className="flex justify-between items-start gap-2 mb-2">
+                <span className="font-mono font-bold text-blue-600">#{order.id}</span>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset ${getStatusColor(order.order_status)}`}>
+                  {order.order_status?.replace(/_/g, ' ') || 'UNKNOWN'}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                <User size={14} className="text-slate-400 shrink-0" /> {order.customer_name}
+              </p>
+              <p className="text-xs text-slate-500 flex items-center gap-2 mt-1">
+                <Store size={14} className="text-orange-400 shrink-0" /> {order.restaurant_name}
+              </p>
+              <p className="text-xs text-slate-600 mt-2 flex items-start gap-1.5">
+                <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                <span className="break-words">{order.delivery_address || 'N/A'}</span>
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
+                <span className="text-xs text-slate-400 uppercase">{order.payment_method || 'CASH'}</span>
+                <span className="text-lg font-bold text-slate-800">
+                  ${parseFloat(order.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="hidden md:flex bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex-1 min-h-[400px] flex-col">
+         <div className="overflow-x-auto flex-1 h-full touch-pan-x -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full text-left border-collapse whitespace-nowrap min-w-[720px]">
               <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Order Details</th>

@@ -1,5 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState, createContext, useContext, useRef, useCallback } from 'react';
+import { Menu } from 'lucide-react';
 import { createApiClient } from '../services/apiClient.js';
 import OwnerSidebar from './OwnerSidebar';
 import { Clock, XCircle, CheckCircle, PartyPopper, X } from 'lucide-react';
@@ -53,7 +54,7 @@ function ApprovalToast({ onDismiss }) {
   }, [onDismiss]);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full animate-slide-up">
+    <div className="fixed bottom-4 left-4 right-4 z-50 max-w-sm w-auto sm:left-auto sm:right-6 sm:w-full animate-slide-up">
       <div className="bg-emerald-600 text-white rounded-3xl shadow-2xl p-5 flex items-start gap-4">
         <div className="bg-white/20 rounded-2xl p-2 shrink-0">
           <CheckCircle size={24} className="text-white" />
@@ -85,7 +86,16 @@ function OwnerLayout() {
   const [isChecking, setIsChecking] = useState(true);
   const [approvalStatus, setApprovalStatus] = useState('approved');
   const [showApprovalToast, setShowApprovalToast] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pollRef = useRef(null);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.matchMedia('(min-width: 1024px)').matches) setMobileNavOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const checkSession = useCallback(async (isPoll = false) => {
     try {
@@ -141,17 +151,32 @@ function OwnerLayout() {
 
   return (
     <ApprovalContext.Provider value={{ approvalStatus }}>
-      <div className="flex min-h-screen bg-slate-50 font-sans relative overflow-hidden">
-        <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-          <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-orange-200/30 blur-[120px]" />
-          <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-blue-200/20 blur-[120px]" />
+      <div className="relative flex min-h-[100dvh] overflow-x-hidden bg-slate-50 font-sans">
+        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-[20%] -left-[10%] h-[50%] w-[50%] rounded-full bg-orange-200/30 blur-[120px]" />
+          <div className="absolute top-[60%] -right-[10%] h-[60%] w-[40%] rounded-full bg-blue-200/20 blur-[120px]" />
         </div>
 
-        <OwnerSidebar />
+        <OwnerSidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
 
-        <div className="flex-1 ml-64 p-8 overflow-y-auto relative z-10">
-          <StatusBanner status={approvalStatus} />
-          <Outlet />
+        <div className="relative z-10 flex min-h-[100dvh] min-w-0 flex-1 flex-col lg:ml-64">
+          <header className="sticky top-0 z-[35] flex h-14 shrink-0 items-center gap-3 border-b border-white/60 bg-white/90 px-4 backdrop-blur-md lg:hidden">
+            <button
+              type="button"
+              className="bh-touch inline-flex items-center justify-center rounded-xl border border-slate-200/80 bg-white p-2.5 text-slate-700 shadow-sm"
+              onClick={() => setMobileNavOpen(true)}
+              aria-expanded={mobileNavOpen}
+              aria-label="Open owner navigation"
+            >
+              <Menu size={22} strokeWidth={2} />
+            </button>
+            <span className="truncate text-base font-bold text-slate-800">Restaurant</span>
+          </header>
+
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <StatusBanner status={approvalStatus} />
+            <Outlet />
+          </div>
         </div>
 
         {showApprovalToast && (

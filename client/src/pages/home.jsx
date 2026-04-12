@@ -59,7 +59,7 @@ const HomePage = () => {
 
     // State management
     const location = useLocation()
-    const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [sidebarOpen, setSidebarOpen] = useState(false)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const [notificationDropdown, setNotificationDropdown] = useState(false)
     const [profileDropdown, setProfileDropdown] = useState(false)
@@ -839,31 +839,37 @@ const HomePage = () => {
                 }}
                 sidebarCollapsed={sidebarCollapsed}
                 setSidebarCollapsed={setSidebarCollapsed}
+                mobileOpen={sidebarOpen}
+                setMobileOpen={setSidebarOpen}
             />
 
             {/* Main Content */}
             <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}`}>
                 {/* TOP NAVIGATION BAR */}
                 <header className={`sticky top-0 z-30 border-b backdrop-blur-2xl shadow-sm relative ${isDarkMode ? 'bg-[#1a1a2e]/60 border-[#1a1a2e]/50' : 'bg-white/60 border-white/50'}`}>
-                    <div className="flex items-center justify-between h-16 px-4 gap-4">
+                    <div className="bh-container flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 !px-3 sm:!px-6">
                         {/* Mobile Menu Toggle */}
                         <button
+                            type="button"
                             onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className={`md:hidden p-2 rounded-lg transition hover:shadow-sm ${isDarkMode ? 'hover:bg-gray-800/50' : 'hover:bg-white/50'}`}
+                            className={`bh-touch md:hidden flex items-center justify-center rounded-lg p-2 transition hover:shadow-sm ${isDarkMode ? 'hover:bg-gray-800/50' : 'hover:bg-white/50'}`}
+                            aria-expanded={sidebarOpen}
+                            aria-label={sidebarOpen ? 'Close navigation menu' : 'Open navigation menu'}
                         >
                             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
                         </button>
 
                         {/* Search Bar */}
-                        <div className="flex-1 max-w-md">
+                        <div className="min-w-0 flex-1 max-w-md">
                             <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={18} />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors pointer-events-none" size={18} />
                                 <input
-                                    type="text"
+                                    type="search"
+                                    enterKeyHint="search"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Search food, restaurants..."
-                                    className={`w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:shadow-sm transition-all duration-300 backdrop-blur-md ${isDarkMode
+                                    className={`w-full min-h-[44px] pl-10 pr-4 py-2.5 text-base sm:text-sm border rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:shadow-sm transition-all duration-300 backdrop-blur-md ${isDarkMode
                                         ? 'bg-gray-800/40 border-gray-700/50 text-white placeholder-gray-400 focus:bg-gray-800/80'
                                         : 'bg-white/40 border-white/50 text-gray-900 placeholder-gray-500 focus:bg-white/80'
                                         }`}
@@ -875,8 +881,9 @@ const HomePage = () => {
                         <div className="flex items-center gap-2">
                             {/* Cart Button */}
                             <button
+                                type="button"
                                 onClick={() => navigate('/cart')}
-                                className={`relative p-2 rounded-lg transition hover:shadow-sm hover:-translate-y-0.5 ${isDarkMode ? 'hover:bg-gray-800/50 text-gray-300' : 'hover:bg-white/50 text-gray-600'}`}
+                                className={`bh-touch relative flex items-center justify-center rounded-lg p-2 transition hover:shadow-sm hover:-translate-y-0.5 ${isDarkMode ? 'hover:bg-gray-800/50 text-gray-300' : 'hover:bg-white/50 text-gray-600'}`}
                             >
                                 <ShoppingCart size={20} />
                                 {cart.length > 0 && (
@@ -889,8 +896,9 @@ const HomePage = () => {
                             {/* Notification Bell */}
                             <div className="relative">
                                 <button
+                                    type="button"
                                     onClick={() => setNotificationDropdown(!notificationDropdown)}
-                                    className={`relative p-2 rounded-lg transition hover:shadow-sm hover:-translate-y-0.5 ${isDarkMode ? 'hover:bg-gray-800/50 text-gray-300' : 'hover:bg-white/50 text-gray-600'}`}
+                                    className={`bh-touch relative flex items-center justify-center rounded-lg p-2 transition hover:shadow-sm hover:-translate-y-0.5 ${isDarkMode ? 'hover:bg-gray-800/50 text-gray-300' : 'hover:bg-white/50 text-gray-600'}`}
                                 >
                                     <Bell size={20} />
                                     {unreadCount > 0 && (
@@ -900,7 +908,7 @@ const HomePage = () => {
                                     )}
                                 </button>
                                 {notificationDropdown && (
-                                    <div className={`absolute right-0 mt-2 w-96 border rounded-2xl shadow-2xl p-0 animate-fade-in flex flex-col z-50 backdrop-blur-3xl overflow-hidden ${isDarkMode ? 'bg-gray-900/95 border-gray-700/50' : 'bg-white/95 border-white/50'
+                                    <div className={`absolute right-0 mt-2 w-[min(24rem,calc(100vw-1.5rem))] max-h-[min(24rem,70vh)] border rounded-2xl shadow-2xl p-0 animate-fade-in flex flex-col z-50 backdrop-blur-3xl overflow-hidden ${isDarkMode ? 'bg-gray-900/95 border-gray-700/50' : 'bg-white/95 border-white/50'
                                         }`}>
                                         <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
                                             <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h3>
@@ -950,10 +958,10 @@ const HomePage = () => {
                 </header>
 
                 {/* PAGE CONTENT */}
-                <main className="p-4 md:p-8 pb-20">
+                <main className="bh-container py-4 pb-24 sm:py-6 md:py-8 md:pb-20">
                     {/* Error/Success Messages - Floating Toast */}
                     {(error || message) && (
-                        <div className={`fixed top-24 right-6 z-[100] min-w-[300px] rounded-2xl border px-4 py-3 text-sm shadow-xl flex items-center justify-between animate-fade-in font-medium transition-all ${messageType === 'success'
+                        <div className={`fixed top-20 left-4 right-4 z-[100] sm:left-auto sm:right-6 sm:min-w-[300px] sm:w-auto rounded-2xl border px-4 py-3 text-sm shadow-xl flex items-center justify-between animate-fade-in font-medium transition-all ${messageType === 'success'
                             ? 'border-green-200 bg-green-50 text-green-700 shadow-green-500/20'
                             : 'border-red-200 bg-red-50 text-red-700 shadow-red-500/20'
                             }`}>
