@@ -9,6 +9,7 @@ import Home from "./pages/home.jsx";
 import Cart from "./pages/cart.jsx";
 import Orders from "./pages/orders.jsx";
 import Profile from "./pages/profile.jsx";
+import CustomerSettings from "./pages/settings.jsx";
 import OwnerLayout from "./components/OwnerLayout.jsx";
 import OwnerDashboard from "./pages/owner/dashboard.jsx";
 import OwnerMenu from "./pages/owner/menu.jsx";
@@ -44,6 +45,7 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<CustomerSettings />} />
         
         {/* Owner Dashboard */}
         <Route path="/owner" element={<OwnerLayout />}>

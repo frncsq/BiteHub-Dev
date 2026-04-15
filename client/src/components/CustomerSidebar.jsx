@@ -18,7 +18,7 @@ const menuItems = [
     { id: "cart", label: "My Cart", icon: ShoppingCart, path: "/cart" },
     { id: "orders", label: "Orders", icon: Package, path: "/orders" },
     { id: "profile", label: "Profile", icon: User, path: "/profile" },
-    { id: "settings", label: "Settings", icon: Settings, path: "/profile" },
+    { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
 ];
 
 function CustomerSidebar({
@@ -82,7 +82,9 @@ function CustomerSidebar({
               ? 'cart'
               : location.pathname === '/profile'
                 ? 'profile'
-                : 'home');
+                : location.pathname === '/settings'
+                  ? 'settings'
+                  : 'home');
 
     const desktopWidth = sidebarCollapsed ? 'md:w-20' : 'md:w-64';
 

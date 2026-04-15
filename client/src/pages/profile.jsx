@@ -1,9 +1,9 @@
 import CustomerSidebar from "../components/CustomerSidebar"
 import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTheme } from "../context/ThemeContext"
-import { Edit2, Camera, MapPin, Mail, Phone, User as UserIcon, Calendar, Briefcase, LayoutDashboard, Utensils, Package } from "lucide-react"
+import { Edit2, Camera, MapPin, Mail, Phone, User as UserIcon, Calendar, Briefcase, LayoutDashboard, Utensils, Package, LogOut, ChevronRight } from "lucide-react"
 import { createApiClient } from "../services/apiClient"
 
 function Profile() {
@@ -35,10 +35,32 @@ function Profile() {
 	const [orders, setOrders] = useState([])
 	const [message, setMessage] = useState("")
 	const [messageType, setMessageType] = useState("")
+	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+	const logoutRef = useRef(null)
 
 	useEffect(() => {
 		fetchProfile()
 	}, [])
+
+	// Close logout confirm when clicking outside
+	useEffect(() => {
+		const handler = (e) => {
+			if (logoutRef.current && !logoutRef.current.contains(e.target)) {
+				setShowLogoutConfirm(false)
+			}
+		}
+		if (showLogoutConfirm) {
+			document.addEventListener('mousedown', handler)
+			return () => document.removeEventListener('mousedown', handler)
+		}
+	}, [showLogoutConfirm])
+
+	const handleLogout = () => {
+		localStorage.removeItem('authToken')
+		setMessage('Logged out successfully!')
+		setMessageType('success')
+		setTimeout(() => navigate('/login'), 600)
+	}
 
 	const fetchProfile = async () => {
 		try {
@@ -581,6 +603,70 @@ function Profile() {
 						</div>
 
 						<UserActivityAnalytics orders={orders} isDarkMode={isDarkMode} />
+
+						{/* Logout Section */}
+						<section className={`${cardBase} overflow-hidden`}>
+							<div
+								className={`flex items-center gap-4 border-b px-6 py-6 ${
+									isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'
+								}`}
+							>
+								<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isDarkMode ? 'bg-red-500/15 text-red-400' : 'bg-red-500/10 text-red-600'}`}>
+									<LogOut size={22} strokeWidth={2} />
+								</div>
+								<div className="min-w-0">
+									<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Session</h3>
+									<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Manage your login session</p>
+								</div>
+							</div>
+							<div className="p-5 sm:p-6" ref={logoutRef}>
+								{!showLogoutConfirm ? (
+									<button
+										type="button"
+										onClick={() => setShowLogoutConfirm(true)}
+										className={`w-full flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all duration-200 group ${
+											isDarkMode
+												? 'border-red-500/20 hover:border-red-500/40 hover:bg-red-950/30'
+												: 'border-red-100 hover:border-red-200 hover:bg-red-50/80'
+										}`}
+									>
+										<div className="flex items-center gap-3">
+											<LogOut size={18} className={`transition-colors ${isDarkMode ? 'text-zinc-500 group-hover:text-red-400' : 'text-slate-400 group-hover:text-red-500'}`} />
+											<span className={`text-sm font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>Logout from account</span>
+										</div>
+										<ChevronRight size={18} className={`transition-colors ${isDarkMode ? 'text-zinc-500 group-hover:text-red-400' : 'text-slate-400 group-hover:text-red-500'}`} />
+									</button>
+								) : (
+									<div className={`rounded-2xl border p-5 transition-all duration-300 ${isDarkMode ? 'border-red-500/30 bg-red-950/30' : 'border-red-200 bg-red-50/60'}`}>
+										<div className="flex items-center gap-3 mb-4">
+											<div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
+												<LogOut size={18} className="text-red-500" />
+											</div>
+											<div>
+												<p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-slate-900'}`}>Are you sure you want to logout?</p>
+												<p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>You'll need to sign in again to access your account.</p>
+											</div>
+										</div>
+										<div className="flex items-center gap-2 ml-12">
+											<button
+												type="button"
+												onClick={handleLogout}
+												className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-700 transition-all hover:shadow-md shadow-sm"
+											>
+												Yes, Logout
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowLogoutConfirm(false)}
+												className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+											>
+												Cancel
+											</button>
+										</div>
+									</div>
+								)}
+							</div>
+						</section>
 					</div>
 				</div>
 			</main>
