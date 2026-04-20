@@ -48,6 +48,7 @@ import { createApiClient } from "../services/apiClient"
 import biteLogo from "../assets/bite.png"
 import CustomerSidebar from "../components/CustomerSidebar"
 import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
+import { calculateDistance, formatDistance } from "../utils/distance"
 
 
 
@@ -141,6 +142,9 @@ const HomePage = () => {
     const [minRating, setMinRating] = useState(0)
     const [maxDistance, setMaxDistance] = useState(10)
     const [featuredScrollIndex, setFeaturedScrollIndex] = useState(0)
+    const [topSellingItems, setTopSellingItems] = useState([])
+    const [popularScrollIndex, setPopularScrollIndex] = useState(0)
+    const [flashSaleItems, setFlashSaleItems] = useState([])
     const [userName, setUserName] = useState("Guest")
     const [showCheckoutDialog, setShowCheckoutDialog] = useState(false)
     const [checkoutInfo, setCheckoutInfo] = useState({
@@ -186,6 +190,29 @@ const HomePage = () => {
     const [budgetLoadingCombos, setBudgetLoadingCombos] = useState(false)
     const [budgetGoToCart, setBudgetGoToCart] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+    const [userLocation, setUserLocation] = useState(null)
+
+    // Get user's location
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    console.warn("Geolocation error:", error.message);
+                    // Default to Abra University Main Campus if denied
+                    setUserLocation({ lat: 17.5956, lng: 120.6200 });
+                }
+            );
+        } else {
+            // Default location
+            setUserLocation({ lat: 17.5956, lng: 120.6200 });
+        }
+    }, []);
 
     const fetchLiveOrders = async () => {
         if (userRole !== 'owner') return;
@@ -237,7 +264,17 @@ const HomePage = () => {
     }
 
     const featuredRef = useRef(null)
+    const popularRef = useRef(null)
+    const flashRef = useRef(null)
     const browseFoodRef = useRef(null)
+
+    const handleFlashScroll = (direction) => {
+        if (flashRef.current) {
+            const container = flashRef.current
+            const scrollAmount = container.clientWidth * 0.8
+            container.scrollBy({ left: direction === 'next' ? scrollAmount : -scrollAmount, behavior: 'smooth' })
+        }
+    }
 
     // Fetch data from backend
     useEffect(() => {
@@ -283,11 +320,13 @@ const HomePage = () => {
             setMessage("")
 
             // Fetch data from real APIs
-            const [catRes, restRes, foodRes, profileRes] = await Promise.all([
+            const [catRes, restRes, foodRes, profileRes, popularRes, flashRes] = await Promise.all([
                 apiClient.get('/categories').catch(() => ({ data: { success: false } })),
                 apiClient.get('/restaurants').catch(() => ({ data: { success: false } })),
                 apiClient.get('/food').catch(() => ({ data: { success: false } })),
-                apiClient.get('/profile').catch(() => ({ data: { success: false } }))
+                apiClient.get('/profile').catch(() => ({ data: { success: false } })),
+                apiClient.get('/food/popular').catch(() => ({ data: { success: false } })),
+                apiClient.get('/food/flash-sale').catch(() => ({ data: { success: false } }))
             ])
 
             if (profileRes.data?.success && profileRes.data.profile) {
@@ -309,8 +348,22 @@ const HomePage = () => {
             if (catRes.data?.success) setCategories(catRes.data.categories)
             else setCategories(mockCategories)
 
-            if (restRes.data?.success) setRestaurants(restRes.data.restaurants)
-            else setRestaurants(mockRestaurantsData)
+            if (restRes.data?.success && restRes.data.restaurants) {
+                let sortedRestaurants = restRes.data.restaurants;
+                if (userLocation) {
+                    sortedRestaurants = sortedRestaurants.map(r => {
+                        const d = calculateDistance(userLocation.lat, userLocation.lng, r.latitude, r.longitude);
+                        return {
+                            ...r,
+                            distance: formatDistance(d),
+                            distanceRaw: d
+                        };
+                    });
+                }
+                setRestaurants(sortedRestaurants)
+            } else {
+                setRestaurants(mockRestaurantsData)
+            }
 
             if (foodRes.data?.success) {
                 const popular = Array.isArray(foodRes.data.foods)
@@ -325,6 +378,18 @@ const HomePage = () => {
                     allFoods.push(...restaurantFoods)
                 })
                 setPopularFoods(allFoods) // Show all mock items including drinks
+            }
+
+            if (popularRes.data?.success && popularRes.data.foods) {
+                setTopSellingItems(popularRes.data.foods)
+            } else {
+                // Fallback: pick highest rated from local search
+                const fallback = [...popularFoods].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8)
+                setTopSellingItems(fallback)
+            }
+
+            if (flashRes.data?.success && flashRes.data.foods) {
+                setFlashSaleItems(flashRes.data.foods)
             }
 
             setRetryCount(0)
@@ -812,6 +877,18 @@ const HomePage = () => {
         })
     }
 
+    const handlePopularScroll = (direction) => {
+        if (!popularRef.current) return
+        const container = popularRef.current
+        const scrollAmount = container.clientWidth * 0.8
+        const nextIndex = direction === "next" ? popularScrollIndex + 1 : popularScrollIndex - 1
+        setPopularScrollIndex(Math.max(0, nextIndex))
+        container.scrollBy({
+            left: direction === "next" ? scrollAmount : -scrollAmount,
+            behavior: "smooth",
+        })
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.background }}>
@@ -1060,37 +1137,6 @@ const HomePage = () => {
                                 </div>
                             </section>
 
-                            {/* Special Offers */}
-                            <section>
-                                <h2 className="text-lg font-bold text-gray-900 mb-2">Special Offers</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-3 text-white">
-                                        <Zap className="mb-1.5" size={20} />
-                                        <h3 className="font-bold text-sm mb-0.5">Flash Sale</h3>
-                                        <p className="text-blue-100 text-[11px] mb-2.5">50% off selected items</p>
-                                        <button className="bg-white text-blue-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-blue-50 transition">
-                                            Shop Now
-                                        </button>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-3 text-white">
-                                        <Star className="mb-1.5" size={20} />
-                                        <h3 className="font-bold text-sm mb-0.5">Top Rated</h3>
-                                        <p className="text-green-100 text-[11px] mb-2.5">Most popular this week</p>
-                                        <button className="bg-white text-green-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-green-50 transition">
-                                            Explore
-                                        </button>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-3 text-white">
-                                        <TrendingUp className="mb-1.5" size={20} />
-                                        <h3 className="font-bold text-sm mb-0.5">Trending</h3>
-                                        <p className="text-pink-100 text-[11px] mb-2.5">What everyone is ordering</p>
-                                        <button className="bg-white text-pink-600 px-2.5 py-1 rounded-lg text-[11px] font-semibold hover:bg-pink-50 transition">
-                                            Discover
-                                        </button>
-                                    </div>
-                                </div>
-                            </section>
-
                             {/* Featured Restaurants Carousel */}
                             <section>
                                 <div className="flex items-center justify-between mb-3">
@@ -1119,6 +1165,7 @@ const HomePage = () => {
                                     {restaurants.map((restaurant) => (
                                         <div
                                             key={restaurant.id}
+                                            onClick={() => navigate(`/restaurant/${restaurant.id}`, { state: { restaurant } })}
                                             className="min-w-[220px] max-w-[220px] bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group"
                                         >
                                             <div className="h-32 w-full overflow-hidden bg-gray-50">
@@ -1155,6 +1202,275 @@ const HomePage = () => {
                                     ))}
                                 </div>
                             </section>
+
+                            {/* Nearby Restaurants */}
+                            <section className="mb-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex flex-col">
+                                        <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                                            Nearby Restaurants <MapPin size={20} className="text-orange-500" />
+                                        </h2>
+                                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Closest to your location</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-xl">
+                                        <span className="font-semibold">Max</span>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="10"
+                                            value={maxDistance}
+                                            onChange={(e) => setMaxDistance(Number(e.target.value))}
+                                            className="accent-orange-500 w-16"
+                                        />
+                                        <span className="text-orange-600 font-bold">{maxDistance} km</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    {filteredRestaurants.map((restaurant) => (
+                                        <div key={restaurant.id} className="bg-white rounded-xl border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden">
+                                            <div
+                                                onClick={() => setExpandedRestaurantId(expandedRestaurantId === restaurant.id ? null : restaurant.id)}
+                                                className="flex items-center gap-3 p-3 cursor-pointer group"
+                                            >
+                                                <img
+                                                    src={restaurant.image}
+                                                    alt={restaurant.name}
+                                                    className="flex-shrink-0 w-14 h-14 rounded-lg object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start">
+                                                        <h3 className="font-bold text-gray-900 text-sm truncate group-hover:text-orange-600 transition-colors">{restaurant.name}</h3>
+                                                        <span className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                                                            <MapPin size={10} /> {restaurant.distance}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 truncate">{restaurant.cuisines ? restaurant.cuisines.join(', ') : (restaurant.cuisine || restaurant.type || 'Restaurant')}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px]">
+                                                        <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                                                        <span className="font-semibold">{restaurant.rating}</span>
+                                                        <span className="text-gray-400">({restaurant.reviews})</span>
+                                                        <span className="text-gray-400">•</span>
+                                                        <Clock size={10} className="text-gray-400" />
+                                                        <span className="text-gray-400">{restaurant.deliveryTime} min</span>
+                                                    </div>
+                                                </div>
+                                                <span className="text-gray-300 p-1">
+                                                    {expandedRestaurantId === restaurant.id ? <ChevronDown size={14} className="rotate-180 transition-transform" /> : <ChevronDown size={14} className="transition-transform" />}
+                                                </span>
+                                            </div>
+
+                                            {/* Expanded Content */}
+                                            {expandedRestaurantId === restaurant.id && (
+                                                <div className="p-4 pt-0 border-t border-gray-100 bg-gray-50/50 animate-fade-in flex flex-col">
+                                                    <div className="w-full h-32 md:h-48 mt-4 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-200 border border-gray-200">
+                                                        <img src={restaurant.image} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt={restaurant.name} onError={(e) => e.target.style.display = 'none'} />
+                                                    </div>
+                                                    <div className="mb-4 pt-4 text-sm text-gray-600 flex flex-col gap-2">
+                                                        {restaurant.description && <p className="leading-relaxed">{restaurant.description}</p>}
+                                                        <div className="flex flex-wrap gap-3 mt-1 text-xs">
+                                                            {restaurant.address && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 rounded-lg border border-gray-100"><MapPin size={14} className="text-orange-500" /> {restaurant.address}</span>}
+                                                            {restaurant.phone && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 rounded-lg border border-gray-100">📞 {restaurant.phone}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <h4 className="font-bold text-gray-900 mb-3 text-sm">Popular Menu Items</h4>
+                                                    <div className="space-y-2">
+                                                        {popularFoods.filter(f => f.restaurant === restaurant.name).length > 0 ? (
+                                                            popularFoods.filter(f => f.restaurant === restaurant.name).slice(0, 4).map(food => (
+                                                                <div key={food.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <img src={food.image} className="w-12 h-12 rounded-lg object-cover" alt={food.name} onError={(e) => { e.target.style.display = 'none'; }} />
+                                                                        <div>
+                                                                            <h5 className="font-bold text-sm text-gray-900">{food.name}</h5>
+                                                                            <div className="flex flex-col">
+                                                                                <p className="text-sm font-bold text-gray-800">₱{food.price}</p>
+                                                                                <p className="text-xs text-gray-500">₱{(food.price * (1 - (food.discount || 0) / 100)).toFixed(2)}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button onClick={(e) => { e.stopPropagation(); addToCart(food); }} className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition">
+                                                                        <Plus size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400 italic">Menu items currently unavailable.</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-4 flex justify-end">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); navigate(`/restaurant/${restaurant.id}`, { state: { restaurant } }); }}
+                                                            className="px-5 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition shadow-sm hover:shadow-orange-500/30 w-full md:w-auto mt-2"
+                                                        >
+                                                            View All Items
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {filteredRestaurants.length === 0 && (
+                                        <div className="text-center py-8">
+                                            <p className="text-gray-400 font-medium text-xs">No restaurants found within {maxDistance} km</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Popular Items Carousel */}
+                            {topSellingItems.length > 0 && (
+                                <section>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex flex-col">
+                                            <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                                                Popular Items <TrendingUp size={20} className="text-orange-500" />
+                                            </h2>
+                                            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Most ordered this week</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handlePopularScroll("prev")}
+                                                className="p-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition"
+                                                aria-label="Previous popular items"
+                                            >
+                                                <ChevronRight className="rotate-180" size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handlePopularScroll("next")}
+                                                className="p-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition"
+                                                aria-label="Next popular items"
+                                            >
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div
+                                        ref={popularRef}
+                                        className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent scroll-smooth no-scrollbar"
+                                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                                    >
+                                        {topSellingItems.map((food) => {
+                                            const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock <= 0;
+                                            return (
+                                                <div
+                                                    key={`popular-${food.id}`}
+                                                    onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}
+                                                    className="min-w-[180px] max-w-[180px] bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-full shadow-sm"
+                                                >
+                                                    <div className="h-28 w-full overflow-hidden relative">
+                                                        <img
+                                                            src={food.image}
+                                                            alt={food.name}
+                                                            className={`h-full w-full object-cover group-hover:scale-110 transition-transform duration-700 ${isOOS ? 'grayscale' : ''}`}
+                                                        />
+                                                        {food.orderCount > 0 && (
+                                                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                <Package size={10} /> {food.orderCount}+ Sold
+                                                            </div>
+                                                        )}
+                                                        {isOOS && (
+                                                            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center">
+                                                                <span className="text-[10px] font-black text-white bg-red-600 px-2 py-0.5 rounded-full">SOLD OUT</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="p-3 flex-1 flex flex-col">
+                                                        <h3 className="font-bold text-gray-900 text-xs mb-1 truncate group-hover:text-orange-600 transition-colors">
+                                                            {food.name}
+                                                        </h3>
+                                                        <p className="text-[10px] text-gray-500 mb-2 truncate">{food.restaurant}</p>
+                                                        <div className="mt-auto flex items-center justify-between">
+                                                            <span className="text-sm font-black text-gray-900">₱{Number(food.price).toFixed(2)}</span>
+                                                            <div className="flex items-center gap-0.5">
+                                                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                                                                <span className="text-[10px] font-bold text-gray-700">{food.rating}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Special Offers - Flash Sale */}
+                            {flashSaleItems.length > 0 && (
+                                <section className="mb-4">
+                                    <div className="flex items-center justify-between mb-3 text-blue-600">
+                                        <div className="flex flex-col">
+                                            <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
+                                                Flash Sale <Zap size={20} className="fill-blue-600" />
+                                            </h2>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">=• 10% Discount • Resets Daily</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleFlashScroll("prev")}
+                                                className={`p-2 rounded-full border ${isDarkMode ? 'border-gray-700 text-gray-400 hover:bg-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'} transition`}
+                                            >
+                                                <ChevronRight className="rotate-180" size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleFlashScroll("next")}
+                                                className={`p-2 rounded-full border ${isDarkMode ? 'border-gray-700 text-gray-400 hover:bg-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50'} transition`}
+                                            >
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div
+                                        ref={flashRef}
+                                        className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent scroll-smooth no-scrollbar"
+                                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                                    >
+                                        {flashSaleItems.map((food) => {
+                                            const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock <= 0;
+                                            const discountedPrice = food.price * (1 - (food.discount / 100));
+                                            return (
+                                                <div
+                                                    key={`flash-${food.id}`}
+                                                    onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}
+                                                    className={`min-w-[180px] max-w-[180px] border rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-full shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+                                                        }`}
+                                                >
+                                                    <div className="h-28 w-full overflow-hidden relative">
+                                                        <img
+                                                            src={food.image}
+                                                            alt={food.name}
+                                                            className={`h-full w-full object-cover group-hover:scale-110 transition-transform duration-700 ${isOOS ? 'grayscale' : ''}`}
+                                                        />
+                                                        <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
+                                                            -{food.discount}%
+                                                        </div>
+                                                        {isOOS && (
+                                                            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center">
+                                                                <span className="text-[10px] font-black text-white bg-red-600 px-2 py-0.5 rounded-full">SOLD OUT</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="p-3 flex-1 flex flex-col">
+                                                        <h3 className={`font-bold text-xs mb-1 truncate group-hover:text-blue-500 transition-colors ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                            {food.name}
+                                                        </h3>
+                                                        <p className="text-[10px] text-gray-500 mb-2 truncate">{food.restaurant}</p>
+                                                        <div className="mt-auto flex flex-col">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="text-sm font-black text-blue-600">₱{discountedPrice.toFixed(2)}</span>
+                                                                <span className="text-[10px] text-gray-400 line-through">₱{Number(food.price).toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-0.5 mt-1">
+                                                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                                                                <span className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{food.rating}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            )}
 
                             {/* ====== EXPLORE MENU ====== */}
                             <section ref={browseFoodRef} className="scroll-mt-24">
@@ -1375,116 +1691,6 @@ const HomePage = () => {
                                 </div>
                             </section>
 
-                            {/* Nearby Restaurants */}
-                            <section>
-                                <div className="flex items-center justify-between mb-3">
-                                    <h2 className="text-xl font-bold text-gray-900">Nearby Restaurants</h2>
-                                    <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                                        <span>Max distance</span>
-                                        <input
-                                            type="range"
-                                            min="1"
-                                            max="10"
-                                            value={maxDistance}
-                                            onChange={(e) => setMaxDistance(Number(e.target.value))}
-                                            className="accent-orange-500 w-16"
-                                        />
-                                        <span className="text-gray-700 font-semibold">{maxDistance} km</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    {filteredRestaurants.map((restaurant) => (
-                                        <div key={restaurant.id} className="bg-white rounded-xl border border-gray-100 hover:shadow-sm transition overflow-hidden">
-                                            <div
-                                                onClick={() => setExpandedRestaurantId(expandedRestaurantId === restaurant.id ? null : restaurant.id)}
-                                                className="flex items-center gap-3 p-3 cursor-pointer"
-                                            >
-                                                <img
-                                                    src={restaurant.image}
-                                                    alt={restaurant.name}
-                                                    className="flex-shrink-0 w-14 h-14 rounded-lg object-cover"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                    }}
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start">
-                                                        <h3 className="font-bold text-gray-900 text-sm truncate">{restaurant.name}</h3>
-                                                        <span className="text-gray-400 p-1">
-                                                            {expandedRestaurantId === restaurant.id ? <ChevronDown size={14} className="rotate-180 transition-transform" /> : <ChevronDown size={14} className="transition-transform" />}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[10px] text-gray-500 truncate">{restaurant.cuisines ? restaurant.cuisines.join(', ') : (restaurant.cuisine || restaurant.type || 'Restaurant')}</p>
-                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px]">
-                                                        <Star size={10} className="text-yellow-400 fill-yellow-400" />
-                                                        <span className="font-semibold">{restaurant.rating}</span>
-                                                        <span className="text-gray-400">({restaurant.reviews})</span>
-                                                        <span className="text-gray-400">•</span>
-                                                        <Clock size={10} className="text-gray-400" />
-                                                        <span className="text-gray-400">{restaurant.deliveryTime} min</span>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setExpandedRestaurantId(restaurant.id); browseFoodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                                                    className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-semibold hover:bg-orange-600 transition hidden md:block"
-                                                >
-                                                    Order
-                                                </button>
-                                            </div>
-
-                                            {/* Expanded Content */}
-                                            {expandedRestaurantId === restaurant.id && (
-                                                <div className="p-4 pt-0 border-t border-gray-100 bg-gray-50/50 animate-fade-in flex flex-col">
-                                                    {/* Restaurant Cover Photo inner banner */}
-                                                    <div className="w-full h-32 md:h-48 mt-4 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-gray-200 border border-gray-200">
-                                                        <img src={restaurant.image} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt={restaurant.name} onError={(e) => e.target.style.display = 'none'} />
-                                                    </div>
-
-                                                    <div className="mb-4 pt-4 text-sm text-gray-600 flex flex-col gap-2">
-                                                        {restaurant.description && <p className="leading-relaxed">{restaurant.description}</p>}
-                                                        <div className="flex flex-wrap gap-3 mt-1 text-xs">
-                                                            {restaurant.address && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 p-2 rounded-lg border border-gray-100"><MapPin size={14} className="text-orange-500" /> {restaurant.address}</span>}
-                                                            {restaurant.phone && <span className="flex items-center gap-1 font-medium bg-white px-2 py-1 p-2 rounded-lg border border-gray-100">📞 {restaurant.phone}</span>}
-                                                        </div>
-                                                    </div>
-                                                    <h4 className="font-bold text-gray-900 mb-3 text-sm">Popular Menu Items</h4>
-                                                    <div className="space-y-2">
-                                                        {popularFoods.filter(f => f.restaurant === restaurant.name).length > 0 ? (
-                                                            popularFoods.filter(f => f.restaurant === restaurant.name).slice(0, 4).map(food => (
-                                                                <div key={food.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <img src={food.image} className="w-12 h-12 rounded-lg object-cover" alt={food.name} onError={(e) => { e.target.style.display = 'none'; }} />
-                                                                        <div>
-                                                                            <h5 className="font-bold text-sm text-gray-900">{food.name}</h5>
-                                                                            <div className="flex flex-col">
-                                                                                <p className="text-sm font-bold text-gray-800">₱{food.price}</p>
-                                                                                <p className="text-xs text-gray-500">₱{(food.price * (1 - (food.discount || 0) / 100)).toFixed(2)}</p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <button onClick={(e) => { e.stopPropagation(); addToCart(food); }} className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition">
-                                                                        <Plus size={16} />
-                                                                    </button>
-                                                                </div>
-                                                            ))
-                                                        ) : (
-                                                            <p className="text-xs text-gray-400 italic">Menu items currently unavailable.</p>
-                                                        )}
-                                                    </div>
-                                                    <div className="mt-4 flex justify-end">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); setSelectedRestaurant(restaurant); setShowRestaurantDialog(true); }}
-                                                            className="px-5 py-2.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition shadow-sm hover:shadow-orange-500/30 w-full md:w-auto mt-2"
-                                                        >
-                                                            View All Items
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
 
 
                         </div>

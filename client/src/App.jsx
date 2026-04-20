@@ -25,6 +25,8 @@ import AdminUsers from "./pages/admin/users.jsx";
 import AdminOrders from "./pages/admin/orders.jsx";
 import AdminPayments from "./pages/admin/payments.jsx";
 
+import RestaurantMenu from "./pages/restaurant-menu.jsx";
+
 function App() {
   return (
     <ThemeProvider>
@@ -42,6 +44,7 @@ function App() {
         
         {/* Customer Pages */}
         <Route path="/home" element={<Home />} />
+        <Route path="/restaurant/:id" element={<RestaurantMenu />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/profile" element={<Profile />} />

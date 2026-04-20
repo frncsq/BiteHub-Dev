@@ -6,7 +6,7 @@ import { createApiClient } from './services/apiClient'
 
 function Login() {
 	const navigate = useNavigate();
-	const [fullName, setFullName] = useState('');
+	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
 	const [rememberMe, setRememberMe] = useState(false);
@@ -17,8 +17,10 @@ function Login() {
 
 	const validateForm = () => {
 		const newErrors = {};
-		if (!fullName.trim()) {
-			newErrors.fullName = 'Full name is required';
+		if (!email.trim()) {
+			newErrors.email = 'Email address is required';
+		} else if (!/\S+@\S+\.\S+/.test(email)) {
+			newErrors.email = 'Email address is invalid';
 		}
 		if (!password) {
 			newErrors.password = 'Password is required';
@@ -46,9 +48,11 @@ function Login() {
 		try {
 			const apiClient = createApiClient();
 			const response = await apiClient.post('/customer/login', {
-				fullName: fullName.trim(),
+				email: email.trim(),
 				password: password
 			});
+
+
 
 			if (response.data.success) {
 				const { token, profile } = response.data;
@@ -64,7 +68,7 @@ function Login() {
 				
 				if (rememberMe) {
 					localStorage.setItem('rememberMe', JSON.stringify({
-						fullName: fullName.trim()
+						email: email.trim()
 					}));
 				}
 				setTimeout(() => {
@@ -133,25 +137,25 @@ function Login() {
 								</div>
 							)}
 
-							{/* Full Name Input */}
+							{/* Email Input */}
 							<div className="space-y-1.5">
-								<label htmlFor="fullName" className="block text-xs font-semibold text-gray-900 flex items-center gap-2">
+								<label htmlFor="email" className="block text-xs font-semibold text-gray-900 flex items-center gap-2">
 									<Mail size={16} className="text-orange-600" />
-									Full Name
+									Email Address
 								</label>
 								<div className="relative">
 									<input
-										id="fullName"
-										type="text"
-										value={fullName}
+										id="email"
+										type="email"
+										value={email}
 										onChange={(e) => {
-											setFullName(e.target.value);
-											if (errors.fullName) {
-												setErrors({ ...errors, fullName: '' });
+											setEmail(e.target.value);
+											if (errors.email) {
+												setErrors({ ...errors, email: '' });
 											}
 										}}
-										placeholder="John Doe"
-										className={`w-full px-3.5 py-2.5 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none text-sm ${errors.fullName
+										placeholder="jane@example.com"
+										className={`w-full px-3.5 py-2.5 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none text-sm ${errors.email
 											? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
 											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
 											}`}
@@ -334,39 +338,39 @@ function Login() {
 							)}
 
 							<form onSubmit={handleLogin} className="space-y-4">
-								{/* Full Name Input */}
+								{/* Email Input */}
 								<div className="space-y-2">
-									<label htmlFor="mobile-fullName" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
+									<label htmlFor="mobile-email" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
 										<Mail size={18} className="text-orange-600" />
-										Full Name
+										Email Address
 									</label>
 									<div className="relative">
 										<input
-											id="mobile-fullName"
-											type="text"
-											value={fullName}
+											id="mobile-email"
+											type="email"
+											value={email}
 											onChange={(e) => {
-												setFullName(e.target.value);
-												if (errors.fullName) {
-													setErrors({ ...errors, fullName: '' });
+												setEmail(e.target.value);
+												if (errors.email) {
+													setErrors({ ...errors, email: '' });
 												}
 											}}
-											placeholder="John Doe"
-											aria-label="Full Name"
-											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${errors.fullName
+											placeholder="jane@example.com"
+											aria-label="Email Address"
+											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${errors.email
 												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
 												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
 												}`}
 										/>
-										{errors.fullName && (
+										{errors.email && (
 											<div className="absolute right-3 top-3">
 												<AlertCircle size={20} className="text-red-500" />
 											</div>
 										)}
 									</div>
-									{errors.fullName && (
+									{errors.email && (
 										<p className="text-sm text-red-600 flex items-center gap-1">
-											<span>•</span> {errors.fullName}
+											<span>•</span> {errors.email}
 										</p>
 									)}
 								</div>

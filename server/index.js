@@ -8,6 +8,7 @@ import { hashPassword, comparePassword } from './components/hash.js';
 import { mockRestaurantsData, mockFoodItems, mockCategories } from './mockData.js';
 import ownerRoutes from './routes/owner.js';
 import adminRoutes from './routes/admin.js';
+import { rotateFlashSale } from './components/flashSale.js';
 
 // ======================================================
 // DAILY STOCK RESET SCHEDULER
@@ -42,6 +43,27 @@ const scheduleDailyStockReset = () => {
   };
 
   scheduleNextReset();
+};
+
+// ======================================================
+// FLASH SALE ROTATION SCHEDULER
+// Picks 5-8 random menu items for a 10% discount, resets daily
+// ======================================================
+const rotateFlashSale_local = async () => { /* Removed local def, using import */ };
+
+const scheduleFlashSaleRotation = () => {
+    const scheduleNextRotation = () => {
+        const now = new Date();
+        const nextMidnight = new Date(now);
+        nextMidnight.setHours(24, 0, 0, 0);
+        const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+            await rotateFlashSale();
+            scheduleNextRotation();
+        }, msUntilMidnight);
+    };
+    scheduleNextRotation();
 };
 
 // Database connection test flag
@@ -154,6 +176,19 @@ const ensureBudgetMealTables = async () => {
   }
 };
 
+const ensureRestaurantLocationColumns = async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE restaurants
+      ADD COLUMN IF NOT EXISTS latitude NUMERIC(10, 8),
+      ADD COLUMN IF NOT EXISTS longitude NUMERIC(11, 8);
+    `);
+    console.log('✅ Ensured restaurants.latitude and restaurants.longitude columns exist');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure restaurant location columns:', err.message);
+  }
+};
+
 const ensureRestaurantIsActiveColumn = async () => {
   try {
     await pool.query(`
@@ -194,6 +229,28 @@ const ensureReviewsTable = async () => {
   }
 };
 
+const ensureFlashSaleTable = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS flash_sales (
+                id SERIAL PRIMARY KEY,
+                menu_item_id INT NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+                discount_percentage NUMERIC(5, 2) DEFAULT 10.00,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log('✅ Ensured flash_sales table exists');
+        
+        // Initial check: if empty, rotate once
+        const check = await pool.query("SELECT COUNT(*) FROM flash_sales");
+        if (parseInt(check.rows[0].count) === 0) {
+            await rotateFlashSale();
+        }
+    } catch (err) {
+        console.warn('⚠️ Could not ensure flash_sales table:', err.message);
+    }
+};
+
 const ensureRestaurantLogoUrlColumnIsText = async () => {
   try {
     await pool.query(`
@@ -222,11 +279,20 @@ const seedDatabase = async () => {
     const restaurantsCount = await pool.query('SELECT COUNT(*) FROM restaurants');
     if (parseInt(restaurantsCount.rows[0].count) === 0) {
       console.log('🌱 Seeding restaurants table...');
-      for (const r of mockRestaurantsData) {
+      // Abra University, Bangued, Abra roughly 17.5956, 120.6200
+      const baseLat = 17.5956;
+      const baseLng = 120.6200;
+      
+      for (let i = 0; i < mockRestaurantsData.length; i++) {
+        const r = mockRestaurantsData[i];
+        // Add some random offset for distance calculation
+        const lat = baseLat + (Math.random() * 0.02 - 0.01);
+        const lng = baseLng + (Math.random() * 0.02 - 0.01);
+        
         await pool.query(
-          `INSERT INTO restaurants (id, business_name, cuisine_type, rating, description, restaurant_logo_url) 
-           VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING`,
-          [r.id, r.name, r.type, r.rating, r.description, r.image]
+          `INSERT INTO restaurants (id, business_name, cuisine_type, rating, description, restaurant_logo_url, latitude, longitude, approval_status, is_active) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'approved', TRUE) ON CONFLICT (id) DO NOTHING`,
+          [r.id, r.name, r.type, r.rating, r.description, r.image, lat, lng]
         );
       }
     }
@@ -259,10 +325,14 @@ const seedDatabase = async () => {
     await ensureStockColumns();
     await ensureBudgetMealTables();
     await ensureRestaurantIsActiveColumn();
+    await ensureRestaurantLocationColumns();
     await ensureReviewsTable();
     await seedDatabase();
+    await pool.query("UPDATE restaurants SET approval_status = 'approved', is_active = TRUE WHERE approval_status = 'pending' OR approval_status IS NULL");
+    await ensureFlashSaleTable();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();
+    scheduleFlashSaleRotation();
   } catch (err) {
     dbConnected = false;
     console.log('⚠️  Database not available, using session storage for auth');
@@ -402,7 +472,9 @@ publicCatalogRouter.get('/restaurants', async (req, res) => {
       rating: r.rating || 0,
       reviews: 0,
       image: r.restaurant_logo_url || 'https://via.placeholder.com/300x200',
-      distance: '2.5',
+      distance: r.latitude ? null : '2.5', // If we have lat/lng, we'll compute it on the frontend
+      latitude: r.latitude,
+      longitude: r.longitude,
       deliveryTime: '30-45 min',
       cuisines: r.cuisine_type ? [r.cuisine_type] : [],
       address: r.business_address,
@@ -454,6 +526,90 @@ publicCatalogRouter.get('/food', async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+publicCatalogRouter.get('/food/popular', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT m.*, r.business_name as restaurant,
+        COALESCE(rv.avg_rating, 0) as avg_rating,
+        COALESCE(rv.review_count, 0) as review_count,
+        COALESCE(oi.total_ordered, 0) as order_count
+      FROM menu_items m 
+      INNER JOIN restaurants r ON m.restaurant_id = r.id
+      LEFT JOIN (
+        SELECT menu_item_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+        FROM reviews WHERE menu_item_id IS NOT NULL GROUP BY menu_item_id
+      ) rv ON rv.menu_item_id = m.id
+      LEFT JOIN (
+        SELECT menu_item_id, SUM(quantity) as total_ordered
+        FROM order_items GROUP BY menu_item_id
+      ) oi ON oi.menu_item_id = m.id
+      WHERE r.approval_status = 'approved'
+        AND r.is_active = TRUE
+      ORDER BY order_count DESC, avg_rating DESC
+      LIMIT 10
+    `);
+    const foods = result.rows.map(f => ({
+      id: f.id,
+      name: f.item_name || 'Unnamed Item',
+      price: Number(f.price || 0),
+      half_price: f.half_price != null ? Number(f.half_price) : null,
+      large_price: f.large_price != null ? Number(f.large_price) : null,
+      category: f.category || 'Main Course',
+      rating: Number(f.avg_rating) || Number(f.rating) || 0,
+      reviews: Number(f.review_count) || 0,
+      orderCount: Number(f.order_count) || 0,
+      image: f.image_url || 'https://via.placeholder.com/400x400',
+      description: f.description || '',
+      restaurant: f.restaurant || 'Unknown Restaurant',
+      restaurantId: f.restaurant_id,
+      is_available: f.is_available,
+      current_stock: f.current_stock != null ? Number(f.current_stock) : null,
+    }));
+    res.status(200).json({ success: true, foods });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+publicCatalogRouter.get('/food/flash-sale', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT m.*, r.business_name as restaurant, fs.discount_percentage,
+                   COALESCE(rv.avg_rating, 0) as avg_rating,
+                   COALESCE(rv.review_count, 0) as review_count
+            FROM menu_items m
+            INNER JOIN flash_sales fs ON m.id = fs.menu_item_id
+            INNER JOIN restaurants r ON m.restaurant_id = r.id
+            LEFT JOIN (
+                SELECT menu_item_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+                FROM reviews WHERE menu_item_id IS NOT NULL GROUP BY menu_item_id
+            ) rv ON rv.menu_item_id = m.id
+            WHERE r.approval_status = 'approved' AND r.is_active = TRUE
+        `);
+        
+        const foods = result.rows.map(f => ({
+            id: f.id,
+            name: f.item_name,
+            price: Number(f.price || 0),
+            category: f.category || 'Main Course',
+            rating: Number(f.avg_rating) || Number(f.rating) || 0,
+            reviews: Number(f.review_count) || 0,
+            discount: Number(f.discount_percentage),
+            image: f.image_url || 'https://via.placeholder.com/400x400',
+            description: f.description || '',
+            restaurant: f.restaurant,
+            restaurantId: f.restaurant_id,
+            is_available: f.is_available,
+            current_stock: f.current_stock != null ? Number(f.current_stock) : null,
+        }));
+        
+        res.status(200).json({ success: true, foods });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 
 publicCatalogRouter.get('/food/:restaurantId', async (req, res) => {
   try {
@@ -1280,16 +1436,17 @@ app.post('/api/customer/register', async (req, res) => {
 });
 
 app.post('/api/customer/login', async (req, res) => {
-  const { fullName, password } = req.body;
-  if (!fullName || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password are required' });
 
   try {
-    const userResult = await pool.query('SELECT * FROM users WHERE full_name = $1', [fullName]);
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
     
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
+
 
     const valid = await comparePassword(password, user.password_hash);
     if (!valid) {
@@ -1322,6 +1479,7 @@ app.post('/api/customer/login', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 app.post('/api/customer/logout', (req, res) => {
   req.session.destroy();

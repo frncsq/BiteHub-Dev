@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 import { comparePassword, hashPassword } from '../components/hash.js';
+import { rotateFlashSale } from '../components/flashSale.js';
 
 const router = express.Router();
 
@@ -313,6 +314,16 @@ router.get('/payments', isAdmin, async (req, res) => {
         res.json({ success: true, transactions: logs });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Flash Sale Management
+router.post('/flash-sale/rotate', isAdmin, async (req, res) => {
+    try {
+        const result = await rotateFlashSale();
+        res.json({ success: true, message: `Flash sale rotated successfully. ${result.count} items picked.`, ...result });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 

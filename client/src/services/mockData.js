@@ -418,8 +418,8 @@ export const createMockOrder = (id, items, restaurant) => ({
 // Authentication Actions
 export const mockAuthService = {
 	// Customer Login
-	login: (fullName, password) => {
-		const user = mockUsers.find(u => u.fullName === fullName && u.password === password);
+	login: (email, password) => {
+		const user = mockUsers.find(u => u.email === email && u.password === password);
 		if (user) {
 			localStorage.setItem('authToken', JSON.stringify({
 				...user,
@@ -429,6 +429,7 @@ export const mockAuthService = {
 		}
 		return { success: false, message: 'Invalid credentials' };
 	},
+
 
 	// Customer Register
 	register: (fullName, department, course, year, password) => {

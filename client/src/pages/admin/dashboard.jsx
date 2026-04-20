@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createApiClient } from '../../services/apiClient';
-import { Users, Store, ClipboardList, TrendingUp, DollarSign, ArrowRight } from 'lucide-react';
+import { Users, Store, ClipboardList, TrendingUp, DollarSign, ArrowRight, Zap } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 function AdminDashboard() {
@@ -14,6 +14,26 @@ function AdminDashboard() {
     revenueTrend: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [rotatingFlashSale, setRotatingFlashSale] = useState(false);
+  const [flashResult, setFlashResult] = useState("");
+
+  const handleRotateFlashSale = async () => {
+    setRotatingFlashSale(true);
+    setFlashResult("");
+    try {
+      const apiClient = createApiClient();
+      const res = await apiClient.post('/admin/flash-sale/rotate');
+      if (res.data.success) {
+        setFlashResult(res.data.message);
+      }
+    } catch (err) {
+      console.error("Failed to rotate flash sale", err);
+      setFlashResult("Rotation failed.");
+    } finally {
+      setRotatingFlashSale(false);
+      setTimeout(() => setFlashResult(""), 3000);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -131,6 +151,17 @@ function AdminDashboard() {
                 <button className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-left px-4 py-3 rounded-xl transition-colors font-medium text-sm flex justify-between items-center group">
                    Generate Payout Report <ArrowRight size={16} className="text-slate-400 group-hover:text-white" />
                 </button>
+                <div className="pt-2">
+                   <button 
+                       onClick={handleRotateFlashSale}
+                       disabled={rotatingFlashSale}
+                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-left px-4 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/20 font-bold text-sm flex justify-between items-center group disabled:opacity-50"
+                   >
+                       {rotatingFlashSale ? "Rotating System..." : "Rotate Daily Flash Sales"} 
+                       <Zap size={16} className="text-white group-hover:scale-125 transition-transform duration-300 fill-white" />
+                   </button>
+                   {flashResult && <p className="text-[10px] text-emerald-400 font-bold mt-2 px-1 animate-pulse">{flashResult}</p>}
+                </div>
              </div>
          </div>
       </div>
