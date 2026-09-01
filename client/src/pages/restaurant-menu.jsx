@@ -226,22 +226,28 @@ const RestaurantMenuPage = () => {
         return matchesCategory && matchesSearch
     })
 
+    const bg = isDarkMode ? '#111111' : '#FAFAFA'
+    const cardBg = isDarkMode ? '#1A1A1A' : '#FFFFFF'
+    const borderColor = isDarkMode ? '#2A2A2A' : '#E5E7EB'
+    const textPrimary = isDarkMode ? '#F5F5F5' : '#171717'
+    const textSecondary = isDarkMode ? '#A0A0A0' : '#6B7280'
+
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
-                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bg }}>
+                <div className="w-10 h-10 border-[3px] border-[#EA580C] border-t-transparent rounded-full animate-spin"></div>
             </div>
         )
     }
 
     if (!restaurant) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-[#0a0a0f]">
-                <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center mb-6">
-                    <Utensils size={40} className="text-gray-700" />
+            <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center" style={{ backgroundColor: bg }}>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
+                    <Utensils size={32} style={{ color: textSecondary }} />
                 </div>
-                <h1 className="text-2xl font-black text-white mb-4">Restaurant Not Found</h1>
-                <button onClick={() => navigate('/home')} className="bg-orange-500 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+                <h1 className="text-xl font-semibold mb-3" style={{ color: textPrimary }}>Restaurant Not Found</h1>
+                <button onClick={() => navigate('/home')} className="bg-[#EA580C] text-white px-7 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#C2410C] transition-all">
                     Return to Home
                 </button>
             </div>
@@ -249,7 +255,7 @@ const RestaurantMenuPage = () => {
     }
 
     return (
-        <div className="min-h-screen relative font-sans transition-colors duration-500" style={{ backgroundColor: isDarkMode ? '#0a0a0f' : '#f8fafc' }}>
+        <div className="min-h-screen relative font-sans transition-colors duration-300" style={{ backgroundColor: bg }}>
             <CustomerSidebar
                 activeTab="home"
                 onTabChange={(tabId) => navigate('/home', { state: { activeTab: tabId } })}
@@ -259,135 +265,142 @@ const RestaurantMenuPage = () => {
                 setMobileOpen={setSidebarOpen}
             />
 
-            <div className={`transition-all duration-500 ${sidebarCollapsed ? "md:ml-24" : "md:ml-72"}`}>
-                {/* High-Contrast Professional Header */}
-                <div className="relative h-[220px] w-full overflow-hidden border-b border-gray-100 dark:border-gray-800/20">
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-[72px]' : 'md:pl-[240px]'}`}>
+                {/* Restaurant Header */}
+                <div className="relative h-[200px] w-full overflow-hidden">
                     <div className="absolute inset-0 z-0">
                         <img 
                             src={restaurant.image} 
                             alt={restaurant.name} 
-                            className="w-full h-full object-cover blur-none opacity-40"
+                            className="w-full h-full object-cover opacity-60"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-gray-900/40"></div>
+                        <div className="absolute inset-0" style={{ background: isDarkMode 
+                            ? 'linear-gradient(to top, rgba(17,17,17,0.95) 0%, rgba(17,17,17,0.5) 50%, rgba(17,17,17,0.2) 100%)'
+                            : 'linear-gradient(to top, rgba(250,250,250,0.98) 0%, rgba(250,250,250,0.5) 50%, rgba(250,250,250,0.1) 100%)'
+                        }}></div>
                     </div>
                     
-                    <div className="relative z-10 h-full max-w-5xl mx-auto px-6 flex flex-col items-center justify-center">
+                    <div className="relative z-10 h-full max-w-5xl mx-auto px-6 flex flex-col justify-end pb-6">
                         <button 
                             onClick={() => navigate(-1)}
-                            className="absolute top-8 left-6 md:left-0 flex items-center justify-center w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all"
+                            className="absolute top-5 left-6 md:left-0 flex items-center justify-center w-9 h-9 rounded-xl transition-all"
+                            style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: textPrimary }}
                         >
-                            <ArrowLeft size={18} />
+                            <ArrowLeft size={16} />
                         </button>
 
-                        <div className="flex flex-col items-center text-center">
-                            <div className="relative mb-5 group">
-                                <div className="absolute inset-0 bg-orange-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                                <div className="relative w-24 h-24 rounded-3xl p-[2px] bg-gradient-to-br from-orange-400 to-red-600 shadow-2xl">
-                                    <div className="w-full h-full rounded-[22px] overflow-hidden bg-white flex items-center justify-center">
-                                        <img 
-                                            src={restaurant.image} 
-                                            className="w-full h-full object-contain p-1" 
-                                            alt={restaurant.name} 
-                                        />
-                                    </div>
-                                </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-md" style={{ border: `2px solid ${borderColor}` }}>
+                                <img 
+                                    src={restaurant.image} 
+                                    className="w-full h-full object-cover" 
+                                    alt={restaurant.name} 
+                                />
                             </div>
-
-                            <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight drop-shadow-lg">{restaurant.name}</h1>
-                            <div className="flex items-center gap-6 px-6 py-2 rounded-2xl bg-white/5 backdrop-blur-md border border-white/5 text-[10px] font-black text-white uppercase tracking-[0.2em]">
-                                <div className="flex items-center gap-1.5">
-                                    <Star size={12} className="text-orange-400 fill-orange-400" />
-                                    <span className="text-orange-400">{restaurant.rating}</span>
+                            <div className="flex flex-col">
+                                <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: textPrimary }}>{restaurant.name}</h1>
+                                <div className="flex items-center gap-4 mt-1">
+                                    <div className="flex items-center gap-1">
+                                        <Star size={13} className="text-[#EA580C] fill-[#EA580C]" />
+                                        <span className="text-xs font-semibold" style={{ color: textPrimary }}>{restaurant.rating}</span>
+                                    </div>
+                                    <span className="text-xs" style={{ color: textSecondary }}>{restaurant.distance}</span>
+                                    <span className="text-xs" style={{ color: textSecondary }}>30-45 min</span>
                                 </div>
-                                <div className="w-[1px] h-3 bg-white/10"></div>
-                                <span className="text-white/80">{restaurant.distance}</span>
-                                <div className="w-[1px] h-3 bg-white/10"></div>
-                                <span className="text-white/80">30-45 MIN</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <main className="max-w-5xl mx-auto px-6 py-10">
-                    {/* Small Search & Filter Strip */}
-                    <div className="flex items-baseline justify-between mb-10 border-b border-gray-800/10 pb-4">
-                        <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
+                <main className="max-w-5xl mx-auto px-6 py-6">
+                    {/* Category Tabs & Search */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-1">
                             {categories.map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveCategory(cat)}
-                                    className={`text-[9px] font-black tracking-[0.3em] uppercase transition-all pb-1.5 ${
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                                         activeCategory === cat 
-                                        ? 'text-orange-500 border-b border-orange-500' 
-                                        : isDarkMode 
-                                            ? 'text-gray-600 hover:text-gray-400' 
-                                            : 'text-gray-400 hover:text-gray-600'
+                                        ? 'bg-[#EA580C] text-white' 
+                                        : ''
                                     }`}
+                                    style={activeCategory !== cat ? { 
+                                        color: textSecondary,
+                                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'
+                                    } : {}}
                                 >
                                     {cat}
                                 </button>
                             ))}
                         </div>
-                        <div className="relative hidden md:block">
+                        <div className="relative hidden md:flex items-center">
+                            <Search size={14} className="absolute left-3" style={{ color: textSecondary }} />
                             <input
                                 type="text"
-                                placeholder="SEARCH..."
+                                placeholder="Search menu..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`bg-transparent outline-none font-black text-[9px] tracking-[0.3em] uppercase transition-all w-32 focus:w-48 ${
-                                    isDarkMode ? 'text-white border-b border-white/5 focus:border-orange-500' : 'text-gray-900 border-b border-gray-100 focus:border-orange-500'
-                                }`}
+                                className="pl-8 pr-3 py-2 rounded-xl text-xs outline-none transition-all w-40 focus:w-56"
+                                style={{ 
+                                    backgroundColor: cardBg, 
+                                    border: `1px solid ${borderColor}`, 
+                                    color: textPrimary 
+                                }}
                             />
                         </div>
                     </div>
 
                     <AdBanner placement="menu_between" className="mb-4" />
 
-                    {/* Menu Grid - Minimalist Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {/* Menu Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredMenu.length === 0 ? (
-                            <div className="col-span-full py-32 text-center">
-                                <div className="w-20 h-20 bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <Utensils size={32} className="text-gray-700" />
+                            <div className="col-span-full py-28 text-center">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
+                                    <Utensils size={28} style={{ color: textSecondary }} />
                                 </div>
-                                <p className="text-gray-500 font-bold text-lg">No items found matching your filter</p>
+                                <p className="text-sm font-medium" style={{ color: textSecondary }}>No items found</p>
                             </div>
                         ) : (
                             filteredMenu.map(item => (
                                 <div 
                                     key={item.id}
-                                    className={`group flex flex-col transition-all cursor-pointer ${isDarkMode ? 'hover:bg-white/[0.02]' : 'hover:bg-black/[0.02]'} rounded-xl p-2`}
+                                    className="group flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all hover:shadow-md"
+                                    style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
                                     onClick={() => { 
                                         setSelectedFood(item); 
                                         setFoodQuantity(1);
                                         setShowFoodModal(true); 
                                     }}
                                 >
-                                    <div className="relative aspect-[4/3] overflow-hidden rounded-lg mb-3">
+                                    <div className="relative aspect-[4/3] overflow-hidden">
                                         <img 
                                             src={item.image} 
                                             alt={item.name} 
-                                            className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                         <div className="absolute top-2 right-2">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
-                                                className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white"
+                                                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                                                style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
                                             >
-                                                <Heart size={10} className={favorites.has(item.id) ? 'fill-red-500 text-red-500' : ''} />
+                                                <Heart size={13} className={favorites.has(item.id) ? 'fill-red-500 text-red-500' : 'text-white'} />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col px-1">
-                                        <h3 className={`text-[11px] font-black tracking-tight mb-1 transition-colors ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                            {item.name.toUpperCase()}
-                                        </h3>
+                                    <div className="p-3 flex flex-col flex-1">
+                                        <h3 className="text-sm font-semibold mb-1.5 line-clamp-1" style={{ color: textPrimary }}>{item.name}</h3>
                                         <div className="flex items-center justify-between mt-auto">
-                                            <span className="text-[12px] font-black text-orange-500">₱{Number(item.price).toFixed(2)}</span>
-                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Plus size={12} className="text-gray-500" />
-                                            </div>
+                                            <span className="text-sm font-bold text-[#EA580C]">₱{Number(item.price).toFixed(2)}</span>
+                                            <button 
+                                                className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                                                style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}
+                                            >
+                                                <Plus size={14} style={{ color: textSecondary }} />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -397,88 +410,88 @@ const RestaurantMenuPage = () => {
                 </main>
             </div>
 
-            {/* Premium Food Modal */}
+            {/* Food Modal */}
             {showFoodModal && selectedFood && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in" onClick={() => setShowFoodModal(false)}>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowFoodModal(false)}>
                     <div 
-                        className={`w-full max-w-xl rounded-[32px] overflow-hidden shadow-2xl animate-fade-in-scale relative border ${isDarkMode ? 'bg-[#0a0a0f] border-gray-800' : 'bg-white border-white'}`}
+                        className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-fade-in-scale relative"
+                        style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button onClick={() => setShowFoodModal(false)} className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-all border border-white/10">
+                        <button onClick={() => setShowFoodModal(false)} className="absolute top-3 right-3 z-20 w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: textPrimary }}>
                             <X size={16} />
                         </button>
                         
                         <div className="flex flex-col">
-                            {/* Visual Header */}
-                            <div className="w-full h-48 relative">
+                            {/* Food Image */}
+                            <div className="w-full h-52 relative">
                                 <img src={selectedFood.image} alt={selectedFood.name} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                                <div className="absolute bottom-4 left-6">
-                                    <span className="px-2 py-0.5 bg-orange-500 text-white rounded-md text-[7px] font-black tracking-widest uppercase">
+                                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }}></div>
+                                <div className="absolute bottom-3 left-4">
+                                    <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white" style={{ backgroundColor: '#EA580C' }}>
                                         {selectedFood.category}
                                     </span>
                                 </div>
                             </div>
                             
-                            {/* Content Area */}
-                            <div className="p-6 md:p-8 flex flex-col">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className={`text-xl md:text-2xl font-black tracking-tight leading-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                        {selectedFood.name}
-                                    </h2>
-                                    <div className="px-2 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded text-[7px] font-black tracking-[0.2em] uppercase">
+                            {/* Content */}
+                            <div className="p-5 md:p-6 flex flex-col">
+                                <div className="flex items-start justify-between gap-3 mb-3">
+                                    <h2 className="text-lg md:text-xl font-bold leading-tight" style={{ color: textPrimary }}>{selectedFood.name}</h2>
+                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap ${selectedFood.current_stock > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
                                         {selectedFood.current_stock > 0 ? 'In Stock' : 'Out of Stock'}
-                                    </div>
+                                    </span>
                                 </div>
 
-                                <p className={`text-xs leading-relaxed mb-6 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {selectedFood.description || "Indulge in a masterpiece of flavor, handcrafted with locally sourced ingredients."}
+                                <p className="text-sm leading-relaxed mb-5" style={{ color: textSecondary }}>
+                                    {selectedFood.description || "Freshly prepared with quality ingredients."}
                                 </p>
 
-                                <div className="grid grid-cols-3 gap-3 mb-6">
-                                    <div className={`p-3 rounded-xl border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-                                        <div className="flex items-center gap-1 text-orange-500 mb-0.5">
-                                            <Clock size={10} />
-                                            <span className="text-[7px] font-black uppercase tracking-widest">Time</span>
+                                <div className="grid grid-cols-3 gap-3 mb-5">
+                                    <div className="p-3 rounded-xl" style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#F9FAFB', border: `1px solid ${borderColor}` }}>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Clock size={12} className="text-[#EA580C]" />
+                                            <span className="text-[10px] font-medium" style={{ color: textSecondary }}>Time</span>
                                         </div>
-                                        <span className={`text-[10px] font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>15 MIN</span>
+                                        <span className="text-xs font-semibold" style={{ color: textPrimary }}>15 min</span>
                                     </div>
-                                    <div className={`p-3 rounded-xl border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-                                        <div className="flex items-center gap-1 text-yellow-500 mb-0.5">
-                                            <Star size={10} className="fill-yellow-500" />
-                                            <span className="text-[7px] font-black uppercase tracking-widest">Rate</span>
+                                    <div className="p-3 rounded-xl" style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#F9FAFB', border: `1px solid ${borderColor}` }}>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Star size={12} className="text-amber-500 fill-amber-500" />
+                                            <span className="text-[10px] font-medium" style={{ color: textSecondary }}>Rating</span>
                                         </div>
-                                        <span className={`text-[10px] font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>4.8</span>
+                                        <span className="text-xs font-semibold" style={{ color: textPrimary }}>4.8</span>
                                     </div>
-                                    <div className={`p-3 rounded-xl border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-                                        <div className="flex items-center gap-1 text-blue-500 mb-0.5">
-                                            <Info size={10} />
-                                            <span className="text-[7px] font-black uppercase tracking-widest">Type</span>
+                                    <div className="p-3 rounded-xl" style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#F9FAFB', border: `1px solid ${borderColor}` }}>
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <Info size={12} className="text-blue-500" />
+                                            <span className="text-[10px] font-medium" style={{ color: textSecondary }}>Type</span>
                                         </div>
-                                        <span className={`text-[10px] font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>FRESH</span>
+                                        <span className="text-xs font-semibold" style={{ color: textPrimary }}>Fresh</span>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col">
-                                            <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest mb-0.5">Payable</span>
-                                            <span className="text-2xl font-black text-orange-500 tracking-tight">₱{(Number(selectedFood.price) * foodQuantity).toFixed(2)}</span>
+                                            <span className="text-[10px] font-medium mb-0.5" style={{ color: textSecondary }}>Total</span>
+                                            <span className="text-xl font-bold text-[#EA580C]">₱{(Number(selectedFood.price) * foodQuantity).toFixed(2)}</span>
                                         </div>
                                         
-                                        <div className={`flex items-center gap-3 p-1 rounded-xl border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-100 border-gray-200'}`}>
+                                        <div className="flex items-center gap-2 p-1 rounded-xl" style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#F3F4F6', border: `1px solid ${borderColor}` }}>
                                             <button 
                                                 onClick={() => setFoodQuantity(Math.max(1, foodQuantity - 1))}
-                                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900 shadow-sm'}`}
+                                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                                                style={{ backgroundColor: cardBg, color: textPrimary, border: `1px solid ${borderColor}` }}
                                             >
-                                                <Minus size={12} />
+                                                <Minus size={14} />
                                             </button>
-                                            <span className={`w-4 text-center font-black text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{foodQuantity}</span>
+                                            <span className="w-5 text-center text-sm font-semibold" style={{ color: textPrimary }}>{foodQuantity}</span>
                                             <button 
                                                 onClick={() => setFoodQuantity(foodQuantity + 1)}
-                                                className="w-8 h-8 rounded-lg bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20"
+                                                className="w-8 h-8 rounded-lg bg-[#EA580C] text-white flex items-center justify-center"
                                             >
-                                                <Plus size={12} />
+                                                <Plus size={14} />
                                             </button>
                                         </div>
                                     </div>
@@ -486,15 +499,17 @@ const RestaurantMenuPage = () => {
                                     <div className="flex gap-2">
                                         <button 
                                             onClick={() => addToCart(selectedFood, foodQuantity, true)}
-                                            className="flex-1 py-3 bg-gray-900 dark:bg-orange-500 text-white font-black text-[8px] tracking-[0.2em] uppercase rounded-xl hover:bg-orange-600 transition-all"
+                                            className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                                            style={{ backgroundColor: '#EA580C' }}
                                         >
                                             Order Now
                                         </button>
                                         <button 
                                             onClick={() => addToCart(selectedFood, foodQuantity)}
-                                            className={`flex-1 py-3 border font-black text-[8px] tracking-[0.2em] uppercase rounded-xl transition-all ${isDarkMode ? 'border-white/10 text-white hover:bg-white/5' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+                                            className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all"
+                                            style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : '#F3F4F6', color: textPrimary, border: `1px solid ${borderColor}` }}
                                         >
-                                            Add to Bag
+                                            Add to Cart
                                         </button>
                                     </div>
                                 </div>
@@ -504,49 +519,67 @@ const RestaurantMenuPage = () => {
                 </div>
             )}
 
+            {/* Direct Checkout Modal */}
             {showDirectCheckout && directCheckoutItem && (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowDirectCheckout(false)}>
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 animate-fade-in" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowDirectCheckout(false)}>
                     <div 
-                        className={`w-full max-w-xs rounded-none p-8 shadow-2xl animate-fade-in-scale relative ${isDarkMode ? 'bg-[#0a0a0f] text-white' : 'bg-white text-gray-900'}`}
+                        className="w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-fade-in-scale relative"
+                        style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <button onClick={() => setShowDirectCheckout(false)} className="absolute top-4 right-4 z-10 w-6 h-6 flex items-center justify-center text-gray-500 hover:text-orange-500 transition-all">
+                        <button onClick={() => setShowDirectCheckout(false)} className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg transition-all" style={{ color: textSecondary }}>
                             <X size={14} />
                         </button>
 
-                        <div className="flex flex-col items-center text-center mb-6">
-                            <h3 className="text-xs font-black tracking-[0.3em] uppercase mb-4">CHECKOUT</h3>
-                            <div className="w-10 h-[1px] bg-orange-500 mb-6"></div>
+                        <div className="flex flex-col items-center text-center mb-5">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: isDarkMode ? 'rgba(234,88,12,0.15)' : 'rgba(234,88,12,0.08)' }}>
+                                <CreditCard size={18} className="text-[#EA580C]" />
+                            </div>
+                            <h3 className="text-sm font-bold" style={{ color: textPrimary }}>Direct Checkout</h3>
+                            <p className="text-xs mt-1" style={{ color: textSecondary }}>Enter your delivery details</p>
                         </div>
 
-                        <div className="space-y-3 mb-8">
-                            <input
-                                type="text"
-                                placeholder="DEPARTMENT"
-                                value={directDepartment}
-                                onChange={(e) => { setDirectDepartment(e.target.value); setDirectCheckoutError(""); }}
-                                className={`w-full px-0 py-2 bg-transparent border-b border-gray-800/20 outline-none font-black text-[9px] tracking-[0.3em] uppercase transition-all focus:border-orange-500`}
-                            />
-                            <input
-                                type="text"
-                                placeholder="SECTION / ROOM"
-                                value={directCourse}
-                                onChange={(e) => { setDirectCourse(e.target.value); setDirectCheckoutError(""); }}
-                                className={`w-full px-0 py-2 bg-transparent border-b border-gray-800/20 outline-none font-black text-[9px] tracking-[0.3em] uppercase transition-all focus:border-orange-500`}
-                            />
+                        <div className="space-y-3 mb-5">
+                            <div>
+                                <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: textSecondary }}>Department</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. CICT"
+                                    value={directDepartment}
+                                    onChange={(e) => { setDirectDepartment(e.target.value); setDirectCheckoutError(""); }}
+                                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+                                    style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#F9FAFB', border: `1px solid ${borderColor}`, color: textPrimary }}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-semibold uppercase tracking-wider mb-1 block" style={{ color: textSecondary }}>Section / Room</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Room 301"
+                                    value={directCourse}
+                                    onChange={(e) => { setDirectCourse(e.target.value); setDirectCheckoutError(""); }}
+                                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+                                    style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.04)' : '#F9FAFB', border: `1px solid ${borderColor}`, color: textPrimary }}
+                                />
+                            </div>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between border-t border-gray-800/10 pt-4">
-                                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">PAYABLE</span>
-                                <span className="text-lg font-black text-orange-500">₱{(Number(directCheckoutItem.price) + 25).toFixed(2)}</span>
+                        {directCheckoutError && (
+                            <p className="text-xs text-red-500 text-center mb-3">{directCheckoutError}</p>
+                        )}
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between pt-1" style={{ borderTop: `1px solid ${borderColor}` }}>
+                                <span className="text-xs font-medium" style={{ color: textSecondary }}>Total</span>
+                                <span className="text-lg font-bold text-[#EA580C]">₱{(Number(directCheckoutItem.price) + 25).toFixed(2)}</span>
                             </div>
                             <button
                                 onClick={handleDirectCheckoutSubmit}
                                 disabled={directCheckoutProcessing || !directDepartment || !directCourse}
-                                className="w-full py-4 bg-orange-500 text-white font-black text-[9px] tracking-[0.3em] uppercase hover:bg-orange-600 transition-all disabled:opacity-30"
+                                className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40"
+                                style={{ backgroundColor: '#EA580C' }}
                             >
-                                {directCheckoutProcessing ? "PROCESSING..." : "CONFIRM ORDER"}
+                                {directCheckoutProcessing ? "Processing..." : "Confirm Order"}
                             </button>
                         </div>
                     </div>
@@ -555,24 +588,20 @@ const RestaurantMenuPage = () => {
 
             {/* Notification Toast */}
             {message && (
-                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-none shadow-2xl animate-fade-in-up flex items-center gap-3 border ${
-                    messageType === "success" 
-                        ? 'bg-[#0a0a0f] border-orange-500 text-orange-500' 
-                        : 'bg-[#0a0a0f] border-red-500 text-red-500'
+                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl shadow-xl animate-fade-in-up flex items-center gap-2 ${
+                    messageType === "success" ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
                 }`}>
-                    <span className="font-black text-[9px] tracking-[0.2em] uppercase">{message}</span>
+                    <span className="text-sm font-medium">{message}</span>
                 </div>
             )}
 
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-                @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-                @keyframes bounceSlow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-                .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-                .animate-fade-in-scale { animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-                .animate-fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-                .animate-bounce-slow { animation: bounceSlow 3s infinite ease-in-out; }
+                @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+                @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+                .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+                .animate-fade-in-scale { animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+                .animate-fade-in-up { animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
                 .scrollbar-none::-webkit-scrollbar { display: none; }
                 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>

@@ -95,44 +95,40 @@ function RestaurantLogin() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-white flex items-center justify-center py-12 px-4">
-			{/* Animated Background */}
-			<div className="absolute top-0 right-0 w-96 h-96 bg-orange-100/30 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
-			<div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-100/30 rounded-full translate-y-1/2 -translate-x-1/3 blur-3xl"></div>
-
+		<div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center py-12 px-4">
 			<div className="w-full max-w-3xl relative z-10">
 				{/* Desktop Two-Column Layout */}
-				<div className="hidden lg:grid lg:grid-cols-2 gap-6 items-center">
+				<div className="hidden lg:grid lg:grid-cols-2 gap-8 items-center">
 					{/* Left Column - Form */}
-					<div className="animate-fade-in pr-6">
+					<div>
 						<button
 							onClick={handleBackToRoles}
-							className="mb-6 text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors text-sm"
+							className="mb-6 text-[#EA580C] hover:text-[#EA580C]/80 font-semibold flex items-center gap-2 transition-colors text-sm"
 						>
 							← Back to role selection
 						</button>
 
-						<div className="space-y-1 mb-6">
-							<h1 className="text-3xl font-bold text-gray-900 tracking-tight">Restaurant Login</h1>
-							<p className="text-sm text-gray-600">Access your restaurant dashboard and manage orders</p>
+						<div className="mb-6">
+							<h1 className="text-3xl font-bold text-[#171717] tracking-tight">Restaurant Login</h1>
+							<p className="text-sm text-[#6B7280] mt-1">Access your restaurant dashboard and manage orders</p>
 						</div>
 
 						<form onSubmit={handleLogin} className="space-y-4">
 							{/* Global Status Messages */}
 							{message && (
-								<div className={`p-3 rounded-lg border-l-4 flex items-start gap-3 animate-fade-in ${messageType === 'success'
-										? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+								<div className={`p-3.5 rounded-lg border flex items-start gap-3 ${messageType === 'success'
+										? 'bg-emerald-50 border-emerald-200 text-emerald-700'
 										: messageType === 'warning'
-											? 'bg-amber-50 border-amber-500 text-amber-800'
+											? 'bg-amber-50 border-amber-200 text-amber-700'
 											: messageType === 'error'
-												? 'bg-red-50 border-red-500 text-red-800'
-												: 'bg-blue-50 border-blue-500 text-blue-800'
+												? 'bg-red-50 border-red-200 text-red-700'
+												: 'bg-blue-50 border-blue-200 text-blue-700'
 									}`}>
 									<div className="mt-0.5 shrink-0">
-										{messageType === 'success' && <CheckCircle size={20} />}
-										{messageType === 'warning' && <Clock size={20} />}
-										{messageType === 'error' && <AlertCircle size={20} />}
-										{messageType === 'info' && <Mail size={20} />}
+										{messageType === 'success' && <CheckCircle size={18} />}
+										{messageType === 'warning' && <Clock size={18} />}
+										{messageType === 'error' && <AlertCircle size={18} />}
+										{messageType === 'info' && <Mail size={18} />}
 									</div>
 									<p className="text-sm font-medium">{message}</p>
 								</div>
@@ -140,8 +136,7 @@ function RestaurantLogin() {
 
 							{/* Email Input */}
 							<div className="space-y-1.5">
-								<label htmlFor="email" className="block text-xs font-semibold text-gray-900 flex items-center gap-2">
-									<Mail size={16} className="text-orange-600" />
+								<label htmlFor="email" className="block text-xs font-semibold text-[#171717]">
 									Business Email
 								</label>
 								<div className="relative">
@@ -159,14 +154,14 @@ function RestaurantLogin() {
 										aria-label="Business Email"
 										aria-invalid={!!errors.email}
 										aria-describedby={errors.email ? 'email-error' : undefined}
-										className={`w-full px-3.5 py-2.5 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none text-sm ${errors.email
-												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+										className={`w-full px-3.5 py-2.5 bg-[#FAFAFA] border rounded-xl transition-all duration-200 placeholder-[#9CA3AF] focus:outline-none text-sm ${errors.email
+												? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
+												: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
 											}`}
 									/>
 									{errors.email && (
 										<div className="absolute right-3 top-3">
-											<AlertCircle size={20} className="text-red-500" />
+											<AlertCircle size={18} className="text-red-500" />
 										</div>
 									)}
 								</div>
@@ -179,8 +174,7 @@ function RestaurantLogin() {
 
 							{/* Password Input */}
 							<div className="space-y-1.5">
-								<label htmlFor="password" className="block text-xs font-semibold text-gray-900 flex items-center gap-2">
-									<Lock size={16} className="text-orange-600" />
+								<label htmlFor="password" className="block text-xs font-semibold text-[#171717]">
 									Password
 								</label>
 								<div className="relative">
@@ -198,18 +192,18 @@ function RestaurantLogin() {
 										aria-label="Password"
 										aria-invalid={!!errors.password}
 										aria-describedby={errors.password ? 'password-error' : undefined}
-										className={`w-full px-3.5 py-2.5 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none pr-12 text-sm ${errors.password
-												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+										className={`w-full px-3.5 py-2.5 bg-[#FAFAFA] border rounded-xl transition-all duration-200 placeholder-[#9CA3AF] focus:outline-none pr-12 text-sm ${errors.password
+												? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
+												: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
 											}`}
 									/>
 									<button
 										type="button"
 										onClick={() => setShowPassword(!showPassword)}
-										className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
+										className="absolute right-3 top-3 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
 										aria-label={showPassword ? "Hide password" : "Show password"}
 									>
-										{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+										{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
 									</button>
 								</div>
 								{errors.password && (
@@ -220,20 +214,20 @@ function RestaurantLogin() {
 							</div>
 
 							{/* Remember Me & Forgot Password */}
-							<div className="flex items-center justify-between pt-2">
+							<div className="flex items-center justify-between pt-1">
 								<label className="flex items-center gap-2 cursor-pointer group">
 									<input
 										type="checkbox"
 										checked={rememberMe}
 										onChange={(e) => setRememberMe(e.target.checked)}
-										className="w-4 h-4 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors"
+										className="w-4 h-4 rounded border-[#D1D5DB] text-[#EA580C] focus:ring-[#EA580C]/30 transition-colors"
 										aria-label="Remember me"
 									/>
-									<span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">Remember me</span>
+									<span className="text-sm text-[#6B7280] group-hover:text-[#171717] transition-colors">Remember me</span>
 								</label>
 								<button
 									type="button"
-									className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+									className="text-xs font-semibold text-[#EA580C] hover:text-[#EA580C]/80 transition-colors"
 								>
 									Forgot password?
 								</button>
@@ -243,7 +237,7 @@ function RestaurantLogin() {
 							<button
 								type="submit"
 								disabled={isLoading}
-								className="w-full py-2.5 px-4 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:scale-100 flex items-center justify-center gap-2 text-sm"
+								className="w-full py-3 px-4 bg-[#EA580C] hover:bg-[#EA580C]/90 disabled:bg-[#D1D5DB] disabled:text-[#9CA3AF] text-white font-semibold rounded-xl transition-all duration-200 shadow-md shadow-[#EA580C]/15 hover:shadow-lg hover:shadow-[#EA580C]/20 disabled:shadow-none flex items-center justify-center gap-2 text-sm mt-2"
 								aria-label="Sign in"
 							>
 								{isLoading ? (
@@ -260,12 +254,12 @@ function RestaurantLogin() {
 							</button>
 
 							{/* Register Link */}
-							<p className="text-center text-gray-700 text-sm pt-4 border-t border-gray-200">
+							<p className="text-center text-[#6B7280] text-sm pt-4 border-t border-[#E5E7EB]">
 								Don't have a restaurant account?{" "}
 								<button
 									type="button"
 									onClick={handleRegisterLink}
-									className="font-semibold text-orange-600 hover:text-orange-700 transition-colors hover:underline"
+									className="font-semibold text-[#EA580C] hover:text-[#EA580C]/80 transition-colors"
 								>
 									Register here
 								</button>
@@ -274,30 +268,23 @@ function RestaurantLogin() {
 					</div>
 
 					{/* Right Column - Illustration */}
-					<div className="hidden lg:flex flex-col items-center justify-center space-y-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-						<div className="relative w-full h-64 bg-gradient-to-br from-orange-50/50 to-orange-100/50 rounded-2xl flex items-center justify-center overflow-hidden border border-orange-100 group">
-							<div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-							{/* Decorative Elements */}
-							<div className="absolute top-4 left-4 w-12 h-12 bg-orange-200/20 rounded-full"></div>
-							<div className="absolute bottom-4 right-4 w-20 h-20 bg-orange-200/20 rounded-full"></div>
-
-							{/* Center Icon */}
-							<div className="relative z-10 text-6xl drop-shadow-sm">
+					<div className="hidden lg:flex flex-col items-center justify-center space-y-4">
+						<div className="relative w-full h-64 bg-[#FAFAFA] rounded-xl flex items-center justify-center overflow-hidden border border-[#E5E7EB]">
+							<div className="absolute top-4 left-4 w-12 h-12 bg-[#EA580C]/5 rounded-full"></div>
+							<div className="absolute bottom-4 right-4 w-20 h-20 bg-[#EA580C]/5 rounded-full"></div>
+							<div className="relative z-10 text-6xl">
 								👨‍🍳
 							</div>
 						</div>
 
 						<div className="space-y-1 text-center">
-							<h2 className="text-2xl font-bold text-gray-900 tracking-tight">Manage Your Restaurant</h2>
-							<p className="text-gray-500 text-xs max-w-[200px] leading-relaxed">
+							<h2 className="text-xl font-bold text-[#171717] tracking-tight">Manage Your Restaurant</h2>
+							<p className="text-[#6B7280] text-xs max-w-[200px] leading-relaxed">
 								Access your dashboard to manage orders, menu items, delivery settings, and grow your business with BiteHub.
 							</p>
-							<div className="flex items-center justify-center gap-3 pt-2 text-[10px] text-gray-500 font-medium">
-								<div className="flex items-center gap-1">
-									<CheckCircle size={14} className="text-orange-600" />
-									<span>Secure & Reliable</span>
-								</div>
+							<div className="flex items-center justify-center gap-1.5 pt-2 text-[11px] text-[#6B7280] font-medium">
+								<CheckCircle size={14} className="text-[#EA580C]" />
+								<span>Secure & Reliable</span>
 							</div>
 						</div>
 					</div>
@@ -307,44 +294,42 @@ function RestaurantLogin() {
 				<div className="lg:hidden">
 					<button
 						onClick={handleBackToRoles}
-						className="mb-6 text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors"
+						className="mb-6 text-[#EA580C] hover:text-[#EA580C]/80 font-semibold flex items-center gap-2 transition-colors text-sm"
 					>
 						← Back
 					</button>
 
-					<div className="bg-white rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm border border-gray-200 animate-fade-in">
+					<div className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#E5E7EB]">
 						{/* Header */}
-						<div className="bg-gradient-to-br from-orange-600 to-orange-700 px-6 py-8 relative overflow-hidden">
-							<div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
-							<div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
-							<div className="relative z-10 space-y-2">
-								<div className="flex items-center gap-3">
-									<ChefHat size={32} className="text-white" />
-									<div>
-										<h1 className="text-3xl font-bold text-white">Restaurant Login</h1>
-										<p className="text-orange-100 text-sm">Manage your business</p>
-									</div>
+						<div className="bg-[#111111] px-6 py-6 relative overflow-hidden">
+							<div className="absolute top-0 right-0 w-32 h-32 bg-[#EA580C]/10 rounded-full -mr-16 -mt-16"></div>
+							<div className="absolute bottom-0 left-0 w-24 h-24 bg-[#EA580C]/10 rounded-full -ml-12 -mb-12"></div>
+							<div className="relative z-10 flex items-center gap-3">
+								<ChefHat size={28} className="text-[#EA580C]" />
+								<div>
+									<h1 className="text-2xl font-bold text-[#F5F5F5]">Restaurant Login</h1>
+									<p className="text-[#A0A0A0] text-sm">Manage your business</p>
 								</div>
 							</div>
 						</div>
 
 						{/* Form Container */}
-						<div className="px-6 py-8 space-y-5">
+						<div className="px-6 py-6 space-y-5">
 							{/* Status Messages */}
 							{message && (
-								<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 animate-fade-in ${messageType === 'success'
-										? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+								<div className={`p-3.5 rounded-lg border flex items-start gap-3 ${messageType === 'success'
+										? 'bg-emerald-50 border-emerald-200 text-emerald-700'
 										: messageType === 'warning'
-											? 'bg-amber-50 border-amber-500 text-amber-800'
+											? 'bg-amber-50 border-amber-200 text-amber-700'
 											: messageType === 'error'
-												? 'bg-red-50 border-red-500 text-red-800'
-												: 'bg-blue-50 border-blue-500 text-blue-800'
+												? 'bg-red-50 border-red-200 text-red-700'
+												: 'bg-blue-50 border-blue-200 text-blue-700'
 									}`}>
 									<div className="mt-0.5 shrink-0">
-										{messageType === 'success' && <CheckCircle size={20} />}
-										{messageType === 'warning' && <Clock size={20} />}
-										{messageType === 'error' && <AlertCircle size={20} />}
-										{messageType === 'info' && <Mail size={20} />}
+										{messageType === 'success' && <CheckCircle size={18} />}
+										{messageType === 'warning' && <Clock size={18} />}
+										{messageType === 'error' && <AlertCircle size={18} />}
+										{messageType === 'info' && <Mail size={18} />}
 									</div>
 									<p className="text-sm font-medium">{message}</p>
 								</div>
@@ -352,9 +337,8 @@ function RestaurantLogin() {
 
 							<form onSubmit={handleLogin} className="space-y-4">
 								{/* Email Input */}
-								<div className="space-y-2">
-									<label htmlFor="mobile-email" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
-										<Mail size={18} className="text-orange-600" />
+								<div className="space-y-1.5">
+									<label htmlFor="mobile-email" className="block text-sm font-semibold text-[#171717]">
 										Business Email
 									</label>
 									<input
@@ -368,9 +352,9 @@ function RestaurantLogin() {
 											}
 										}}
 										placeholder="admin@restaurant.com"
-										className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none ${errors.email
-												? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+										className={`w-full px-4 py-3 bg-[#FAFAFA] border rounded-xl transition-all duration-200 placeholder-[#9CA3AF] focus:outline-none text-sm ${errors.email
+												? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
+												: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
 											}`}
 									/>
 									{errors.email && (
@@ -381,9 +365,8 @@ function RestaurantLogin() {
 								</div>
 
 								{/* Password Input */}
-								<div className="space-y-2">
-									<label htmlFor="mobile-password" className="block text-sm font-semibold text-gray-900 flex items-center gap-2">
-										<Lock size={18} className="text-orange-600" />
+								<div className="space-y-1.5">
+									<label htmlFor="mobile-password" className="block text-sm font-semibold text-[#171717]">
 										Password
 									</label>
 									<div className="relative">
@@ -398,17 +381,17 @@ function RestaurantLogin() {
 												}
 											}}
 											placeholder="••••••••"
-											className={`w-full px-4 py-3 bg-white border-2 rounded-xl transition-all duration-200 placeholder-gray-400 focus:outline-none pr-12 ${errors.password
-													? 'border-red-400 focus:ring-2 focus:ring-red-300 bg-red-50'
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+											className={`w-full px-4 py-3 bg-[#FAFAFA] border rounded-xl transition-all duration-200 placeholder-[#9CA3AF] focus:outline-none pr-12 text-sm ${errors.password
+													? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
+													: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
 												}`}
 										/>
 										<button
 											type="button"
 											onClick={() => setShowPassword(!showPassword)}
-											className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
+											className="absolute right-3 top-3 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
 										>
-											{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+											{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
 										</button>
 									</div>
 									{errors.password && (
@@ -419,19 +402,19 @@ function RestaurantLogin() {
 								</div>
 
 								{/* Remember Me */}
-								<div className="space-y-2 pt-2">
+								<div className="space-y-3 pt-1">
 									<label className="flex items-center gap-2 cursor-pointer group">
 										<input
 											type="checkbox"
 											checked={rememberMe}
 											onChange={(e) => setRememberMe(e.target.checked)}
-											className="w-4 h-4 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-300 transition-colors"
+											className="w-4 h-4 rounded border-[#D1D5DB] text-[#EA580C] focus:ring-[#EA580C]/30 transition-colors"
 										/>
-										<span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">Remember me</span>
+										<span className="text-sm text-[#6B7280] group-hover:text-[#171717] transition-colors">Remember me</span>
 									</label>
 									<button
 										type="button"
-										className="w-full text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors py-2"
+										className="w-full text-sm font-semibold text-[#EA580C] hover:text-[#EA580C]/80 transition-colors py-1"
 									>
 										Forgot password?
 									</button>
@@ -441,7 +424,7 @@ function RestaurantLogin() {
 								<button
 									type="submit"
 									disabled={isLoading}
-									className="w-full py-3 px-4 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:scale-100 flex items-center justify-center gap-2 mt-6"
+									className="w-full py-3 px-4 bg-[#EA580C] hover:bg-[#EA580C]/90 disabled:bg-[#D1D5DB] disabled:text-[#9CA3AF] text-white font-semibold rounded-xl transition-all duration-200 shadow-md shadow-[#EA580C]/15 hover:shadow-lg disabled:shadow-none flex items-center justify-center gap-2 mt-4"
 								>
 									{isLoading ? (
 										<>
@@ -458,11 +441,11 @@ function RestaurantLogin() {
 							</form>
 
 							{/* Register Link */}
-							<p className="text-center text-gray-700 text-sm pt-4 border-t border-gray-200">
+							<p className="text-center text-[#6B7280] text-sm pt-4 border-t border-[#E5E7EB]">
 								Don't have an account?{" "}
 								<button
 									onClick={handleRegisterLink}
-									className="font-semibold text-orange-600 hover:text-orange-700 transition-colors hover:underline"
+									className="font-semibold text-[#EA580C] hover:text-[#EA580C]/80 transition-colors"
 								>
 									Register your restaurant
 								</button>
@@ -471,23 +454,6 @@ function RestaurantLogin() {
 					</div>
 				</div>
 			</div>
-
-			{/* Custom CSS for animations */}
-			<style>{`
-				@keyframes fade-in {
-					from {
-						opacity: 0;
-						transform: translateY(20px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
-				}
-				.animate-fade-in {
-					animation: fade-in 0.6s ease-out forwards;
-				}
-			`}</style>
 		</div>
 	)
 }

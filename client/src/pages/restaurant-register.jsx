@@ -212,7 +212,7 @@ function RestaurantRegister() {
 			if (response.data.success) {
 				if (response.data.pending) {
 					// Account created but pending approval — do NOT redirect
-					setMessage('✅ Registration submitted! Your account is pending admin approval. You will be notified once approved. You may close this page.');
+					setMessage('Registration submitted! Your account is pending admin approval. You will be notified once approved. You may close this page.');
 					setMessageType('success');
 				} else {
 					setMessage('Registration successful! Redirecting to dashboard...');
@@ -243,31 +243,33 @@ function RestaurantRegister() {
 
 	const passwordsMatch = formData.password && formData.confirmPassword && formData.password === formData.confirmPassword;
 
-	return (
-		<div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-white flex items-center justify-center py-12 px-4">
-			{/* Animated Background */}
-			<div className="absolute top-0 right-0 w-96 h-96 bg-orange-100/30 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+	const inputClass = (error) => `w-full px-3.5 py-2.5 bg-[#FAFAFA] border rounded-xl transition-all duration-200 focus:outline-none text-sm ${error
+		? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
+		: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
+	}`;
 
+	return (
+		<div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center py-12 px-4">
 			<div className="w-full max-w-3xl relative z-10 px-4">
 				{/* Header */}
 				<div className="mb-6">
 					<button
 						onClick={handleBackToRoles}
-						className="text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-2 transition-colors mb-4 text-sm"
+						className="text-[#EA580C] hover:text-[#EA580C]/80 font-semibold flex items-center gap-2 transition-colors mb-4 text-sm"
 					>
 						← Back to role selection
 					</button>
-					<h1 className="text-3xl font-bold text-gray-900 mb-1">Register Your Restaurant</h1>
-					<p className="text-gray-600 text-sm">Join BiteHub and start receiving orders</p>
+					<h1 className="text-3xl font-bold text-[#171717] mb-1">Register Your Restaurant</h1>
+					<p className="text-[#6B7280] text-sm">Join BiteHub and start receiving orders</p>
 				</div>
 
 				{/* Status Messages */}
 				{message && (
-					<div className={`p-4 rounded-xl border-l-4 flex items-start gap-3 mb-6 animate-fade-in ${messageType === 'success'
-						? 'bg-emerald-50 border-emerald-500 text-emerald-800'
+					<div className={`p-4 rounded-lg border flex items-start gap-3 mb-6 ${messageType === 'success'
+						? 'bg-emerald-50 border-emerald-200 text-emerald-700'
 						: messageType === 'error'
-							? 'bg-red-50 border-red-500 text-red-800'
-							: 'bg-blue-50 border-blue-500 text-blue-800'
+							? 'bg-red-50 border-red-200 text-red-700'
+							: 'bg-blue-50 border-blue-200 text-blue-700'
 						}`}>
 						<p className="text-sm font-medium">{message}</p>
 					</div>
@@ -275,23 +277,23 @@ function RestaurantRegister() {
 
 				<form onSubmit={handleRegister} className="space-y-6">
 					{/* Combined Registration Form Container */}
-					<div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-2xl border border-white/20 space-y-8">
+					<div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-[#E5E7EB] space-y-8">
 						{/* Grid for Business & Owner Info */}
 						<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 							{/* Business Information Section (Left) */}
 							<section className="space-y-4">
-								<div className="flex items-center gap-3 mb-4 pb-3 border-b border-orange-100">
-									<div className="p-1.5 bg-orange-100 rounded-lg">
-										<Building2 size={20} className="text-orange-600" />
+								<div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#F3F4F6]">
+									<div className="p-2 bg-[#EA580C]/10 rounded-lg">
+										<Building2 size={18} className="text-[#EA580C]" />
 									</div>
-									<h2 className="text-xl font-bold text-gray-900">Business Information</h2>
+									<h2 className="text-lg font-bold text-[#171717]">Business Information</h2>
 								</div>
 
 								<div className="space-y-4">
 									{/* Business Name */}
 									<div>
-										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-											Business Name <span className="text-red-600">*</span>
+										<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+											Business Name <span className="text-red-500">*</span>
 										</label>
 										<input
 											type="text"
@@ -299,17 +301,14 @@ function RestaurantRegister() {
 											value={formData.businessName}
 											onChange={handleInputChange}
 											placeholder="Your Restaurant Name"
-											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.businessName
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-												}`}
+											className={inputClass(errors.businessName)}
 										/>
 									</div>
 
 									{/* Business Address */}
 									<div>
-										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-											Business Address <span className="text-red-600">*</span>
+										<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+											Business Address <span className="text-red-500">*</span>
 										</label>
 										<input
 											type="text"
@@ -317,18 +316,15 @@ function RestaurantRegister() {
 											value={formData.businessAddress}
 											onChange={handleInputChange}
 											placeholder="Street address"
-											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.businessAddress
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-												}`}
+											className={inputClass(errors.businessAddress)}
 										/>
 									</div>
 
 									{/* City & Province */}
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 										<div>
-											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-												City <span className="text-red-600">*</span>
+											<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+												City <span className="text-red-500">*</span>
 											</label>
 											<input
 												type="text"
@@ -336,15 +332,12 @@ function RestaurantRegister() {
 												value={formData.city}
 												onChange={handleInputChange}
 												placeholder="City"
-												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.city
-													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-													}`}
+												className={inputClass(errors.city)}
 											/>
 										</div>
 										<div>
-											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-												Province/State <span className="text-red-600">*</span>
+											<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+												Province/State <span className="text-red-500">*</span>
 											</label>
 											<input
 												type="text"
@@ -352,24 +345,21 @@ function RestaurantRegister() {
 												value={formData.province}
 												onChange={handleInputChange}
 												placeholder="Province"
-												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.province
-													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-													}`}
+												className={inputClass(errors.province)}
 											/>
 										</div>
 									</div>
 
 									{/* Restaurant Logo URL */}
 									<div>
-										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
+										<label className="block text-xs font-semibold text-[#171717] mb-1.5">
 											Restaurant Logo / Cover Photo
 										</label>
 										<input
 											type="file"
 											accept="image/*"
 											onChange={handlePhotoUpload}
-											className="w-full px-3.5 py-2 bg-white border-2 border-gray-100 rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+											className="w-full px-3.5 py-2 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#EA580C]/10 file:text-[#EA580C] hover:file:bg-[#EA580C]/20 cursor-pointer transition-colors"
 										/>
 									</div>
 								</div>
@@ -377,19 +367,19 @@ function RestaurantRegister() {
 
 							{/* Owner & Permit Information Section (Right) */}
 							<section className="space-y-4">
-								<div className="flex items-center gap-3 mb-4 pb-3 border-b border-orange-100">
-									<div className="p-1.5 bg-orange-100 rounded-lg">
-										<User size={20} className="text-orange-600" />
+								<div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#F3F4F6]">
+									<div className="p-2 bg-[#EA580C]/10 rounded-lg">
+										<User size={18} className="text-[#EA580C]" />
 									</div>
-									<h2 className="text-xl font-bold text-gray-900">Owner & Permit Information</h2>
+									<h2 className="text-lg font-bold text-[#171717]">Owner & Permit Information</h2>
 								</div>
 
 								<div className="space-y-4">
 									{/* Row for Owner Name & Detail */}
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 										<div>
-											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-												Owner Full Name <span className="text-red-600">*</span>
+											<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+												Owner Full Name <span className="text-red-500">*</span>
 											</label>
 											<input
 												type="text"
@@ -397,15 +387,12 @@ function RestaurantRegister() {
 												value={formData.ownerName}
 												onChange={handleInputChange}
 												placeholder="Full Name"
-												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.ownerName
-													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-													}`}
+												className={inputClass(errors.ownerName)}
 											/>
 										</div>
 										<div>
-											<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-												Contact Number <span className="text-red-600">*</span>
+											<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+												Contact Number <span className="text-red-500">*</span>
 											</label>
 											<input
 												type="tel"
@@ -413,18 +400,15 @@ function RestaurantRegister() {
 												value={formData.ownerPhone}
 												onChange={handleInputChange}
 												placeholder="Phone"
-												className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.ownerPhone
-													? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-													}`}
+												className={inputClass(errors.ownerPhone)}
 											/>
 										</div>
 									</div>
 
 									{/* Business Email */}
 									<div>
-										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-											Business Email <span className="text-red-600">*</span>
+										<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+											Business Email <span className="text-red-500">*</span>
 										</label>
 										<input
 											type="email"
@@ -432,17 +416,14 @@ function RestaurantRegister() {
 											value={formData.businessEmail}
 											onChange={handleInputChange}
 											placeholder="admin@restaurant.com"
-											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.businessEmail
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-												}`}
+											className={inputClass(errors.businessEmail)}
 										/>
 									</div>
 
 									{/* Permit Number */}
-									<div className="pt-3 border-t border-orange-50">
-										<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-											Permit Number <span className="text-red-600">*</span>
+									<div className="pt-3 border-t border-[#F3F4F6]">
+										<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+											Permit Number <span className="text-red-500">*</span>
 										</label>
 										<input
 											type="text"
@@ -450,19 +431,16 @@ function RestaurantRegister() {
 											value={formData.permitNumber}
 											onChange={handleInputChange}
 											placeholder="Permit #123456"
-											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.permitNumber
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-												}`}
+											className={inputClass(errors.permitNumber)}
 										/>
 									</div>
 
 									{/* Document Upload */}
 									<div className="pt-1">
-										<div className={`border-2 border-dashed rounded-xl p-4 transition-all duration-200 text-center ${errors.permitDocument ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-orange-300'}`}>
+										<div className={`border border-dashed rounded-xl p-4 transition-all duration-200 text-center ${errors.permitDocument ? 'border-red-400 bg-red-50/50' : 'border-[#E5E7EB] hover:border-[#EA580C]/30 bg-[#FAFAFA]'}`}>
 											<label className="cursor-pointer block space-y-1">
-												<Upload size={20} className="mx-auto text-orange-600" />
-												<p className="text-[10px] font-bold text-gray-600">Upload Business Permit</p>
+												<Upload size={20} className="mx-auto text-[#EA580C]" />
+												<p className="text-xs font-semibold text-[#6B7280]">Upload Business Permit</p>
 												<input type="file" name="permitDocument" onChange={handleFileUpload} accept=".pdf,.jpg,.jpeg,.png" className="hidden" />
 											</label>
 										</div>
@@ -472,19 +450,19 @@ function RestaurantRegister() {
 						</div>
 
 						{/* Account Credentials Section (Bottom) */}
-						<section className="pt-6 border-t border-orange-100">
-							<div className="flex items-center gap-3 mb-4 pb-3 border-b border-orange-100">
-								<div className="p-1.5 bg-orange-100 rounded-lg">
-									<Lock size={20} className="text-orange-600" />
+						<section className="pt-6 border-t border-[#F3F4F6]">
+							<div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#F3F4F6]">
+								<div className="p-2 bg-[#EA580C]/10 rounded-lg">
+									<Lock size={18} className="text-[#EA580C]" />
 								</div>
-								<h2 className="text-xl font-bold text-gray-900">Account Credentials</h2>
+								<h2 className="text-lg font-bold text-[#171717]">Account Credentials</h2>
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 								{/* Username */}
 								<div>
-									<label className="block text-xs font-semibold text-gray-900 mb-1.5">
-										Username <span className="text-red-600">*</span>
+									<label className="block text-xs font-semibold text-[#171717] mb-1.5">
+										Username <span className="text-red-500">*</span>
 									</label>
 									<input
 										type="text"
@@ -492,19 +470,16 @@ function RestaurantRegister() {
 										value={formData.username}
 										onChange={handleInputChange}
 										placeholder="restaurant_admin"
-										className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none text-sm ${errors.username
-											? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-											: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
-											}`}
+										className={inputClass(errors.username)}
 									/>
 								</div>
 
 								{/* Password */}
 								<div>
-									<label className="block text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-2">
-										Password <span className="text-red-600">*</span>
-										<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${passwordStrength === 'strong' ? 'bg-green-100 text-green-700' :
-											passwordStrength === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+									<label className="block text-xs font-semibold text-[#171717] mb-1.5 flex items-center gap-2">
+										Password <span className="text-red-500">*</span>
+										<span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${passwordStrength === 'strong' ? 'bg-emerald-100 text-emerald-700' :
+											passwordStrength === 'medium' ? 'bg-amber-100 text-amber-700' :
 												'bg-red-100 text-red-700'
 											}`}>
 											{passwordStrength}
@@ -517,15 +492,15 @@ function RestaurantRegister() {
 											value={formData.password}
 											onChange={handleInputChange}
 											placeholder="Min. 8 chars"
-											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none pr-11 text-sm ${errors.password
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
-												: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+											className={`w-full px-3.5 py-2.5 bg-[#FAFAFA] border rounded-xl transition-all duration-200 focus:outline-none pr-11 text-sm ${errors.password
+												? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
+												: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
 												}`}
 										/>
 										<button
 											type="button"
 											onClick={() => setShowPassword(!showPassword)}
-											className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition-colors"
+											className="absolute right-3 top-2.5 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
 										>
 											{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
 										</button>
@@ -534,9 +509,9 @@ function RestaurantRegister() {
 
 								{/* Confirm Password */}
 								<div>
-									<label className="block text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-2">
-										Confirm Password <span className="text-red-600">*</span>
-										{passwordsMatch && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Match</span>}
+									<label className="block text-xs font-semibold text-[#171717] mb-1.5 flex items-center gap-2">
+										Confirm Password <span className="text-red-500">*</span>
+										{passwordsMatch && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Match</span>}
 									</label>
 									<div className="relative">
 										<input
@@ -545,17 +520,17 @@ function RestaurantRegister() {
 											value={formData.confirmPassword}
 											onChange={handleInputChange}
 											placeholder="Repeat password"
-											className={`w-full px-3.5 py-2.5 border-2 rounded-xl transition-all duration-200 focus:outline-none pr-11 text-sm ${errors.confirmPassword
-												? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-300'
+											className={`w-full px-3.5 py-2.5 bg-[#FAFAFA] border rounded-xl transition-all duration-200 focus:outline-none pr-11 text-sm ${errors.confirmPassword
+												? 'border-red-400 focus:ring-2 focus:ring-red-100 bg-red-50/50'
 												: passwordsMatch
-													? 'border-green-400 focus:border-green-500 focus:ring-2 focus:ring-green-100'
-													: 'border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-100'
+													? 'border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
+													: 'border-[#E5E7EB] focus:border-[#EA580C] focus:ring-2 focus:ring-[#EA580C]/10'
 												}`}
 										/>
 										<button
 											type="button"
 											onClick={() => setShowConfirm(!showConfirm)}
-											className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition-colors"
+											className="absolute right-3 top-2.5 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
 										>
 											{showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
 										</button>
@@ -566,35 +541,35 @@ function RestaurantRegister() {
 					</div>
 
 					{/* Agreement & Privacy Policy */}
-					<div className="max-w-xl mx-auto text-center space-y-6 pt-6 border-t border-orange-50">
+					<div className="max-w-xl mx-auto text-center space-y-6 pt-6 border-t border-[#F3F4F6]">
 						<label className="inline-flex items-start gap-3 cursor-pointer group text-left max-w-md mx-auto">
 							<input
 								type="checkbox"
 								name="agreeTerms"
 								checked={formData.agreeTerms}
 								onChange={handleInputChange}
-								className="w-5 h-5 mt-0.5 rounded-lg border-2 border-gray-200 text-orange-600 focus:ring-orange-500 transition-all cursor-pointer"
+								className="w-5 h-5 mt-0.5 rounded-lg border-[#D1D5DB] text-[#EA580C] focus:ring-[#EA580C]/30 transition-all cursor-pointer"
 							/>
-							<span className="text-xs text-gray-500 group-hover:text-gray-900 transition-colors leading-relaxed">
+							<span className="text-xs text-[#6B7280] group-hover:text-[#171717] transition-colors leading-relaxed">
 								I certify that the information provided is accurate and complies with all regulations. I agree to the
-								<button type="button" className="mx-1 font-bold text-orange-600 hover:text-orange-700 underline underline-offset-4 decoration-2 decoration-orange-100 decoration-offset-2">Terms</button>
+								<button type="button" className="mx-1 font-semibold text-[#EA580C] hover:text-[#EA580C]/80 underline underline-offset-2 decoration-[#EA580C]/30">Terms</button>
 								and
-								<button type="button" className="mx-1 font-bold text-orange-600 hover:text-orange-700 underline underline-offset-4 decoration-2 decoration-orange-100 decoration-offset-2">Privacy Policy</button>.
+								<button type="button" className="mx-1 font-semibold text-[#EA580C] hover:text-[#EA580C]/80 underline underline-offset-2 decoration-[#EA580C]/30">Privacy Policy</button>.
 							</span>
 						</label>
-						
+
 						{errors.agreeTerms && (
-							<p className="text-xs text-red-600 flex items-center justify-center gap-1 font-bold bg-red-50/50 py-2 rounded-xl border border-red-100">
+							<p className="text-xs text-red-600 flex items-center justify-center gap-1 font-semibold bg-red-50 py-2 rounded-lg border border-red-100">
 								<AlertCircle size={14} /> {errors.agreeTerms}
 							</p>
 						)}
 
 						{/* Form Actions */}
-						<div className="space-y-6 pt-2">
+						<div className="space-y-5 pt-2">
 							<button
 								type="submit"
 								disabled={isLoading}
-								className="w-full py-4 px-8 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 disabled:from-gray-300 disabled:to-gray-200 text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-orange-500/10 hover:shadow-orange-500/30 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 group/btn uppercase tracking-widest text-sm"
+								className="w-full py-3.5 px-8 bg-[#EA580C] hover:bg-[#EA580C]/90 disabled:bg-[#D1D5DB] disabled:text-[#9CA3AF] text-white font-bold rounded-xl transition-all duration-200 shadow-md shadow-[#EA580C]/15 hover:shadow-lg hover:shadow-[#EA580C]/20 disabled:shadow-none flex items-center justify-center gap-2 text-sm"
 							>
 								{isLoading ? (
 									<>
@@ -604,17 +579,17 @@ function RestaurantRegister() {
 								) : (
 									<>
 										<span>Submit Registration</span>
-										<ArrowRight size={20} className="transition-transform duration-300 group-hover/btn:translate-x-1" />
+										<ArrowRight size={18} />
 									</>
 								)}
 							</button>
 
-							<p className="text-center text-gray-500 font-bold text-xs">
+							<p className="text-center text-[#6B7280] font-medium text-xs">
 								Already have a partner account?{" "}
 								<button
 									type="button"
 									onClick={handleLoginLink}
-									className="text-orange-600 hover:text-orange-700 font-black transition-all hover:underline underline-offset-4"
+									className="text-[#EA580C] hover:text-[#EA580C]/80 font-semibold transition-colors"
 								>
 									Log in here
 								</button>
@@ -623,23 +598,6 @@ function RestaurantRegister() {
 					</div>
 				</form>
 			</div>
-
-			{/* Custom CSS for animations */}
-			<style>{`
-				@keyframes fade-in {
-					from {
-						opacity: 0;
-						transform: translateY(20px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
-				}
-				.animate-fade-in {
-					animation: fade-in 0.6s ease-out forwards;
-				}
-			`}</style>
 		</div>
 	)
 }

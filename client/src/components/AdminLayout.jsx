@@ -36,8 +36,8 @@ function AdminLayout() {
 
   if (isChecking) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent shadow-lg text-blue-500"></div>
+      <div className="flex h-screen items-center justify-center bg-[#FAFAFA] dark:bg-[#111111]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -45,31 +45,25 @@ function AdminLayout() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="relative flex min-h-[100dvh] overflow-x-hidden bg-slate-50 font-sans">
-      <div className="pointer-events-none fixed top-0 left-0 -z-10 h-full w-full overflow-hidden bg-slate-50">
-        <div className="absolute -top-[20%] -left-[10%] h-[50%] w-[50%] rounded-full bg-blue-200/40 blur-[120px]" />
-        <div className="absolute top-[60%] right-[10%] h-[60%] w-[40%] rounded-full bg-indigo-200/30 blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[20%] h-[30%] w-[30%] rounded-full bg-slate-300/40 blur-[100px]" />
-      </div>
-
+    <div className="relative flex min-h-[100dvh] overflow-x-hidden bg-[#FAFAFA] font-sans dark:bg-[#111111]">
       <AdminSidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
 
       <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col lg:ml-64">
-        <header className="sticky top-0 z-[35] flex h-14 shrink-0 items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-md lg:hidden">
+        <header className="sticky top-0 z-[35] flex h-14 shrink-0 items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 lg:hidden dark:border-[#2A2A2A] dark:bg-[#111111]">
           <button
             type="button"
-            className="bh-touch inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-sm"
+            className="bh-touch inline-flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white p-2.5 text-[#171717] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-[#F5F5F5]"
             onClick={() => setMobileNavOpen(true)}
             aria-expanded={mobileNavOpen}
             aria-label="Open admin navigation"
           >
             <Menu size={22} strokeWidth={2} />
           </button>
-          <span className="truncate text-base font-bold text-slate-800">BiteHub Admin</span>
+          <span className="truncate text-base font-bold text-[#171717] dark:text-[#F5F5F5]">BiteHub Admin</span>
         </header>
 
-        <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl min-h-[calc(100dvh-8rem)] rounded-3xl bg-white/40 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] ring-1 ring-white/60 backdrop-blur-md sm:p-6 lg:min-h-[calc(100dvh-4rem)]">
+        <div className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl min-h-[calc(100dvh-8rem)] rounded-xl border border-[#E5E7EB] bg-white p-4 sm:p-6 lg:min-h-[calc(100dvh-4rem)] dark:border-[#2A2A2A] dark:bg-[#1A1A1A]">
             <Outlet />
           </div>
         </div>

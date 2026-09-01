@@ -4,7 +4,7 @@ import {
   Menu, X, Search, Star, ChevronRight, ShoppingBag, ShoppingCart,
   MapPin, Check, CheckCircle2, Zap, ChefHat, Utensils, Salad,
   Wallet, Bell, ArrowRight, Store, Package, BarChart3, TrendingUp,
-  ClipboardList, Flame, Plus, RefreshCw,
+  ClipboardList, Flame, Plus, RefreshCw, Quote,
 } from "lucide-react";
 import biteLogo from "../assets/bite.png";
 import { createApiClient } from "../services/apiClient";
@@ -74,7 +74,6 @@ function Landing() {
   const scrolled = useScrollTop();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ── Real food data from the BiteHub PostgreSQL backend ──
   const [featuredFoods, setFeaturedFoods] = useState([]);
   const [foodsLoading, setFoodsLoading] = useState(true);
   const [foodsError, setFoodsError] = useState("");
@@ -85,7 +84,6 @@ function Landing() {
     try {
       const api = createApiClient();
       const res = await api.get("/foods/featured?limit=8");
-      // Backend returns { success, foods: [...] }
       const foods = Array.isArray(res?.data?.foods) ? res.data.foods : [];
       setFeaturedFoods(foods);
     } catch (err) {
@@ -101,9 +99,8 @@ function Landing() {
   }, []);
 
   const foodImage = (food) => {
-    // Use the real image stored in PostgreSQL (base64 data URL or path).
     if (food?.image && food.image.trim() !== "") return food.image;
-    return fallbackImg; // clean default placeholder
+    return fallbackImg;
   };
 
   const formatPrice = (price) => {
@@ -113,8 +110,6 @@ function Landing() {
   };
 
   const goToFood = (food) => {
-    // Existing food/menu browsing lives at /home. Navigating there keeps
-    // using the existing marketplace rather than a duplicate food page.
     setMenuOpen(false);
     navigate("/home", {
       state: food?.restaurantId ? { focusRestaurant: food.restaurantId } : undefined,
@@ -122,9 +117,6 @@ function Landing() {
   };
 
   const handleAddToCart = async (food) => {
-    // Uses the existing BiteHub cart API. If the user isn't logged in the
-    // API returns 401, so route them to login to keep the flow working
-    // without introducing a second cart system.
     const token = localStorage.getItem("authToken");
     if (!token || token === "null" || token === "undefined") {
       navigate("/login");
@@ -151,88 +143,83 @@ function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#1c1917] font-sans">
-      {/* ── NAVBAR ─────────────────────────────────────────────── */}
+    <div className="min-h-screen bg-[#FAFAFA] text-[#171717] font-sans">
+
+      {/* NAVBAR */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
+        className={`sticky top-0 z-50 transition-all duration-200 ${
           scrolled
-            ? "bg-white/85 backdrop-blur-xl shadow-lg shadow-orange-100/40 border-b border-orange-50"
-            : "bg-transparent border-b border-transparent"
+            ? "bg-white border-b border-[#E5E7EB]"
+            : "bg-[#FAFAFA] border-b border-transparent"
         }`}
       >
-        <nav className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8">
-          {/* Logo */}
+        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
           <button onClick={() => go("/")} className="flex items-center gap-2.5">
-            <img src={biteLogo} alt="BiteHub" className="h-10 w-10 object-contain" />
-            <span className="text-[22px] font-extrabold tracking-tight text-[#1c1917]">
-              Bite<span className="text-orange-500">Hub</span>
+            <img src={biteLogo} alt="BiteHub" className="h-9 w-9 object-contain" />
+            <span className="text-[20px] font-bold tracking-tight text-[#171717]">
+              Bite<span className="text-[#EA580C]">Hub</span>
             </span>
           </button>
 
-          {/* Desktop nav */}
           <div className="hidden items-center gap-8 lg:flex">
             {navLinks.map((l) => (
               <a
                 key={l.label}
                 href={l.href}
-                className="text-[15px] font-medium text-[#57534e] transition-colors hover:text-orange-500"
+                className="text-sm font-medium text-[#6B7280] transition-colors hover:text-[#EA580C]"
               >
                 {l.label}
               </a>
             ))}
           </div>
 
-          {/* Desktop actions */}
           <div className="hidden items-center gap-3 lg:flex">
             <button
               onClick={() => go("/login")}
-              className="rounded-full px-5 py-2.5 text-[15px] font-semibold text-[#1c1917] transition-colors hover:text-orange-500"
+              className="rounded-lg px-5 py-2 text-sm font-medium text-[#171717] transition-colors hover:text-[#EA580C]"
             >
               Log In
             </button>
             <button
               onClick={() => go("/register")}
-              className="group rounded-full bg-orange-500 px-6 py-2.5 text-[15px] font-semibold text-white shadow-lg shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-500/40"
+              className="rounded-lg bg-[#EA580C] px-5 py-2 text-sm font-medium text-white transition-all hover:bg-[#C2410C]"
             >
               Get Started
-              <ArrowRight className="ml-1.5 inline h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-lg p-2 text-[#1c1917] transition-colors hover:bg-orange-50 lg:hidden"
+            className="rounded-lg p-2 text-[#171717] transition-colors hover:bg-[#E5E7EB] lg:hidden"
             aria-label="Toggle menu"
           >
             {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </nav>
 
-        {/* Mobile menu */}
         {menuOpen && (
-          <div className="border-t border-orange-50 bg-white/95 backdrop-blur-xl lg:hidden">
+          <div className="border-t border-[#E5E7EB] bg-white lg:hidden">
             <div className="mx-auto flex max-w-7xl flex-col gap-1 px-6 py-4">
               {navLinks.map((l) => (
                 <a
                   key={l.label}
                   href={l.href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-3 py-3 text-[15px] font-medium text-[#57534e] transition-colors hover:bg-orange-50 hover:text-orange-500"
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#EA580C]"
                 >
                   {l.label}
                 </a>
               ))}
-              <div className="mt-3 flex flex-col gap-2 border-t border-orange-50 pt-4">
+              <div className="mt-3 flex flex-col gap-2 border-t border-[#E5E7EB] pt-4">
                 <button
                   onClick={() => go("/login")}
-                  className="rounded-xl border border-orange-200 px-4 py-3 text-[15px] font-semibold text-orange-600 transition-colors hover:bg-orange-50"
+                  className="rounded-lg border border-[#E5E7EB] px-4 py-3 text-sm font-medium text-[#171717] transition-colors hover:bg-[#F3F4F6]"
                 >
                   Log In
                 </button>
                 <button
                   onClick={() => go("/register")}
-                  className="rounded-xl bg-orange-500 px-4 py-3 text-[15px] font-semibold text-white shadow-lg shadow-orange-500/30"
+                  className="rounded-lg bg-[#EA580C] px-4 py-3 text-sm font-medium text-white"
                 >
                   Get Started
                 </button>
@@ -242,31 +229,26 @@ function Landing() {
         )}
       </header>
 
-      {/* ── HERO ───────────────────────────────────────────────── */}
-      <section id="home" className="relative overflow-hidden">
-        {/* Soft background washes */}
-        <div className="pointer-events-none absolute -top-32 -right-24 h-[480px] w-[480px] rounded-full bg-orange-100/70 blur-3xl" />
-        <div className="pointer-events-none absolute top-40 -left-32 h-[420px] w-[420px] rounded-full bg-amber-50 blur-3xl" />
-
-        <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pt-14 pb-20 sm:px-8 lg:grid-cols-2 lg:pt-20 lg:pb-28">
-          {/* Hero text */}
+      {/* HERO */}
+      <section id="home" className="relative overflow-hidden bg-gradient-to-b from-orange-50 to-[#FAFAFA]">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pt-16 pb-20 sm:px-8 lg:grid-cols-2 lg:pt-24 lg:pb-28">
           <div>
             <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-[13px] font-semibold tracking-wide text-orange-600">
+              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#EA580C]">
                 <span className="text-sm">🍴</span> UNIVERSITY FOOD MARKETPLACE
               </span>
             </Reveal>
             <Reveal delay={80}>
-              <h1 className="mt-6 text-[42px] font-extrabold leading-[1.05] tracking-tight text-[#1c1917] sm:text-[52px] lg:text-[60px]">
+              <h1 className="mt-6 text-[40px] font-extrabold leading-[1.08] tracking-tight text-[#171717] sm:text-[50px] lg:text-[58px]">
                 Your Campus. <br />
-                Your <span className="text-orange-500">Food.</span> <br />
+                Your <span className="text-[#EA580C]">Food.</span> <br />
                 Your <span className="relative inline-block">Bite.
                   <svg className="absolute -bottom-2 left-0 w-full text-orange-300" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none"><path d="M2 9C50 3 150 3 198 9" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/></svg>
                 </span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
-              <p className="mt-7 max-w-xl text-lg leading-relaxed text-[#57534e]">
+              <p className="mt-7 max-w-xl text-lg leading-relaxed text-[#6B7280]">
                 Discover your favorite campus restaurants, explore delicious meals, and order
                 everything you need from one place.
               </p>
@@ -275,14 +257,14 @@ function Landing() {
               <div className="mt-9 flex flex-wrap items-center gap-4">
                 <button
                   onClick={() => go("/register")}
-                  className="group inline-flex items-center rounded-full bg-orange-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-2xl hover:shadow-orange-500/40"
+                  className="group inline-flex items-center rounded-lg bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </button>
                 <button
                   onClick={() => go("/home")}
-                  className="inline-flex items-center rounded-full border border-[#e7e5e4] bg-white px-8 py-4 text-base font-semibold text-[#1c1917] transition-all hover:-translate-y-0.5 hover:border-orange-300 hover:text-orange-600 hover:shadow-lg"
+                  className="inline-flex items-center rounded-lg border border-[#E5E7EB] bg-white px-7 py-3.5 text-base font-semibold text-[#171717] transition-all hover:border-[#EA580C] hover:text-[#EA580C]"
                 >
                   Explore BiteHub
                   <ChevronRight className="ml-1 h-5 w-5" />
@@ -290,49 +272,44 @@ function Landing() {
               </div>
             </Reveal>
             <Reveal delay={320}>
-              <p className="mt-6 text-[15px] text-[#78716c]">
+              <p className="mt-6 text-sm text-[#6B7280]">
                 Already have an account?{" "}
-                <button onClick={() => go("/login")} className="font-semibold text-orange-500 transition-colors hover:text-orange-600">
+                <button onClick={() => go("/login")} className="font-semibold text-[#EA580C] transition-colors hover:text-[#C2410C]">
                   Log in
                 </button>
               </p>
             </Reveal>
           </div>
 
-          {/* Hero visual */}
           <Reveal delay={150} className="relative">
             <div className="relative">
-              {/* Main app mockup */}
-              <div className="relative mx-auto w-full max-w-[460px] rounded-[32px] border border-orange-100 bg-white p-4 shadow-2xl shadow-orange-100/60">
-                {/* Mockup header */}
-                <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3">
+              <div className="relative mx-auto w-full max-w-[440px] rounded-2xl border border-[#E5E7EB] bg-white p-4">
+                <div className="flex items-center justify-between rounded-lg bg-[#EA580C] px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/20">
                       <ShoppingBag className="h-4 w-4 text-white" />
                     </div>
                     <span className="text-sm font-bold text-white">BiteHub</span>
                   </div>
                   <div className="relative">
                     <ShoppingCart className="h-5 w-5 text-white" />
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-orange-600">
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[#EA580C]">
                       3
                     </span>
                   </div>
                 </div>
 
-                {/* Mockup search */}
-                <div className="mt-4 flex items-center gap-2 rounded-full border border-[#f0eeed] bg-[#faf9f8] px-4 py-2.5">
-                  <Search className="h-4 w-4 text-[#a8a29e]" />
-                  <span className="text-[13px] text-[#a8a29e]">Search for food, restaurants...</span>
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-4 py-2.5">
+                  <Search className="h-4 w-4 text-[#A0A0A0]" />
+                  <span className="text-[13px] text-[#A0A0A0]">Search for food, restaurants...</span>
                 </div>
 
-                {/* Mockup categories */}
                 <div className="mt-4 flex gap-2 overflow-hidden">
                   {["All", "Fast Food", "Filipino", "Drinks", "Desserts"].map((c, i) => (
                     <span
                       key={c}
-                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold ${
-                        i === 0 ? "bg-orange-500 text-white" : "bg-[#f4f2f1] text-[#78716c]"
+                      className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[11px] font-semibold ${
+                        i === 0 ? "bg-[#EA580C] text-white" : "bg-[#F3F4F6] text-[#6B7280]"
                       }`}
                     >
                       {c}
@@ -340,103 +317,97 @@ function Landing() {
                   ))}
                 </div>
 
-                {/* Mockup restaurant cards */}
                 <div className="mt-4 space-y-3">
                   {[
                     { img: foodImages.burger, name: "Campus Fast Food", cat: "Fast Food", time: "15-20 min", price: "₱85", rating: "4.8", item: "Classic Burger" },
                     { img: foodImages.adobo, name: "Kanto Grille", cat: "Filipino", time: "10-15 min", price: "₱65", rating: "4.7", item: "Pork Adobo Rice" },
                     { img: foodImages.milktea, name: "Brew & Chill", cat: "Drinks", time: "5-10 min", price: "₱49", rating: "4.9", item: "Fresh Milk Tea" },
                   ].map((r) => (
-                    <div key={r.name} className="flex items-center gap-3 rounded-2xl border border-[#f0eeed] bg-white p-3 shadow-sm">
-                      <img src={r.img} onError={(e) => (e.currentTarget.src = fallbackImg)} alt={r.name} className="h-14 w-14 rounded-xl object-cover" />
+                    <div key={r.name} className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white p-3">
+                      <img src={r.img} onError={(e) => (e.currentTarget.src = fallbackImg)} alt={r.name} className="h-14 w-14 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-[13px] font-bold text-[#1c1917]">{r.name}</p>
+                          <p className="truncate text-[13px] font-bold text-[#171717]">{r.name}</p>
                           <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
                             <Star className="h-2.5 w-2.5 fill-current" /> {r.rating}
                           </span>
                         </div>
-                        <p className="truncate text-[11px] text-[#a8a29e]">{r.item} · {r.cat} · {r.time}</p>
-                        <p className="mt-0.5 text-[12px] font-bold text-orange-500">{r.price}</p>
+                        <p className="truncate text-[11px] text-[#A0A0A0]">{r.item} · {r.cat} · {r.time}</p>
+                        <p className="mt-0.5 text-[12px] font-bold text-[#EA580C]">{r.price}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Floating card: Order confirmed */}
-              <div className="bh-float absolute -left-6 top-14 hidden w-[170px] rounded-2xl border border-green-100 bg-white p-3 shadow-xl shadow-green-100/40 sm:block">
+              <div className="bh-float absolute -left-6 top-14 hidden w-[170px] rounded-xl border border-[#E5E7EB] bg-white p-3 sm:block">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-50">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-[#1c1917]">Order Confirmed</p>
-                    <p className="text-[10px] text-[#78716c]">Your food is being prepared</p>
+                    <p className="text-[11px] font-bold text-[#171717]">Order Confirmed</p>
+                    <p className="text-[10px] text-[#6B7280]">Your food is being prepared</p>
                   </div>
                 </div>
               </div>
 
-              {/* Floating card: Fast ordering */}
-              <div className="bh-float-slow absolute -right-4 top-40 hidden w-[150px] rounded-2xl border border-orange-100 bg-white p-3 shadow-xl shadow-orange-100/40 md:block">
+              <div className="bh-float-slow absolute -right-4 top-40 hidden w-[150px] rounded-xl border border-[#E5E7EB] bg-white p-3 md:block">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
-                    <Zap className="h-4 w-4 text-orange-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50">
+                    <Zap className="h-4 w-4 text-[#EA580C]" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-[#1c1917]">Fast Ordering</p>
-                    <p className="text-[10px] text-[#78716c]">Order in a few clicks</p>
+                    <p className="text-[11px] font-bold text-[#171717]">Fast Ordering</p>
+                    <p className="text-[10px] text-[#6B7280]">Order in a few clicks</p>
                   </div>
                 </div>
               </div>
 
-              {/* Floating card: Popular near you */}
-              <div className="bh-float-alt absolute -bottom-6 left-6 hidden w-[160px] rounded-2xl border border-amber-100 bg-white p-3 shadow-xl shadow-amber-100/50 sm:block">
+              <div className="bh-float-alt absolute -bottom-6 left-6 hidden w-[160px] rounded-xl border border-[#E5E7EB] bg-white p-3 sm:block">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
-                    <Flame className="h-4 w-4 text-amber-600" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50">
+                    <Flame className="h-4 w-4 text-[#EA580C]" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-[#1c1917]">Popular Near You</p>
-                    <p className="text-[10px] text-[#78716c]">Student favorites</p>
+                    <p className="text-[11px] font-bold text-[#171717]">Popular Near You</p>
+                    <p className="text-[10px] text-[#6B7280]">Student favorites</p>
                   </div>
                 </div>
               </div>
 
-              {/* Floating food elements */}
-              <div className="bh-float-slow pointer-events-none absolute -right-8 top-4 hidden rounded-2xl bg-white p-2.5 text-4xl shadow-lg shadow-orange-100/60 lg:block">
+              <div className="bh-float-slow pointer-events-none absolute -right-8 top-4 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
                 🍔
               </div>
-              <div className="bh-float pointer-events-none absolute -left-10 bottom-24 hidden rounded-2xl bg-white p-2.5 text-4xl shadow-lg shadow-orange-100/60 lg:block">
+              <div className="bh-float pointer-events-none absolute -left-10 bottom-24 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
                 🍟
               </div>
-              <div className="bh-float-alt pointer-events-none absolute -right-10 bottom-16 hidden rounded-2xl bg-white p-2.5 text-4xl shadow-lg shadow-orange-100/60 lg:block">
+              <div className="bh-float-alt pointer-events-none absolute -right-10 bottom-16 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
                 🍕
               </div>
-              <div className="bh-float pointer-events-none absolute -left-6 top-2 hidden rounded-2xl bg-white p-2.5 text-4xl shadow-lg shadow-orange-100/60 lg:block">
+              <div className="bh-float pointer-events-none absolute -left-6 top-2 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
                 🥤
               </div>
             </div>
           </Reveal>
         </div>
 
-        {/* Hero trust strip */}
         <div className="relative mx-auto max-w-7xl px-5 pb-16 sm:px-8">
           <Reveal>
-            <div className="grid grid-cols-1 gap-4 rounded-3xl border border-orange-50 bg-gradient-to-br from-orange-50/60 to-white p-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 rounded-xl border border-[#E5E7EB] bg-white p-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { icon: <Store className="h-5 w-5" />, title: "Multiple Restaurants", desc: "Explore food from different campus restaurants" },
                 { icon: <Zap className="h-5 w-5" />, title: "Easy Ordering", desc: "Order your favorite meals in just a few clicks" },
                 { icon: <Bell className="h-5 w-5" />, title: "Order Updates", desc: "Stay updated from preparation to delivery" },
                 { icon: <Wallet className="h-5 w-5" />, title: "Student-Friendly Meals", desc: "Discover affordable meals for your campus budget" },
               ].map((b) => (
-                <div key={b.title} className="flex items-start gap-3 rounded-2xl bg-white p-4 shadow-sm">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                <div key={b.title} className="flex items-start gap-3 rounded-xl bg-[#FAFAFA] p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-[#EA580C]">
                     {b.icon}
                   </div>
                   <div>
-                    <p className="font-bold text-[#1c1917]">{b.title}</p>
-                    <p className="mt-0.5 text-[13px] leading-snug text-[#78716c]">{b.desc}</p>
+                    <p className="font-semibold text-[#171717]">{b.title}</p>
+                    <p className="mt-0.5 text-[13px] leading-snug text-[#6B7280]">{b.desc}</p>
                   </div>
                 </div>
               ))}
@@ -445,17 +416,17 @@ function Landing() {
         </div>
       </section>
 
-      {/* ── FEATURES ───────────────────────────────────────────── */}
-      <section id="about" className="relative bg-[#faf8f6] py-20 lg:py-28">
+      {/* FEATURES */}
+      <section id="about" className="bg-[#FAFAFA] py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-[13px] font-semibold text-orange-600">
+            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
               WHY BITEHUB
             </span>
-            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#1c1917] sm:text-4xl lg:text-[42px]">
+            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
               Everything You Need to Eat Better on Campus
             </h2>
-            <p className="mt-4 text-lg text-[#78716c]">
+            <p className="mt-4 text-lg text-[#6B7280]">
               BiteHub makes campus food ordering simple, convenient, and accessible.
             </p>
           </Reveal>
@@ -470,12 +441,12 @@ function Landing() {
               { icon: <Wallet className="h-6 w-6" />, title: "Budget-Friendly Meals", desc: "Easily discover affordable meals designed for students and university employees." },
             ].map((f, i) => (
               <Reveal key={f.title} delay={(i % 3) * 90}>
-                <div className="group h-full rounded-3xl border border-[#eeeceb] bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/50">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-500 transition-all duration-300 group-hover:bg-orange-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-orange-200/50">
+                <div className="group h-full rounded-xl border border-[#E5E7EB] bg-white p-7 transition-all duration-200 hover:border-[#EA580C] hover:shadow-lg hover:shadow-orange-50">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-orange-50 text-[#EA580C] transition-all duration-200 group-hover:bg-[#EA580C] group-hover:text-white">
                     {f.icon}
                   </div>
-                  <h3 className="mt-6 text-xl font-bold text-[#1c1917]">{f.title}</h3>
-                  <p className="mt-2.5 leading-relaxed text-[#78716c]">{f.desc}</p>
+                  <h3 className="mt-6 text-xl font-bold text-[#171717]">{f.title}</h3>
+                  <p className="mt-2.5 leading-relaxed text-[#6B7280]">{f.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -483,24 +454,23 @@ function Landing() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ───────────────────────────────────────── */}
-      <section id="how-it-works" className="py-20 lg:py-28">
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" className="bg-white py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-[13px] font-semibold text-orange-600">
+            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
               HOW IT WORKS
             </span>
-            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#1c1917] sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl">
               From Discovery to Your Doorstep
             </h2>
-            <p className="mt-4 text-lg text-[#78716c]">
+            <p className="mt-4 text-lg text-[#6B7280]">
               Ordering food on campus has never been easier.
             </p>
           </Reveal>
 
           <div className="relative mt-16">
-            {/* connecting line */}
-            <div className="absolute left-1/2 top-8 hidden h-0.5 w-2/3 -translate-x-1/2 bg-gradient-to-r from-orange-200 via-orange-400 to-orange-200 lg:block" />
+            <div className="absolute left-1/2 top-8 hidden h-0.5 w-2/3 -translate-x-1/2 bg-gradient-to-r from-orange-200 via-[#EA580C]/30 to-orange-200 lg:block" />
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
               {[
                 { num: "01", title: "DISCOVER", desc: "Find restaurants and meals available around your campus.", icon: <Search className="h-6 w-6" /> },
@@ -509,14 +479,14 @@ function Landing() {
               ].map((s, i) => (
                 <Reveal key={s.num} delay={i * 120}>
                   <div className="relative text-center lg:pt-0">
-                    <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-xl shadow-orange-500/30">
+                    <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-[#EA580C] text-white">
                       {s.icon}
-                      <span className="absolute -right-2 -top-2 rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-orange-500 shadow">
+                      <span className="absolute -right-2 -top-2 rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold text-[#EA580C] border border-[#E5E7EB]">
                         {s.num}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-bold tracking-wide text-[#1c1917]">{s.title}</h3>
-                    <p className="mx-auto mt-3 max-w-xs text-[#78716c]">{s.desc}</p>
+                    <h3 className="text-2xl font-bold tracking-wide text-[#171717]">{s.title}</h3>
+                    <p className="mx-auto mt-3 max-w-xs text-[#6B7280]">{s.desc}</p>
                   </div>
                 </Reveal>
               ))}
@@ -525,61 +495,57 @@ function Landing() {
         </div>
       </section>
 
-      {/* ── RESTAURANT SHOWCASE ────────────────────────────────── */}
-      <section id="restaurants" className="bg-[#faf8f6] py-20 lg:py-28">
+      {/* RESTAURANT SHOWCASE */}
+      <section id="restaurants" className="bg-[#FAFAFA] py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight text-[#1c1917] sm:text-4xl lg:text-[42px]">
+            <h2 className="text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
               Your Favorite Food, All in One Place.
             </h2>
-            <p className="mt-4 text-lg text-[#78716c]">
+            <p className="mt-4 text-lg text-[#6B7280]">
               Discover delicious meals from restaurants and food vendors around your campus.
             </p>
           </Reveal>
 
           <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Loading skeletons */}
             {foodsLoading &&
               Array.from({ length: 8 }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="overflow-hidden rounded-3xl border border-[#eeeceb] bg-white shadow-sm">
-                  <div className="h-44 animate-pulse bg-[#f2f0ef]" />
+                <div key={`skeleton-${i}`} className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+                  <div className="h-44 animate-pulse bg-[#F3F4F6]" />
                   <div className="p-5">
-                    <div className="h-4 w-2/3 animate-pulse rounded bg-[#eeeceb]" />
-                    <div className="mt-2 h-3.5 w-full animate-pulse rounded bg-[#f4f3f2]" />
-                    <div className="mt-4 h-3.5 w-1/3 animate-pulse rounded bg-[#f4f3f2]" />
+                    <div className="h-4 w-2/3 animate-pulse rounded bg-[#E5E7EB]" />
+                    <div className="mt-2 h-3.5 w-full animate-pulse rounded bg-[#F3F4F6]" />
+                    <div className="mt-4 h-3.5 w-1/3 animate-pulse rounded bg-[#F3F4F6]" />
                   </div>
                 </div>
               ))}
 
-            {/* Error state */}
             {!foodsLoading && foodsError && (
-              <div className="col-span-full rounded-3xl border border-orange-100 bg-orange-50/60 p-10 text-center">
-                <p className="text-[#a16207]">{foodsError}</p>
+              <div className="col-span-full rounded-xl border border-orange-200 bg-orange-50 p-10 text-center">
+                <p className="text-[#9A3412]">{foodsError}</p>
                 <button
                   onClick={loadFeaturedFoods}
-                  className="mt-4 inline-flex items-center rounded-full bg-orange-500 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-orange-600"
+                  className="mt-4 inline-flex items-center rounded-lg bg-[#EA580C] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C]"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Try Again
                 </button>
               </div>
             )}
 
-            {/* Empty state */}
             {!foodsLoading && !foodsError && featuredFoods.length === 0 && (
-              <div className="col-span-full rounded-3xl border border-[#eeeceb] bg-white p-10 text-center">
-                <Salad className="mx-auto h-10 w-10 text-orange-300" />
-                <p className="mt-3 text-[#78716c]">No featured foods available yet.</p>
+              <div className="col-span-full rounded-xl border border-[#E5E7EB] bg-white p-10 text-center">
+                <Salad className="mx-auto h-10 w-10 text-[#A0A0A0]" />
+                <p className="mt-3 text-[#6B7280]">No featured foods available yet.</p>
               </div>
             )}
 
-            {/* Real food cards from the BiteHub backend */}
             {!foodsLoading &&
               !foodsError &&
               featuredFoods.map((food, i) => (
                 <Reveal key={food.id} delay={(i % 4) * 80}>
                   <button
                     onClick={() => goToFood(food)}
-                    className="group w-full overflow-hidden rounded-3xl border border-[#eeeceb] bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/50"
+                    className="group w-full overflow-hidden rounded-xl border border-[#E5E7EB] bg-white text-left transition-all duration-200 hover:-translate-y-1 hover:border-[#EA580C] hover:shadow-lg hover:shadow-orange-50"
                   >
                     <div className="relative h-44 overflow-hidden">
                       <img
@@ -589,21 +555,21 @@ function Landing() {
                         loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
-                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-[#1c1917] backdrop-blur">
+                      <span className="absolute left-3 top-3 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-[#171717]">
                         {food.category}
                       </span>
                       {Number(food.rating) > 0 && (
-                        <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-[11px] font-bold text-white">
+                        <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#EA580C] px-2 py-1 text-[11px] font-bold text-white">
                           <Star className="h-3 w-3 fill-current" /> {food.rating}
                         </span>
                       )}
                     </div>
                     <div className="p-5">
-                      <h3 className="truncate text-lg font-bold text-[#1c1917] group-hover:text-orange-500">{food.name}</h3>
-                      <p className="mt-1 truncate text-sm text-[#78716c]">{food.restaurant}</p>
+                      <h3 className="truncate text-lg font-bold text-[#171717] group-hover:text-[#EA580C]">{food.name}</h3>
+                      <p className="mt-1 truncate text-sm text-[#6B7280]">{food.restaurant}</p>
                       <div className="mt-3 flex items-center justify-between">
-                        <span className="text-sm font-bold text-[#78716c]">{food.category}</span>
-                        <span className="text-lg font-extrabold text-orange-500">{formatPrice(food.price)}</span>
+                        <span className="text-sm font-medium text-[#6B7280]">{food.category}</span>
+                        <span className="text-lg font-extrabold text-[#EA580C]">{formatPrice(food.price)}</span>
                       </div>
                     </div>
                   </button>
@@ -614,7 +580,7 @@ function Landing() {
           <Reveal className="mt-12 text-center">
             <button
               onClick={() => go("/home")}
-              className="group inline-flex items-center rounded-full bg-orange-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-2xl"
+              className="group inline-flex items-center rounded-lg bg-[#EA580C] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
             >
               Explore Restaurants
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -623,24 +589,24 @@ function Landing() {
         </div>
       </section>
 
-      {/* ── BUDGET MEALS ───────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
+      {/* BUDGET MEALS */}
+      <section className="bg-white py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <Reveal>
-              <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-[13px] font-semibold text-orange-600">
+              <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
                 STUDENT-FRIENDLY
               </span>
-              <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#1c1917] sm:text-4xl lg:text-[42px]">
+              <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
                 Good Food Without Breaking Your Budget.
               </h2>
-              <p className="mt-4 text-lg text-[#78716c]">
+              <p className="mt-4 text-lg text-[#6B7280]">
                 Find affordable meals and student-friendly food options available around campus — without
                 compromising on taste.
               </p>
               <button
                 onClick={() => go("/home")}
-                className="group mt-8 inline-flex items-center rounded-full bg-orange-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-2xl"
+                className="group mt-8 inline-flex items-center rounded-lg bg-[#EA580C] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
               >
                 Find Budget Meals
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -649,28 +615,26 @@ function Landing() {
 
             <Reveal delay={120}>
               <div className="grid gap-4 sm:grid-cols-2">
-                {/* Skeleton */}
                 {foodsLoading &&
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={`bs-${i}`} className="overflow-hidden rounded-3xl border border-[#eeeceb] bg-white shadow-sm">
-                      <div className="h-32 animate-pulse bg-[#f2f0ef]" />
+                    <div key={`bs-${i}`} className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+                      <div className="h-32 animate-pulse bg-[#F3F4F6]" />
                       <div className="p-4">
-                        <div className="h-4 w-2/3 animate-pulse rounded bg-[#eeeceb]" />
-                        <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-[#f4f3f2]" />
+                        <div className="h-4 w-2/3 animate-pulse rounded bg-[#E5E7EB]" />
+                        <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-[#F3F4F6]" />
                       </div>
                     </div>
                   ))}
 
-                {/* Error / empty for the budget section */}
                 {!foodsLoading && (foodsError || featuredFoods.length === 0) && (
-                  <div className="col-span-2 rounded-3xl border border-[#eeeceb] bg-[#faf8f6] p-8 text-center">
-                    <p className="text-[#a8a29e]">
+                  <div className="col-span-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-8 text-center">
+                    <p className="text-[#A0A0A0]">
                       {foodsError ? "Budget meals aren't available right now." : "No budget-friendly meals available yet."}
                     </p>
                     {foodsError && (
                       <button
                         onClick={loadFeaturedFoods}
-                        className="mt-3 inline-flex items-center rounded-full bg-orange-500 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-orange-600"
+                        className="mt-3 inline-flex items-center rounded-lg bg-[#EA580C] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C]"
                       >
                         <RefreshCw className="mr-2 h-4 w-4" /> Try Again
                       </button>
@@ -678,7 +642,6 @@ function Landing() {
                   </div>
                 )}
 
-                {/* Real budget-friendly food cards */}
                 {!foodsLoading &&
                   !foodsError &&
                   featuredFoods
@@ -698,7 +661,7 @@ function Landing() {
                       <button
                         key={b.id}
                         onClick={() => goToFood(b)}
-                        className="overflow-hidden rounded-3xl border border-[#eeeceb] bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                        className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-50"
                       >
                         <div className="relative h-32 overflow-hidden">
                           <img
@@ -708,16 +671,16 @@ function Landing() {
                             loading="lazy"
                             className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                           />
-                          <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-bold text-[#1c1917]">{b.category}</span>
+                          <span className="absolute left-3 top-3 rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold text-[#171717]">{b.category}</span>
                         </div>
                         <div className="p-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="truncate font-bold text-[#1c1917]">{b.name}</h3>
-                            <span className="text-lg font-extrabold text-orange-500">{formatPrice(b.price)}</span>
+                            <h3 className="truncate font-bold text-[#171717]">{b.name}</h3>
+                            <span className="text-lg font-extrabold text-[#EA580C]">{formatPrice(b.price)}</span>
                           </div>
                           <div className="mt-1 flex items-center justify-between">
-                            <p className="truncate text-[12px] text-[#a8a29e]">{b.restaurant}</p>
-                            <span className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1.5 text-[12px] font-bold text-orange-600">
+                            <p className="truncate text-[12px] text-[#A0A0A0]">{b.restaurant}</p>
+                            <span className="flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-1.5 text-[12px] font-bold text-[#EA580C]">
                               <Plus size={14} /> Order
                             </span>
                           </div>
@@ -730,14 +693,73 @@ function Landing() {
         </div>
       </section>
 
-      {/* ── RESTAURANT OWNERS ──────────────────────────────────── */}
-      <section id="for-owners" className="relative overflow-hidden bg-[#1c1917] py-20 lg:py-28">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-orange-500/10 blur-3xl" />
+      {/* TESTIMONIALS */}
+      <section className="bg-[#FAFAFA] py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
+              TESTIMONIALS
+            </span>
+            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
+              What Students Are Saying
+            </h2>
+            <p className="mt-4 text-lg text-[#6B7280]">
+              Hear from students and restaurant owners who love using BiteHub.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {[
+              {
+                quote: "BiteHub changed how I get food on campus. I can order between classes and it's ready by the time I walk over. No more long lines!",
+                name: "Maria Santos",
+                role: "3rd Year, BS Computer Science",
+                rating: 5,
+              },
+              {
+                quote: "As a restaurant owner, BiteHub brought in so many student orders we weren't getting before. The dashboard makes tracking everything super easy.",
+                name: "Jun Reyes",
+                role: "Owner, Kanto Grille",
+                rating: 5,
+              },
+              {
+                quote: "I love that I can see all the menus and prices in one place. The budget meals section is a lifesaver during exam weeks.",
+                name: "Angela Cruz",
+                role: "2nd Year, BS Business Administration",
+                rating: 5,
+              },
+            ].map((t, i) => (
+              <Reveal key={t.name} delay={i * 100}>
+                <div className="h-full rounded-xl border border-[#E5E7EB] bg-white p-7 transition-all duration-200 hover:border-[#EA580C]">
+                  <Quote className="h-8 w-8 text-orange-200" />
+                  <p className="mt-4 text-[15px] leading-relaxed text-[#6B7280]">{t.quote}</p>
+                  <div className="mt-5 flex items-center gap-0.5">
+                    {Array.from({ length: t.rating }).map((_, j) => (
+                      <Star key={j} className="h-4 w-4 fill-[#EA580C] text-[#EA580C]" />
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-sm font-bold text-[#EA580C]">
+                      {t.name.split(" ").map((n) => n[0]).join("")}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#171717]">{t.name}</p>
+                      <p className="text-xs text-[#A0A0A0]">{t.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* RESTAURANT OWNERS */}
+      <section id="for-owners" className="bg-[#111111] py-20 lg:py-28">
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 sm:px-8 lg:grid-cols-2">
           <div>
             <Reveal>
-              <span className="inline-block rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-1.5 text-[13px] font-semibold text-orange-400">
+              <span className="inline-block rounded-full border border-[#EA580C]/30 bg-[#EA580C]/10 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
                 FOR RESTAURANT OWNERS
               </span>
             </Reveal>
@@ -747,7 +769,7 @@ function Landing() {
               </h2>
             </Reveal>
             <Reveal delay={150}>
-              <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#a8a29e]">
+              <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#A0A0A0]">
                 Bring your restaurant to the BiteHub marketplace and reach more students and university
                 customers. Manage orders, menus, and sales all in one place.
               </p>
@@ -755,8 +777,8 @@ function Landing() {
             <Reveal delay={220}>
               <ul className="mt-7 space-y-3">
                 {["Reach thousands of hungry students", "Manage orders in real time", "Track sales and popular items"].map((t) => (
-                  <li key={t} className="flex items-center gap-3 text-[#e7e5e4]">
-                    <Check className="h-5 w-5 shrink-0 text-orange-400" /> <span>{t}</span>
+                  <li key={t} className="flex items-center gap-3 text-[#D4D4D4]">
+                    <Check className="h-5 w-5 shrink-0 text-[#EA580C]" /> <span>{t}</span>
                   </li>
                 ))}
               </ul>
@@ -764,7 +786,7 @@ function Landing() {
             <Reveal delay={300}>
               <button
                 onClick={() => go("/restaurant-register")}
-                className="group mt-9 inline-flex items-center rounded-full bg-orange-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-orange-500/30 transition-all hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-2xl"
+                className="group mt-9 inline-flex items-center rounded-lg bg-[#EA580C] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
               >
                 Become a Restaurant Partner
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -772,57 +794,53 @@ function Landing() {
             </Reveal>
           </div>
 
-          {/* Owner dashboard mockup */}
           <Reveal delay={150}>
             <div className="relative">
-              <div className="rounded-3xl border border-white/10 bg-white p-4 shadow-2xl shadow-black/40">
-                <div className="flex items-center justify-between border-b border-[#f0eeed] pb-3">
-                  <span className="text-sm font-bold text-[#1c1917]">Restaurant Dashboard</span>
-                  <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700">
+              <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-4">
+                <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
+                  <span className="text-sm font-bold text-white">Restaurant Dashboard</span>
+                  <span className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-[11px] font-bold text-green-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Open
                   </span>
                 </div>
-                {/* stat row */}
                 <div className="mt-4 grid grid-cols-3 gap-3">
                   {[
                     { icon: <Package className="h-4 w-4" />, label: "Orders", value: "24" },
                     { icon: <TrendingUp className="h-4 w-4" />, label: "Sales", value: "₱1.2k" },
                     { icon: <Flame className="h-4 w-4" />, label: "Popular", value: "Adobo" },
                   ].map((s) => (
-                    <div key={s.label} className="rounded-xl bg-orange-50 p-3">
-                      <div className="text-orange-500">{s.icon}</div>
-                      <p className="mt-1 text-lg font-extrabold text-[#1c1917]">{s.value}</p>
-                      <p className="text-[11px] text-[#a8a29e]">{s.label}</p>
+                    <div key={s.label} className="rounded-lg bg-[#2A2A2A] p-3">
+                      <div className="text-[#EA580C]">{s.icon}</div>
+                      <p className="mt-1 text-lg font-extrabold text-white">{s.value}</p>
+                      <p className="text-[11px] text-[#A0A0A0]">{s.label}</p>
                     </div>
                   ))}
                 </div>
-                {/* orders list */}
                 <div className="mt-4 space-y-2">
                   {[
                     { name: "Beef Tapsilog", amt: "₱65", qty: "×2", status: "Preparing" },
                     { name: "Chicken Rice Bowl", amt: "₱55", qty: "×1", status: "New" },
                     { name: "Fresh Milk Tea", amt: "₱49", qty: "×3", status: "Out for delivery" },
                   ].map((o) => (
-                    <div key={o.name} className="flex items-center justify-between rounded-xl border border-[#f0eeed] p-2.5">
+                    <div key={o.name} className="flex items-center justify-between rounded-lg border border-[#2A2A2A] p-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-500">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EA580C]/10 text-[#EA580C]">
                           <Utensils className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-[12px] font-bold text-[#1c1917]">{o.name} {o.qty}</p>
-                          <p className="text-[11px] text-orange-500">{o.amt}</p>
+                          <p className="text-[12px] font-bold text-white">{o.name} {o.qty}</p>
+                          <p className="text-[11px] text-[#EA580C]">{o.amt}</p>
                         </div>
                       </div>
-                      <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-600">{o.status}</span>
+                      <span className="rounded-full bg-[#EA580C]/10 px-2 py-0.5 text-[10px] font-bold text-[#EA580C]">{o.status}</span>
                     </div>
                   ))}
                 </div>
-                {/* bottom summary */}
-                <div className="mt-4 flex items-center justify-between rounded-xl bg-[#faf9f8] p-3">
-                  <div className="flex items-center gap-2 text-[12px] text-[#78716c]">
-                    <BarChart3 className="h-4 w-4 text-orange-500" /> Sales this week
+                <div className="mt-4 flex items-center justify-between rounded-lg bg-[#2A2A2A] p-3">
+                  <div className="flex items-center gap-2 text-[12px] text-[#A0A0A0]">
+                    <BarChart3 className="h-4 w-4 text-[#EA580C]" /> Sales this week
                   </div>
-                  <span className="text-sm font-extrabold text-[#1c1917]">₱8,420</span>
+                  <span className="text-sm font-extrabold text-white">₱8,420</span>
                 </div>
               </div>
             </div>
@@ -830,29 +848,27 @@ function Landing() {
         </div>
       </section>
 
-      {/* ── FINAL CTA ──────────────────────────────────────────── */}
+      {/* FINAL CTA */}
       <section className="px-5 py-20 sm:px-8 lg:py-28">
         <Reveal className="mx-auto max-w-5xl">
-          <div className="relative overflow-hidden rounded-[40px] bg-gradient-to-br from-orange-500 to-orange-600 px-8 py-16 text-center shadow-2xl shadow-orange-500/30 sm:px-16">
-            <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-            <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative overflow-hidden rounded-2xl bg-[#EA580C] px-8 py-16 text-center sm:px-16">
             <div className="relative">
               <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[44px]">
                 Ready to Find Your Next Favorite Meal?
               </h2>
-              <p className="mx-auto mt-4 max-w-xl text-lg text-orange-50">
+              <p className="mx-auto mt-4 max-w-xl text-lg text-orange-100">
                 Join BiteHub and make campus food ordering easier.
               </p>
               <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
                 <button
                   onClick={() => go("/register")}
-                  className="rounded-full bg-white px-8 py-4 text-base font-bold text-orange-600 shadow-xl transition-all hover:-translate-y-0.5 hover:shadow-2xl"
+                  className="rounded-lg bg-white px-8 py-3.5 text-base font-semibold text-[#EA580C] transition-all hover:bg-orange-50"
                 >
                   Get Started
                 </button>
                 <button
                   onClick={() => go("/login")}
-                  className="rounded-full border-2 border-white/60 px-8 py-4 text-base font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-white/10"
+                  className="rounded-lg border-2 border-white/40 px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-white/10"
                 >
                   Log In
                 </button>
@@ -862,18 +878,18 @@ function Landing() {
         </Reveal>
       </section>
 
-      {/* ── FOOTER ─────────────────────────────────────────────── */}
-      <footer className="border-t border-[#f0eeed] bg-[#faf9f8] py-14">
+      {/* FOOTER */}
+      <footer className="border-t border-[#E5E7EB] bg-white py-14">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="flex flex-col gap-10 md:flex-row md:justify-between">
             <div className="max-w-xs">
               <div className="flex items-center gap-2.5">
-                <img src={biteLogo} alt="BiteHub" className="h-10 w-10 object-contain" />
-                <span className="text-xl font-extrabold tracking-tight text-[#1c1917]">
-                  Bite<span className="text-orange-500">Hub</span>
+                <img src={biteLogo} alt="BiteHub" className="h-9 w-9 object-contain" />
+                <span className="text-xl font-bold tracking-tight text-[#171717]">
+                  Bite<span className="text-[#EA580C]">Hub</span>
                 </span>
               </div>
-              <p className="mt-3 text-sm text-[#78716c]">Your university food marketplace.</p>
+              <p className="mt-3 text-sm text-[#6B7280]">Your university food marketplace.</p>
             </div>
             <div className="grid grid-cols-2 gap-x-16 gap-y-3 sm:grid-cols-3">
               {[
@@ -894,15 +910,15 @@ function Landing() {
                       go(l.action === "login" ? "/login" : "/register");
                     }
                   }}
-                  className="text-sm font-medium text-[#57534e] transition-colors hover:text-orange-500"
+                  className="text-sm font-medium text-[#6B7280] transition-colors hover:text-[#EA580C]"
                 >
                   {l.label}
                 </a>
               ))}
             </div>
           </div>
-          <div id="contact" className="mt-12 border-t border-[#eeeceb] pt-6" />
-          <p className="text-sm text-[#a8a29e]">© 2026 BiteHub. All rights reserved.</p>
+          <div id="contact" className="mt-12 border-t border-[#E5E7EB] pt-6" />
+          <p className="text-sm text-[#A0A0A0]">© 2026 BiteHub. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -4,16 +4,16 @@ import { getApiBaseUrl } from '../../services/apiClient';
 import { Search, MapPin, Store, CheckCircle, XCircle, Clock, RefreshCw, AlertTriangle, Power } from 'lucide-react';
 
 const STATUS_TABS = [
-  { key: 'pending',  label: 'Pending Review', color: 'amber'   },
-  { key: 'approved', label: 'Approved',        color: 'emerald' },
-  { key: 'rejected', label: 'Rejected',        color: 'red'     },
-  { key: 'all',      label: 'All Vendors',     color: 'blue'    },
+  { key: 'pending',  label: 'Pending Review' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'all',      label: 'All Vendors' },
 ];
 
 const statusStyle = {
-  pending:  'bg-amber-100 text-amber-700 ring-amber-500/30',
-  approved: 'bg-emerald-100 text-emerald-700 ring-emerald-500/30',
-  rejected: 'bg-red-100 text-red-700 ring-red-500/30',
+  pending:  'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]',
+  approved: 'bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0]',
+  rejected: 'bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]',
 };
 
 const statusIcon = {
@@ -32,7 +32,6 @@ function AdminRestaurants() {
 
   const baseURL = getApiBaseUrl();
 
-  // Build auth config — attach JWT bearer token + session cookie
   const authConfig = () => {
     const token = localStorage.getItem('authToken');
     const headers = {};
@@ -80,10 +79,8 @@ function AdminRestaurants() {
     } catch (err) { console.error(err); }
   };
 
-  // Toggle admin-side is_active (controls user-side visibility)
   const toggleActiveStatus = async (restaurant) => {
     const newStatus = !(restaurant.is_active !== false);
-    // Optimistic UI update
     setRestaurants(prev =>
       prev.map(r => r.id === restaurant.id ? { ...r, is_active: newStatus } : r)
     );
@@ -96,7 +93,6 @@ function AdminRestaurants() {
       );
     } catch (err) {
       console.error(err);
-      // Rollback on failure
       setRestaurants(prev =>
         prev.map(r => r.id === restaurant.id ? { ...r, is_active: !newStatus } : r)
       );
@@ -120,27 +116,27 @@ function AdminRestaurants() {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in flex flex-col h-full">
+    <div className="space-y-5 flex flex-col h-full">
 
       {/* Header */}
-      <div className="flex flex-wrap justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Vendor Management</h1>
-          <p className="text-slate-500 mt-1 text-sm">Review applications and control restaurant visibility</p>
+          <h1 className="text-2xl font-bold text-[#171717]">Vendor Management</h1>
+          <p className="text-[#6B7280] mt-1 text-sm">Review applications and control restaurant visibility</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={16} />
             <input
               type="text"
               placeholder="Search vendors..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-56"
+              className="pl-9 pr-4 py-2 bg-white border border-[#E5E7EB] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20 focus:border-[#EA580C] transition-all w-52"
             />
           </div>
-          <button onClick={fetchRestaurants} className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors">
-            <RefreshCw size={18} className={isLoading ? 'animate-spin text-blue-500' : ''} />
+          <button onClick={fetchRestaurants} className="p-2 bg-white border border-[#E5E7EB] hover:bg-[#FAFAFA] text-[#6B7280] rounded-xl transition-colors">
+            <RefreshCw size={16} className={isLoading ? 'animate-spin text-[#EA580C]' : ''} />
           </button>
         </div>
       </div>
@@ -151,15 +147,15 @@ function AdminRestaurants() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all border ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
               activeTab === tab.key
-                ? 'bg-slate-800 text-white border-slate-800 shadow-lg'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                ? 'bg-[#111111] text-white'
+                : 'bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-[#FAFAFA]'
             }`}
           >
             {tab.label}
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-              activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+            <span className={`px-1.5 py-0.5 rounded-md text-xs font-semibold ${
+              activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-[#FAFAFA] text-[#6B7280]'
             }`}>
               {counts[tab.key]}
             </span>
@@ -169,100 +165,99 @@ function AdminRestaurants() {
 
       {/* Pending notice */}
       {activeTab === 'pending' && counts.pending > 0 && (
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-5 py-3.5 rounded-2xl text-sm font-medium">
-          <AlertTriangle size={18} className="shrink-0" />
+        <div className="flex items-center gap-3 bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] px-4 py-3 rounded-xl text-sm font-medium">
+          <AlertTriangle size={16} className="shrink-0" />
           {counts.pending} restaurant application{counts.pending > 1 ? 's' : ''} waiting for your review.
         </div>
       )}
 
       {/* Cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 flex-1 overflow-y-auto min-h-0 pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 overflow-y-auto min-h-0 pb-4">
         {isLoading ? (
           <div className="col-span-full flex justify-center py-16">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EA580C]" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="col-span-full text-center py-16 text-slate-400">
-            <Store size={40} className="mx-auto mb-3 opacity-30" />
+          <div className="col-span-full text-center py-16 text-[#9CA3AF]">
+            <Store size={36} className="mx-auto mb-3 opacity-30" />
             <p className="font-medium">No vendors in this category</p>
           </div>
         ) : filtered.map(r => {
           const rStatus = r.approval_status || 'pending';
-          const isActive = r.is_active !== false; // default true for legacy rows
+          const isActive = r.is_active !== false;
           const isToggling = statusTogglingId === r.id;
 
           return (
             <div
               key={r.id}
-              className={`bg-white rounded-3xl p-5 shadow-sm border transition-all flex flex-col gap-4 ${
-                isActive ? 'border-slate-100 hover:shadow-md' : 'border-slate-200 opacity-60 grayscale-[30%]'
+              className={`bg-white rounded-xl p-5 border transition-colors flex flex-col gap-3 ${
+                isActive ? 'border-[#E5E7EB]' : 'border-[#E5E7EB] opacity-60'
               }`}
             >
               {/* Card header */}
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border ${
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                     isActive
-                      ? 'bg-orange-100 text-orange-600 border-orange-200'
-                      : 'bg-slate-100 text-slate-400 border-slate-200'
+                      ? 'bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/20'
+                      : 'bg-[#FAFAFA] text-[#9CA3AF] border-[#E5E7EB]'
                   }`}>
-                    <Store size={20} />
+                    <Store size={18} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 leading-tight">{r.business_name}</h3>
-                    <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                      <MapPin size={11} /> {r.city}
+                    <h3 className="font-semibold text-[#171717] leading-tight text-sm">{r.business_name}</h3>
+                    <div className="flex items-center gap-1 text-xs text-[#6B7280] mt-0.5">
+                      <MapPin size={10} /> {r.city}
                     </div>
                   </div>
                 </div>
-                <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ring-1 ring-inset ${statusStyle[rStatus] || statusStyle.pending}`}>
+                <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-semibold ${statusStyle[rStatus] || statusStyle.pending}`}>
                   {statusIcon[rStatus]}
                   {rStatus.charAt(0).toUpperCase() + rStatus.slice(1)}
                 </span>
               </div>
 
               {/* Details */}
-              <div className="py-3 border-y border-slate-100 space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-slate-500">Owner</span><span className="font-medium text-slate-800">{r.owner_name}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Email</span><span className="font-medium text-slate-700 text-xs">{r.business_email}</span></div>
-                <div className="flex justify-between"><span className="text-slate-500">Contact</span><span className="font-medium text-slate-800">{r.owner_phone}</span></div>
+              <div className="py-2.5 border-y border-[#F3F4F6] space-y-1.5 text-sm">
+                <div className="flex justify-between"><span className="text-[#6B7280]">Owner</span><span className="font-medium text-[#171717]">{r.owner_name}</span></div>
+                <div className="flex justify-between"><span className="text-[#6B7280]">Email</span><span className="font-medium text-[#374151] text-xs">{r.business_email}</span></div>
+                <div className="flex justify-between"><span className="text-[#6B7280]">Contact</span><span className="font-medium text-[#171717]">{r.owner_phone}</span></div>
                 {rStatus === 'approved' && (
                   <>
-                    <div className="flex justify-between"><span className="text-slate-500">Orders</span><span className="font-bold text-emerald-600">{r.total_orders}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Revenue</span><span className="font-bold text-blue-600">${parseFloat(r.revenue || 0).toLocaleString()}</span></div>
+                    <div className="flex justify-between"><span className="text-[#6B7280]">Orders</span><span className="font-bold text-[#16A34A]">{r.total_orders}</span></div>
+                    <div className="flex justify-between"><span className="text-[#6B7280]">Revenue</span><span className="font-bold text-[#3B82F6]">${parseFloat(r.revenue || 0).toLocaleString()}</span></div>
                   </>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Registered</span>
-                  <span className="text-slate-600 text-xs">{new Date(r.created_at).toLocaleDateString()}</span>
+                  <span className="text-[#6B7280]">Registered</span>
+                  <span className="text-[#9CA3AF] text-xs">{new Date(r.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
 
-              {/* Admin Visibility Toggle — only for approved restaurants */}
+              {/* Admin Visibility Toggle */}
               {rStatus === 'approved' && (
-                <div className="flex items-center justify-between bg-slate-50 rounded-2xl px-4 py-2.5">
+                <div className="flex items-center justify-between bg-[#FAFAFA] rounded-xl px-3.5 py-2.5 border border-[#F3F4F6]">
                   <div className="flex items-center gap-2">
-                    <Power size={14} className={isActive ? 'text-emerald-500' : 'text-slate-400'} />
-                    <span className="text-xs font-semibold text-slate-600">User Visibility</span>
+                    <Power size={13} className={isActive ? 'text-[#16A34A]' : 'text-[#9CA3AF]'} />
+                    <span className="text-xs font-medium text-[#6B7280]">User Visibility</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${isActive ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <span className={`text-xs font-semibold ${isActive ? 'text-[#16A34A]' : 'text-[#9CA3AF]'}`}>
                       {isToggling ? '...' : isActive ? 'Active' : 'Inactive'}
                     </span>
-                    {/* Toggle switch */}
                     <button
                       onClick={() => toggleActiveStatus(r)}
                       disabled={isToggling}
-                      title={isActive ? 'Click to Deactivate (hide from users)' : 'Click to Activate (show to users)'}
-                      className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 ${
+                      title={isActive ? 'Click to Deactivate' : 'Click to Activate'}
+                      className={`relative inline-flex items-center w-10 h-5 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-60 ${
                         isActive
-                          ? 'bg-emerald-500 focus:ring-emerald-400'
-                          : 'bg-slate-300 focus:ring-slate-400'
+                          ? 'bg-[#16A34A] focus:ring-[#16A34A]/40'
+                          : 'bg-[#D1D5DB] focus:ring-[#9CA3AF]/40'
                       }`}
                     >
                       <span
-                        className={`inline-block w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-300 ${
-                          isActive ? 'translate-x-6' : 'translate-x-1'
+                        className={`inline-block w-3.5 h-3.5 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${
+                          isActive ? 'translate-x-5.5 ml-[22px]' : 'translate-x-1'
                         } ${isToggling ? 'animate-pulse' : ''}`}
                       />
                     </button>
@@ -277,17 +272,17 @@ function AdminRestaurants() {
                     <button
                       disabled={!!actionLoading}
                       onClick={() => handleApproval(r.id, 'approved')}
-                      className="flex-1 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-50"
+                      className="flex-1 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors disabled:opacity-50"
                     >
-                      {actionLoading === `${r.id}-approved` ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                      {actionLoading === `${r.id}-approved` ? <RefreshCw size={13} className="animate-spin" /> : <CheckCircle size={13} />}
                       Approve
                     </button>
                     <button
                       disabled={!!actionLoading}
                       onClick={() => handleApproval(r.id, 'rejected')}
-                      className="flex-1 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors disabled:opacity-50"
+                      className="flex-1 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 bg-[#FEE2E2] hover:bg-[#FECACA] text-[#DC2626] border border-[#FECACA] transition-colors disabled:opacity-50"
                     >
-                      {actionLoading === `${r.id}-rejected` ? <RefreshCw size={14} className="animate-spin" /> : <XCircle size={14} />}
+                      {actionLoading === `${r.id}-rejected` ? <RefreshCw size={13} className="animate-spin" /> : <XCircle size={13} />}
                       Reject
                     </button>
                   </>
@@ -296,16 +291,16 @@ function AdminRestaurants() {
                   <>
                     <button
                       onClick={() => toggleOpen(r)}
-                      className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${r.is_open ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'}`}
+                      className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${r.is_open ? 'bg-white text-[#374151] border-[#E5E7EB] hover:bg-[#FAFAFA]' : 'bg-[#FAFAFA] text-[#9CA3AF] border-[#E5E7EB] hover:bg-[#F3F4F6]'}`}
                     >
                       {r.is_open ? '🟢 Open' : '🔴 Closed'}
                     </button>
                     <button
                       onClick={() => handleApproval(r.id, 'rejected')}
-                      className="px-3 py-2 rounded-xl text-sm font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
+                      className="px-3 py-2 rounded-xl text-sm font-medium bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA] hover:bg-[#FECACA] transition-colors"
                       title="Revoke Approval"
                     >
-                      <XCircle size={16} />
+                      <XCircle size={15} />
                     </button>
                   </>
                 )}
@@ -313,9 +308,9 @@ function AdminRestaurants() {
                   <button
                     disabled={!!actionLoading}
                     onClick={() => handleApproval(r.id, 'approved')}
-                    className="flex-1 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors"
+                    className="flex-1 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 bg-[#DCFCE7] hover:bg-[#BBF7D0] text-[#16A34A] border border-[#BBF7D0] transition-colors"
                   >
-                    <CheckCircle size={14} /> Re-Approve
+                    <CheckCircle size={13} /> Re-Approve
                   </button>
                 )}
               </div>

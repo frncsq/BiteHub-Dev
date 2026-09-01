@@ -145,18 +145,18 @@ function AdminAds() {
 
   const statusBadge = (status) =>
     status === 'active'
-      ? 'bg-emerald-100 text-emerald-700 ring-emerald-500/30'
-      : 'bg-slate-100 text-slate-600 ring-slate-400/30';
+      ? 'bg-[#DCFCE7] text-[#16A34A] border-[#BBF7D0]'
+      : 'bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]';
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-800">
-            <Megaphone className="text-blue-500" size={28} />
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-[#171717]">
+            <Megaphone className="text-[#EA580C]" size={26} />
             Advertisement Management
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-[#6B7280]">
             Banners, sponsored content, and AdSense placements
           </p>
         </div>
@@ -164,40 +164,40 @@ function AdminAds() {
           <button
             type="button"
             onClick={fetchAds}
-            className="rounded-xl bg-slate-100 p-2.5 text-slate-600 transition hover:bg-slate-200"
+            className="rounded-xl bg-white border border-[#E5E7EB] p-2 text-[#6B7280] transition hover:bg-[#FAFAFA]"
           >
-            <RefreshCw size={18} className={loading ? 'animate-spin text-blue-500' : ''} />
+            <RefreshCw size={16} className={loading ? 'animate-spin text-[#EA580C]' : ''} />
           </button>
           <button
             type="button"
             onClick={() => setTab('list')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${
-              tab === 'list' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-700'
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium ${
+              tab === 'list' ? 'bg-[#111111] text-white' : 'bg-white text-[#374151] border border-[#E5E7EB]'
             }`}
           >
-            <List size={16} /> Manage
+            <List size={15} /> Manage
           </button>
           <button
             type="button"
             onClick={() => setTab('analytics')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${
-              tab === 'analytics' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium ${
+              tab === 'analytics' ? 'bg-[#3B82F6] text-white' : 'bg-white text-[#374151] border border-[#E5E7EB]'
             }`}
           >
-            <BarChart3 size={16} /> Analytics
+            <BarChart3 size={15} /> Analytics
           </button>
           <button
             type="button"
             onClick={openCreate}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            className="flex items-center gap-2 rounded-xl bg-[#EA580C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#D4500A]"
           >
-            <Plus size={16} /> Add Ad
+            <Plus size={15} /> Add Ad
           </button>
         </div>
       </div>
 
       {message && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        <div className="rounded-xl border border-[#EA580C]/20 bg-[#EA580C]/5 px-4 py-3 text-sm text-[#C2410C]">
           {message}
         </div>
       )}
@@ -207,38 +207,38 @@ function AdminAds() {
       {tab === 'form' && (
         <form
           onSubmit={handleSubmit}
-          className="grid gap-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm lg:grid-cols-2"
+          className="grid gap-5 rounded-xl border border-[#E5E7EB] bg-white p-5 lg:grid-cols-2"
         >
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-slate-800">
+            <h2 className="text-base font-semibold text-[#171717]">
               {editingId ? 'Edit advertisement' : 'New advertisement'}
             </h2>
-            <label className="block text-sm font-medium text-slate-600">
+            <label className="block text-sm font-medium text-[#374151]">
               Title *
               <input
                 required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
               />
             </label>
-            <label className="block text-sm font-medium text-slate-600">
+            <label className="block text-sm font-medium text-[#374151]">
               Advertiser link
               <input
                 type="url"
                 value={form.link}
                 onChange={(e) => setForm({ ...form, link: e.target.value })}
                 placeholder="https://"
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
               />
             </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-slate-600">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-medium text-[#374151]">
                 Placement *
                 <select
                   value={form.position}
                   onChange={(e) => setForm({ ...form, position: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                  className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
                 >
                   {AD_PLACEMENTS.map((p) => (
                     <option key={p.value} value={p.value}>
@@ -247,12 +247,12 @@ function AdminAds() {
                   ))}
                 </select>
               </label>
-              <label className="block text-sm font-medium text-slate-600">
+              <label className="block text-sm font-medium text-[#374151]">
                 Type
                 <select
                   value={form.ad_type}
                   onChange={(e) => setForm({ ...form, ad_type: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                  className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
                 >
                   {AD_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -262,37 +262,37 @@ function AdminAds() {
                 </select>
               </label>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-slate-600">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-medium text-[#374151]">
                 Start date
                 <input
                   type="datetime-local"
                   value={form.start_date}
                   onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                  className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
                 />
               </label>
-              <label className="block text-sm font-medium text-slate-600">
+              <label className="block text-sm font-medium text-[#374151]">
                 End date
                 <input
                   type="datetime-local"
                   value={form.end_date}
                   onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                  className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
                 />
               </label>
             </div>
-            <label className="block text-sm font-medium text-slate-600">
+            <label className="block text-sm font-medium text-[#374151]">
               Sort order
               <input
                 type="number"
                 value={form.sort_order}
                 onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
               />
             </label>
             {form.ad_type === 'adsense' && (
-              <label className="block text-sm font-medium text-slate-600">
+              <label className="block text-sm font-medium text-[#374151]">
                 AdSense slot ID
                 <input
                   value={form.metadata?.adsenseSlot || ''}
@@ -302,20 +302,20 @@ function AdminAds() {
                       metadata: { ...form.metadata, adsenseSlot: e.target.value },
                     })
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                  className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
                 />
               </label>
             )}
           </div>
 
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-slate-600">
+            <label className="block text-sm font-medium text-[#374151]">
               Banner image (jpg, png, webp)
-              <div className="mt-2 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6">
+              <div className="mt-2 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-[#FAFAFA] p-6">
                 {preview ? (
                   <img src={preview} alt="Preview" className="max-h-48 rounded-xl object-contain" />
                 ) : (
-                  <ImageIcon className="text-slate-300" size={48} />
+                  <ImageIcon className="text-[#D1D5DB]" size={44} />
                 )}
                 <input
                   type="file"
@@ -325,22 +325,22 @@ function AdminAds() {
                 />
               </div>
             </label>
-            <label className="block text-sm font-medium text-slate-600">
+            <label className="block text-sm font-medium text-[#374151]">
               Status
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm"
+                className="mt-1 w-full rounded-xl border border-[#E5E7EB] px-3.5 py-2.5 text-sm focus:border-[#EA580C] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </label>
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-3">
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-[#EA580C] py-3 text-sm font-bold text-white hover:bg-[#D4500A] disabled:opacity-60"
               >
                 {saving ? 'Saving…' : editingId ? 'Update ad' : 'Create ad'}
               </button>
@@ -350,7 +350,7 @@ function AdminAds() {
                   resetForm();
                   setTab('list');
                 }}
-                className="rounded-xl bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700"
+                className="rounded-xl bg-[#FAFAFA] border border-[#E5E7EB] px-6 py-3 text-sm font-medium text-[#374151]"
               >
                 Cancel
               </button>
@@ -360,79 +360,79 @@ function AdminAds() {
       )}
 
       {tab === 'list' && (
-        <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-          <div className="flex items-center gap-2 border-b border-slate-100 px-6 py-4">
-            <List size={18} className="text-slate-400" />
-            <span className="font-semibold text-slate-700">All advertisements ({ads.length})</span>
+        <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+          <div className="flex items-center gap-2 border-b border-[#E5E7EB] px-5 py-4">
+            <List size={16} className="text-[#9CA3AF]" />
+            <span className="font-semibold text-[#374151]">All advertisements ({ads.length})</span>
           </div>
           {loading ? (
-            <p className="p-8 text-center text-slate-500">Loading…</p>
+            <p className="p-8 text-center text-[#9CA3AF]">Loading…</p>
           ) : ads.length === 0 ? (
-            <p className="p-8 text-center text-slate-500">No ads yet. Click Add Ad to create one.</p>
+            <p className="p-8 text-center text-[#9CA3AF]">No ads yet. Click Add Ad to create one.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <thead className="bg-[#FAFAFA] text-xs text-[#6B7280] uppercase tracking-wider">
                   <tr>
-                    <th className="px-4 py-3">Preview</th>
-                    <th className="px-4 py-3">Title</th>
-                    <th className="px-4 py-3">Placement</th>
-                    <th className="px-4 py-3">Stats</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-5 py-3">Preview</th>
+                    <th className="px-5 py-3">Title</th>
+                    <th className="px-5 py-3">Placement</th>
+                    <th className="px-5 py-3">Stats</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#F3F4F6]">
                   {ads.map((ad) => (
-                    <tr key={ad.id} className="hover:bg-slate-50/80">
-                      <td className="px-4 py-3">
+                    <tr key={ad.id} className="hover:bg-[#FAFAFA] transition-colors">
+                      <td className="px-5 py-3">
                         {ad.image ? (
                           <img
                             src={resolveAdImageUrl(ad.image)}
                             alt=""
-                            className="h-12 w-20 rounded-lg object-cover"
+                            className="h-12 w-20 rounded-lg object-cover border border-[#F3F4F6]"
                           />
                         ) : (
-                          <div className="flex h-12 w-20 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
-                            <ImageIcon size={16} />
+                          <div className="flex h-12 w-20 items-center justify-center rounded-lg bg-[#FAFAFA] border border-[#F3F4F6] text-[#9CA3AF]">
+                            <ImageIcon size={15} />
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-800">{ad.title}</td>
-                      <td className="px-4 py-3 text-slate-500">{ad.position}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="px-5 py-3 font-medium text-[#171717]">{ad.title}</td>
+                      <td className="px-5 py-3 text-[#6B7280]">{ad.position}</td>
+                      <td className="px-5 py-3 text-xs text-[#6B7280]">
                         {ad.clicks} clicks · {ad.impressions} views
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3">
                         <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ${statusBadge(ad.status)}`}
+                          className={`inline-flex rounded-lg px-2.5 py-0.5 text-xs font-semibold border ${statusBadge(ad.status)}`}
                         >
                           {ad.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3">
                         <div className="flex gap-1">
                           <button
                             type="button"
                             onClick={() => toggleStatus(ad)}
-                            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                            className="rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6]"
                             title="Toggle active"
                           >
-                            <Power size={16} />
+                            <Power size={15} />
                           </button>
                           <button
                             type="button"
                             onClick={() => openEdit(ad)}
-                            className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"
+                            className="rounded-lg p-2 text-[#3B82F6] hover:bg-blue-50"
                           >
-                            <Pencil size={16} />
+                            <Pencil size={15} />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(ad.id)}
-                            className="rounded-lg p-2 text-red-600 hover:bg-red-50"
+                            className="rounded-lg p-2 text-[#DC2626] hover:bg-[#FEE2E2]"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>

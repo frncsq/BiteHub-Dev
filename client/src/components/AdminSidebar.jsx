@@ -19,7 +19,7 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 lg:hidden ${
           mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={close}
@@ -27,25 +27,23 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
       />
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-white/10 bg-slate-900/95 shadow-2xl backdrop-blur-3xl transition-transform duration-300 ease-out text-slate-300 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-[#2A2A2A] bg-[#111111] text-[#F5F5F5] transition-transform duration-300 ease-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0`}
       >
-        <div className="pointer-events-none absolute top-0 left-0 -z-10 h-32 w-full bg-gradient-to-b from-blue-500/10 to-transparent" />
-
-        <div className="relative z-20 flex items-center justify-between border-b border-white/10 p-5">
+        <div className="flex items-center justify-between border-b border-[#2A2A2A] p-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-white/20 transition-transform duration-300 hover:scale-105">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-white/10">
               <img src={biteLogo} alt="" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
-              <span className="block truncate text-lg font-bold tracking-tight text-white">System Admin</span>
-              <span className="text-xs font-semibold tracking-wider text-blue-300 uppercase">BiteHub</span>
+              <span className="block truncate text-lg font-bold tracking-tight text-[#F5F5F5]">System Admin</span>
+              <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">BiteHub</span>
             </div>
           </div>
           <button
             type="button"
-            className="bh-touch flex shrink-0 items-center justify-center rounded-xl p-2 text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
+            className="bh-touch flex shrink-0 items-center justify-center rounded-lg p-2 text-[#A0A0A0] hover:bg-white/5 hover:text-[#F5F5F5] lg:hidden"
             onClick={close}
             aria-label="Close menu"
           >
@@ -53,7 +51,7 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-6">
+        <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-4 py-6">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname.startsWith(link.path);
@@ -62,24 +60,17 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
                 key={link.name}
                 to={link.path}
                 onClick={close}
-                className={`relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-3 font-medium transition-all duration-300 group ${
+                className={`flex items-center gap-3 rounded-lg px-4 py-3 font-medium transition-colors ${
                   isActive
-                    ? 'border border-blue-500/30 bg-blue-600/20 text-blue-400 shadow-inner'
-                    : 'border border-transparent text-slate-400 hover:border-transparent hover:bg-white/5 hover:text-white'
+                    ? 'bg-blue-500/15 text-blue-400'
+                    : 'text-[#A0A0A0] hover:bg-white/5 hover:text-[#F5F5F5]'
                 }`}
               >
-                {isActive && (
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent" />
-                )}
                 <Icon
                   size={20}
-                  className={`transition-all duration-300 group-hover:scale-110 ${
-                    isActive ? 'text-blue-400 drop-shadow-sm' : 'text-slate-500 group-hover:text-slate-300'
-                  }`}
+                  className={isActive ? 'text-blue-400' : 'text-[#A0A0A0]'}
                 />
-                <span className="relative z-10 translate-x-0 transition-transform duration-300 group-hover:translate-x-1">
-                  {link.name}
-                </span>
+                <span>{link.name}</span>
               </Link>
             );
           })}

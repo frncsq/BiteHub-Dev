@@ -27,7 +27,7 @@ function AdminLogin() {
     try {
       const baseURL = getApiBaseUrl();
       const response = await axios.post(`${baseURL}/api/admin/login`, { email, password }, { withCredentials: true });
-      
+
       if (response.data.success) {
         const { token } = response.data;
         if (token) {
@@ -50,28 +50,23 @@ function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative background */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="w-full max-w-md bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 animate-fade-in scale-100">
-        
+    <div className="min-h-screen bg-[#111111] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#1A1A1A] rounded-xl p-8 border border-[#2A2A2A] shadow-2xl">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-inner">
-            <ShieldAlert size={32} className="text-blue-400" />
+          <div className="w-14 h-14 bg-[#EA580C]/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert size={28} className="text-[#EA580C]" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">System Admin</h1>
-          <p className="text-slate-400 text-sm mt-1">Authorized personnel only</p>
+          <h1 className="text-2xl font-bold text-[#F5F5F5] tracking-tight">System Admin</h1>
+          <p className="text-[#A0A0A0] text-sm mt-1">Authorized personnel only</p>
         </div>
 
         {message && (
-          <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 backdrop-blur-sm ${
-            messageType === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-            : 'bg-red-500/10 border-red-500/30 text-red-400'
+          <div className={`mb-6 p-3.5 rounded-lg border flex items-start gap-3 ${
+            messageType === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            : 'bg-red-500/10 border-red-500/20 text-red-400'
           }`}>
-            <div className="mt-0.5">
+            <div className="mt-0.5 shrink-0">
               {messageType === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
             </div>
             <p className="text-sm font-medium">{message}</p>
@@ -79,33 +74,31 @@ function AdminLogin() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-300">Email Address</label>
-            <input 
-              type="email" 
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-[#A0A0A0]">Email Address</label>
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@bitehub.com"
-              className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all font-mono"
+              className="w-full px-4 py-3 bg-[#222222] border border-[#2A2A2A] rounded-xl text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-[#EA580C] focus:ring-1 focus:ring-[#EA580C]/30 transition-all text-sm"
             />
           </div>
 
-          <div className="space-y-2 relative">
-            <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
-               Password
-            </label>
+          <div className="space-y-1.5 relative">
+            <label className="block text-sm font-medium text-[#A0A0A0]">Password</label>
             <div className="relative">
-              <input 
-                type={showPassword ? "text" : "password"} 
+              <input
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all pr-12 font-mono tracking-widest"
+                className="w-full px-4 py-3 bg-[#222222] border border-[#2A2A2A] rounded-xl text-[#F5F5F5] placeholder-[#6B7280] focus:outline-none focus:border-[#EA580C] focus:ring-1 focus:ring-[#EA580C]/30 transition-all pr-12 text-sm tracking-wide"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3 top-3 text-[#6B7280] hover:text-[#A0A0A0] transition-colors"
                 tabIndex="-1"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -113,10 +106,10 @@ function AdminLogin() {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 flex items-center justify-center gap-2 mt-8 ring-1 ring-white/10 group"
+            className="w-full py-3 px-4 bg-[#EA580C] hover:bg-[#EA580C]/90 disabled:bg-[#2A2A2A] disabled:text-[#6B7280] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-[#EA580C]/20 hover:shadow-[#EA580C]/30 flex items-center justify-center gap-2 mt-6 text-sm"
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
@@ -130,15 +123,11 @@ function AdminLogin() {
         </form>
 
         <div className="mt-8 text-center">
-            <button onClick={() => navigate('/')} className="text-sm text-slate-500 hover:text-white transition-colors">
-              Return to Public Portal
-            </button>
+          <button onClick={() => navigate('/')} className="text-sm text-[#6B7280] hover:text-[#F5F5F5] transition-colors">
+            Return to Public Portal
+          </button>
         </div>
       </div>
-      <style>{`
-        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
-      `}</style>
     </div>
   );
 }

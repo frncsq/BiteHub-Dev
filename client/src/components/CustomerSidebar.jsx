@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-    Menu,
-    ChevronRight,
-    Home,
-    ShoppingCart,
-    Package,
-    User,
-    Settings,
-    X,
+    Menu, ChevronRight, Home, ShoppingCart, Package, User, Settings, X,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import biteLogo from '../assets/bite.png';
@@ -51,9 +44,7 @@ function CustomerSidebar({
         if (mobileDrawerOpen) {
             const prev = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
-            return () => {
-                document.body.style.overflow = prev;
-            };
+            return () => { document.body.style.overflow = prev; };
         }
     }, [mobileDrawerOpen]);
 
@@ -76,74 +67,68 @@ function CustomerSidebar({
 
     const currentTab =
         activeTab ||
-        (location.pathname === '/orders'
-            ? 'orders'
-            : location.pathname === '/cart'
-              ? 'cart'
-              : location.pathname === '/profile'
-                ? 'profile'
-                : location.pathname === '/settings'
-                  ? 'settings'
-                  : 'home');
+        (location.pathname === '/orders' ? 'orders'
+            : location.pathname === '/cart' ? 'cart'
+            : location.pathname === '/profile' ? 'profile'
+            : location.pathname === '/settings' ? 'settings'
+            : 'home');
 
-    const desktopWidth = sidebarCollapsed ? 'md:w-20' : 'md:w-64';
+    const desktopWidth = sidebarCollapsed ? 'md:w-[72px]' : 'md:w-[240px]';
+
+    const sidebarBg = isDarkMode
+        ? 'bg-[#1A1A1A] border-[#2A2A2A]'
+        : 'bg-white border-[#E5E7EB]';
+
+    const activeItemBg = isDarkMode
+        ? 'bg-[#252525] text-[#EA580C]'
+        : 'bg-[#FFF7ED] text-[#EA580C]';
+
+    const inactiveItemText = isDarkMode
+        ? 'text-[#A0A0A0] hover:text-[#F5F5F5] hover:bg-[#222222]'
+        : 'text-[#6B7280] hover:text-[#171717] hover:bg-[#F5F5F5]';
 
     return (
         <>
-            {/* Mobile FAB — pages without a top-bar hamburger (cart, orders, profile) */}
+            {/* Mobile FAB */}
             {!isControlled && (
                 <button
                     type="button"
-                    className={`bh-touch fixed bottom-5 right-5 z-40 flex items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600 md:hidden ${
+                    className={`bh-touch fixed bottom-5 right-5 z-40 flex items-center justify-center rounded-full bg-[#EA580C] text-white shadow-lg transition-all duration-200 hover:bg-[#DC2626] md:hidden ${
                         mobileDrawerOpen ? 'pointer-events-none opacity-0' : 'opacity-100'
                     }`}
                     onClick={() => setMobileDrawerOpen(true)}
                     aria-label="Open navigation menu"
                 >
-                    <Menu size={22} strokeWidth={2} />
+                    <Menu size={20} strokeWidth={2} />
                 </button>
             )}
 
-            {/* Dimmed backdrop (mobile only) */}
+            {/* Mobile backdrop */}
             <div
-                className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+                className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-200 md:hidden ${
                     mobileDrawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
                 }`}
                 onClick={() => setMobileDrawerOpen(false)}
                 aria-hidden
             />
 
+            {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r shadow-[8px_0_32px_rgba(0,0,0,0.05)] backdrop-blur-2xl transition-transform duration-300 ease-out ${desktopWidth} w-[min(20rem,calc(100vw-1rem))] max-w-[85vw] -translate-x-full ${
+                className={`fixed left-0 top-0 z-50 h-screen flex flex-col border-r ${sidebarBg} transition-all duration-300 ease-out ${desktopWidth} w-[min(240px,calc(100vw-1rem))] max-w-[85vw] -translate-x-full ${
                     mobileDrawerOpen ? 'translate-x-0' : ''
-                } md:translate-x-0 ${
-                    isDarkMode
-                        ? 'border-[#1a1a2e]/50 bg-[#1a1a2e]/60'
-                        : 'border-white/50 bg-white/60'
-                }`}
+                } md:translate-x-0`}
             >
-                <div
-                    className={`absolute top-0 left-0 h-32 w-full bg-gradient-to-b pointer-events-none -z-10 ${
-                        isDarkMode ? 'from-orange-500/5 to-transparent' : 'from-white/60 to-transparent'
-                    }`}
-                />
-
-                <div
-                    className={`relative z-20 flex h-16 items-center justify-between border-b px-4 ${
-                        isDarkMode ? 'border-gray-700/50' : 'border-white/40'
-                    }`}
-                >
-                    <div className="flex min-w-0 items-center gap-2">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-transform duration-300 hover:scale-105">
-                            <img src={biteLogo} alt="" className="h-full w-full object-contain" />
+                {/* Logo area */}
+                <div className={`flex h-16 items-center justify-between border-b ${isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'} px-4`}>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                            <img src={biteLogo} alt="BiteHub" className="h-full w-full object-contain" />
                         </div>
                         {(!sidebarCollapsed || mobileDrawerOpen) && (
-                            <span
-                                className={`truncate font-bold text-lg tracking-tight bg-gradient-to-r bg-clip-text text-transparent md:inline ${
-                                    isDarkMode ? 'from-white to-gray-300' : 'from-gray-900 to-gray-600'
-                                }`}
-                            >
-                                BiteHub
+                            <span className={`truncate font-bold text-lg tracking-tight ${
+                                isDarkMode ? 'text-white' : 'text-[#171717]'
+                            }`}>
+                                Bite<span className="text-[#EA580C]">Hub</span>
                             </span>
                         )}
                     </div>
@@ -154,21 +139,22 @@ function CustomerSidebar({
                             onClick={() => setMobileDrawerOpen(false)}
                             aria-label="Close menu"
                         >
-                            <X size={20} className={isDarkMode ? 'text-gray-300' : 'text-gray-600'} />
+                            <X size={20} className={isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'} />
                         </button>
                         <button
                             type="button"
                             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                            className={`hidden rounded-lg p-2 transition hover:shadow-sm md:flex md:items-center ${
-                                isDarkMode ? 'hover:bg-gray-800/50 text-gray-400' : 'hover:bg-white/50 text-gray-500'
+                            className={`hidden rounded-lg p-2 transition-colors md:flex md:items-center ${
+                                isDarkMode ? 'text-[#666666] hover:bg-[#252525] hover:text-[#A0A0A0]' : 'text-[#9CA3AF] hover:bg-[#F5F5F5] hover:text-[#6B7280]'
                             }`}
                             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                         >
-                            {sidebarCollapsed ? <ChevronRight size={20} /> : <Menu size={20} />}
+                            {sidebarCollapsed ? <ChevronRight size={18} /> : <Menu size={18} />}
                         </button>
                     </div>
                 </div>
 
+                {/* Navigation */}
                 <nav className="relative z-20 flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
@@ -179,40 +165,24 @@ function CustomerSidebar({
                                 key={item.id}
                                 type="button"
                                 onClick={() => handleItemClick(item)}
-                                className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-300 ${
-                                    isActive
-                                        ? isDarkMode
-                                            ? 'border border-gray-700/50 bg-gray-800/80 text-orange-400 shadow-sm'
-                                            : 'border border-white/60 bg-white/80 text-orange-600 shadow-sm'
-                                        : isDarkMode
-                                          ? 'border border-transparent text-gray-200 hover:bg-gray-800/40 hover:text-white'
-                                          : 'border border-transparent text-black hover:bg-white/50 hover:text-orange-600 hover:-translate-y-0.5'
+                                className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
+                                    isActive ? activeItemBg : inactiveItemText
                                 }`}
                                 title={sidebarCollapsed && !mobileDrawerOpen ? item.label : ''}
                             >
-                                {isActive && (
-                                    <div
-                                        className={`pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r ${
-                                            isDarkMode ? 'from-orange-500/10' : 'from-orange-100/40'
-                                        } to-transparent`}
-                                    />
-                                )}
-                                <div className="relative">
-                                    <Icon
-                                        size={20}
-                                        className={`flex-shrink-0 transition-all duration-300 group-hover:scale-110 ${
-                                            isActive ? 'text-orange-500' : 'group-hover:text-orange-400'
-                                        }`}
-                                    />
-                                </div>
+                                <Icon
+                                    size={18}
+                                    className={`flex-shrink-0 transition-colors duration-200 ${
+                                        isActive ? 'text-[#EA580C]' : ''
+                                    }`}
+                                />
                                 {(!sidebarCollapsed || mobileDrawerOpen) && (
-                                    <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-                                        {item.label}
-                                    </span>
+                                    <span>{item.label}</span>
                                 )}
 
+                                {/* Tooltip when collapsed */}
                                 {sidebarCollapsed && !mobileDrawerOpen && (
-                                    <span className="pointer-events-none absolute left-full z-50 ml-2 translate-x-1 whitespace-nowrap rounded-xl bg-gray-900/90 px-3 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition group-hover:translate-x-0 group-hover:opacity-100">
+                                    <span className="pointer-events-none absolute left-full z-50 ml-2 whitespace-nowrap rounded-lg bg-[#171717] px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
                                         {item.label}
                                     </span>
                                 )}
@@ -220,6 +190,15 @@ function CustomerSidebar({
                         );
                     })}
                 </nav>
+
+                {/* Sidebar footer */}
+                {(!sidebarCollapsed || mobileDrawerOpen) && (
+                    <div className={`border-t px-4 py-4 ${isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'}`}>
+                        <p className={`text-[11px] font-medium ${isDarkMode ? 'text-[#666666]' : 'text-[#9CA3AF]'}`}>
+                            &copy; 2026 BiteHub
+                        </p>
+                    </div>
+                )}
             </aside>
         </>
     );

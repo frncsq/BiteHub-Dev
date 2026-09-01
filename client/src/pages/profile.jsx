@@ -42,7 +42,6 @@ function Profile() {
 		fetchProfile()
 	}, [])
 
-	// Close logout confirm when clicking outside
 	useEffect(() => {
 		const handler = (e) => {
 			if (logoutRef.current && !logoutRef.current.contains(e.target)) {
@@ -72,8 +71,6 @@ function Profile() {
 				const user = res.data.profile
 				console.log("DEBUG: Profile data received:", user)
 				
-				// user is { id, fullName, email, phone, address, city, department, course, year }
-				// Sanitize fullName: if it's "N/A", null, or empty, fallback to "User"
 				const rawName = (user.fullName && user.fullName !== "N/A") ? user.fullName : "User"
 				const nameParts = rawName.split(" ")
 				const firstName = nameParts[0] || "User"
@@ -149,7 +146,7 @@ function Profile() {
 			if (response.data?.success) {
 				setProfile({ ...formData })
 				setEditMode(prev => ({ ...prev, [section]: false }))
-				setMessage("Profile updated successfully! ✨")
+				setMessage("Profile updated successfully!")
 				setMessageType("success")
 			}
 		} catch (error) {
@@ -177,37 +174,37 @@ function Profile() {
 
 	if (loading) {
 		return (
-			<div className={`flex min-h-screen items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950' : 'bg-slate-50'}`}>
+			<div className={`flex min-h-screen items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-[#111111]' : 'bg-[#FAFAFA]'}`}>
 				<div className="text-center px-6">
-					<div className={`mx-auto mb-5 h-12 w-12 rounded-full border-2 border-orange-500/30 border-t-orange-500 animate-spin shadow-sm`} aria-hidden />
-					<p className={`text-base font-medium tracking-tight ${isDarkMode ? 'text-zinc-300' : 'text-slate-600'}`}>Loading your profile…</p>
+					<div className={`mx-auto mb-5 h-12 w-12 rounded-full border-2 border-[#EA580C]/30 border-t-[#EA580C] animate-spin`} aria-hidden />
+					<p className={`text-base font-medium tracking-tight ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Loading your profile...</p>
 				</div>
 			</div>
 		)
 	}
 
-	const cardBase = `rounded-[1.5rem] border transition-all duration-300 ${isDarkMode ? 'border-white/[0.08] bg-zinc-900/40 backdrop-blur-md' : 'border-black/[0.04] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]'}`
+	const cardBase = `rounded-xl border transition-all duration-300 ${isDarkMode ? 'border-[#2A2A2A] bg-[#1A1A1A]' : 'border-[#E5E7EB] bg-white'}`
 
-	const inputClass = `w-full rounded-2xl px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 bg-transparent ${
-		isDarkMode ? 'border border-white/10 text-zinc-100 placeholder:text-zinc-600 focus:bg-white/5' : 'border border-black/10 text-slate-900 placeholder:text-slate-400 focus:bg-black/5'
+	const inputClass = `w-full rounded-lg px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20 focus:border-[#EA580C]/50 ${
+		isDarkMode ? 'border border-[#2A2A2A] bg-[#222222] text-[#F5F5F5] placeholder:text-[#666666]' : 'border border-[#E5E7EB] bg-[#FAFAFA] text-[#171717] placeholder:text-[#9CA3AF]'
 	}`
 
-	const labelClass = `mb-1.5 block text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`
+	const labelClass = `mb-1.5 block text-xs font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`
 
-	const valueClass = `text-sm font-medium leading-relaxed ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`
+	const valueClass = `text-sm font-medium leading-relaxed ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`
 
-	const secondaryBtn = `inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
+	const secondaryBtn = `inline-flex items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
 		isDarkMode
-			? 'border-white/10 text-zinc-300 hover:bg-white/5'
-			: 'border-black/10 text-slate-700 hover:bg-black/5'
+			? 'border-[#2A2A2A] text-[#A0A0A0] hover:bg-[#222222]'
+			: 'border-[#E5E7EB] text-[#6B7280] hover:bg-[#FAFAFA]'
 	}`
 
 	const primaryBtnBase =
-		'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98]'
+		'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98]'
 
 	const primaryBtnClass = (editing) =>
 		`${primaryBtnBase} ${
-			editing ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20' : isDarkMode ? 'bg-white text-zinc-950 hover:bg-zinc-200' : 'bg-slate-900 text-white hover:bg-slate-800'
+			editing ? 'bg-[#EA580C] text-white hover:bg-[#EA580C]/90' : isDarkMode ? 'bg-[#F5F5F5] text-[#111111] hover:bg-white' : 'bg-[#171717] text-white hover:bg-[#171717]/90'
 		}`
 
 	const joinLabel = profile.joinDate
@@ -228,27 +225,27 @@ function Profile() {
 	}
 
 	return (
-		<div className={`min-h-screen flex ${isDarkMode ? 'bg-zinc-950' : 'bg-gradient-to-b from-slate-50 to-slate-100/90'}`}>
+		<div className={`min-h-screen flex ${isDarkMode ? 'bg-[#111111]' : 'bg-[#FAFAFA]'}`}>
 			<CustomerSidebar
 				activeTab="profile"
 				sidebarCollapsed={sidebarCollapsed}
 				setSidebarCollapsed={setSidebarCollapsed}
 			/>
 
-			<main className={`flex-1 min-h-screen min-w-0 overflow-x-hidden transition-all duration-300 pb-24 md:pb-8 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-				<div className="bh-container max-w-5xl py-8 sm:py-10 lg:py-12 text-gray-900">
-					<div className={`mb-8 overflow-hidden rounded-[2rem] border p-6 sm:p-8 transition-all duration-300 ${isDarkMode ? 'bg-zinc-900/40 border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40' : 'bg-white border-black/[0.04] shadow-[0_20px_40px_rgb(0,0,0,0.04)]'}`}>
+			<main className={`flex-1 min-h-screen min-w-0 overflow-x-hidden transition-all duration-300 pb-24 md:pb-8 ${sidebarCollapsed ? 'md:pl-[72px]' : 'md:pl-[240px]'}`}>
+				<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+					<div className={`mb-8 overflow-hidden rounded-xl border p-6 sm:p-8 transition-all duration-300 ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-white border-[#E5E7EB]'}`}>
 						<div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
 							<div className="min-w-0 flex-1">
-								<h3 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Profile of {displayName}</h3>
-								<p className={`mt-2.5 max-w-xl text-sm leading-relaxed sm:text-base ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+								<h3 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Profile of {displayName}</h3>
+								<p className={`mt-2.5 max-w-xl text-sm leading-relaxed sm:text-base ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
 									View your campus dining analytics, default delivery addresses, and recent activity.
 								</p>
 								<div className="mt-6 flex flex-wrap items-center gap-3">
 									<button
 										type="button"
 										onClick={scrollToUserActivity}
-										className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 border ${isDarkMode ? 'bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-white/20' : 'bg-white text-slate-800 border-black/10 hover:bg-black/5'}`}
+										className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 border ${isDarkMode ? 'bg-[#222222] text-[#F5F5F5] border-[#2A2A2A] hover:bg-[#2A2A2A]' : 'bg-[#FAFAFA] text-[#171717] border-[#E5E7EB] hover:bg-[#F5F5F5]'}`}
 									>
 										<LayoutDashboard size={18} strokeWidth={2} aria-hidden />
 										Dashboard
@@ -256,7 +253,7 @@ function Profile() {
 									<button
 										type="button"
 										onClick={() => navigate("/home")}
-										className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/25 hover:-translate-y-0.5"
+										className="inline-flex items-center gap-2 rounded-lg bg-[#EA580C] px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-[#EA580C]/90"
 									>
 										<Utensils size={18} strokeWidth={2} aria-hidden />
 										Browse food
@@ -264,7 +261,7 @@ function Profile() {
 									<button
 										type="button"
 										onClick={() => navigate("/orders")}
-										className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-medium transition-all duration-200 ${isDarkMode ? 'text-zinc-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'}`}
+										className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 ${isDarkMode ? 'text-[#A0A0A0] hover:text-[#F5F5F5] hover:bg-[#222222]' : 'text-[#6B7280] hover:text-[#171717] hover:bg-[#FAFAFA]'}`}
 									>
 										<Package size={18} strokeWidth={2} aria-hidden />
 										View orders
@@ -272,17 +269,17 @@ function Profile() {
 								</div>
 							</div>
 							<div className="grid w-full grid-cols-3 gap-3 md:w-auto md:min-w-[320px]">
-								<div className={`rounded-2xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]'}`}>
-									<p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Active orders</p>
-									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.activeOrdersCount}</p>
+								<div className={`rounded-xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-[#222222]' : 'bg-[#FAFAFA]'}`}>
+									<p className={`text-xs font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Active orders</p>
+									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>{activityMetrics.activeOrdersCount}</p>
 								</div>
-								<div className={`rounded-2xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]'}`}>
-									<p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Total orders</p>
-									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{activityMetrics.totalOrders}</p>
+								<div className={`rounded-xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-[#222222]' : 'bg-[#FAFAFA]'}`}>
+									<p className={`text-xs font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Total orders</p>
+									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>{activityMetrics.totalOrders}</p>
 								</div>
-								<div className={`rounded-2xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-white/5' : 'bg-black/[0.03]'}`}>
-									<p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Total spent</p>
-									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+								<div className={`rounded-xl p-4 md:p-5 transition-all ${isDarkMode ? 'bg-[#222222]' : 'bg-[#FAFAFA]'}`}>
+									<p className={`text-xs font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Total spent</p>
+									<p className={`text-2xl font-semibold mt-1 tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
 										₱{Math.round(activityMetrics.totalSpent).toLocaleString()}
 									</p>
 								</div>
@@ -291,10 +288,10 @@ function Profile() {
 					</div>
 
 					<header className="mb-8 space-y-1">
-						<h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+						<h1 className={`text-2xl sm:text-3xl font-semibold tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
 							Profile
 						</h1>
-						<p className={`text-sm sm:text-base max-w-xl ${isDarkMode ? 'text-zinc-400' : 'text-slate-600'}`}>
+						<p className={`text-sm sm:text-base max-w-xl ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
 							Manage your account details and see how you use BiteHub.
 						</p>
 					</header>
@@ -302,18 +299,18 @@ function Profile() {
 					{message && (
 						<div
 							role="status"
-							className={`mb-6 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-sm shadow-sm transition-all duration-300 ${
+							className={`mb-6 flex items-center justify-between gap-4 rounded-xl border px-4 py-3 text-sm transition-all duration-300 ${
 								messageType === 'success'
 									? isDarkMode
-										? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-200'
-										: 'border-emerald-200/80 bg-emerald-50/90 text-emerald-800'
+										? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+										: 'border-emerald-200 bg-emerald-50 text-emerald-700'
 									: isDarkMode
-										? 'border-red-500/30 bg-red-950/40 text-red-200'
-										: 'border-red-200/80 bg-red-50/90 text-red-800'
+										? 'border-red-500/30 bg-red-500/10 text-red-400'
+										: 'border-red-200 bg-red-50 text-red-700'
 							}`}
 						>
 							<div className="flex items-center gap-2 min-w-0">
-								<span className="shrink-0">{messageType === 'success' ? '✅' : '❌'}</span>
+								<span className="shrink-0">{messageType === 'success' ? '✓' : '✕'}</span>
 								<span className="truncate">{message}</span>
 							</div>
 							<button
@@ -331,25 +328,25 @@ function Profile() {
 						<section className={`${cardBase} p-6 sm:p-8`}>
 							<div className="flex flex-col items-center gap-8 sm:flex-row sm:items-start">
 								<div className="relative group shrink-0">
-									<div className="rounded-full bg-gradient-to-br from-orange-400/20 to-orange-600/10 p-1 shadow-inner ring-1 ring-black/5 dark:ring-white/10">
+									<div className={`rounded-full p-1 ${isDarkMode ? 'bg-[#EA580C]/10 ring-1 ring-[#2A2A2A]' : 'bg-[#EA580C]/10 ring-1 ring-[#E5E7EB]'}`}>
 										{profile.profilePicture ? (
 											<img
 												src={profile.profilePicture}
 												alt=""
-												className="h-28 w-28 sm:h-32 sm:w-32 rounded-full object-cover shadow-md"
+												className="h-28 w-28 sm:h-32 sm:w-32 rounded-full object-cover"
 											/>
 										) : (
-											<div className="flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-3xl sm:text-4xl font-semibold text-white shadow-lg shadow-orange-500/25">
+											<div className="flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-full bg-[#EA580C] text-3xl sm:text-4xl font-semibold text-white">
 												{profile.firstName ? profile.firstName.charAt(0).toUpperCase() : 'U'}
 											</div>
 										)}
 									</div>
 									<button
 										type="button"
-										className={`absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border shadow-md transition-all duration-200 group-hover:scale-105 ${
+										className={`absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-200 group-hover:scale-105 ${
 											isDarkMode
-												? 'border-zinc-600 bg-zinc-900 text-orange-400 hover:bg-zinc-800'
-												: 'border-slate-200 bg-white text-orange-600 hover:bg-orange-50'
+												? 'border-[#2A2A2A] bg-[#1A1A1A] text-[#EA580C] hover:bg-[#222222]'
+												: 'border-[#E5E7EB] bg-white text-[#EA580C] hover:bg-[#FAFAFA]'
 										}`}
 										aria-label="Change photo (coming soon)"
 									>
@@ -359,10 +356,10 @@ function Profile() {
 
 								<div className="min-w-0 flex-1 text-center sm:text-left space-y-4">
 									<div>
-										<h2 className={`text-xl sm:text-2xl font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+										<h2 className={`text-xl sm:text-2xl font-semibold tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
 											{`${profile.firstName} ${profile.lastName}`.trim() || 'Member'}
 										</h2>
-										<p className={`mt-1.5 text-sm ${isDarkMode ? 'text-zinc-400' : 'text-slate-600'}`}>
+										<p className={`mt-1.5 text-sm ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
 											{profile.email || 'No email on file'}
 										</p>
 									</div>
@@ -370,7 +367,7 @@ function Profile() {
 									<div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 justify-center sm:justify-start">
 										<div
 											className={`inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium ${
-												isDarkMode ? 'bg-zinc-800/80 text-zinc-200' : 'bg-slate-100 text-slate-700'
+												isDarkMode ? 'bg-[#222222] text-[#A0A0A0]' : 'bg-[#FAFAFA] text-[#6B7280]'
 											}`}
 										>
 											<Briefcase size={14} className="opacity-80 shrink-0" />
@@ -378,7 +375,7 @@ function Profile() {
 										</div>
 										<div
 											className={`inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium ${
-												isDarkMode ? 'bg-zinc-800/80 text-zinc-200' : 'bg-slate-100 text-slate-700'
+												isDarkMode ? 'bg-[#222222] text-[#A0A0A0]' : 'bg-[#FAFAFA] text-[#6B7280]'
 											}`}
 										>
 											<MapPin size={14} className="opacity-80 shrink-0" />
@@ -387,7 +384,7 @@ function Profile() {
 										{joinLabel && (
 											<div
 												className={`inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium ${
-													isDarkMode ? 'bg-zinc-800/80 text-zinc-200' : 'bg-slate-100 text-slate-700'
+													isDarkMode ? 'bg-[#222222] text-[#A0A0A0]' : 'bg-[#FAFAFA] text-[#6B7280]'
 												}`}
 											>
 												<Calendar size={14} className="opacity-80 shrink-0" />
@@ -398,31 +395,31 @@ function Profile() {
 
 									<dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2">
 										<div
-											className={`flex items-start gap-4 rounded-2xl px-5 py-4 transition-colors duration-200 ${
-												isDarkMode ? 'bg-white/5' : 'bg-black/[0.02]'
+											className={`flex items-start gap-4 rounded-xl px-5 py-4 transition-colors duration-200 ${
+												isDarkMode ? 'bg-[#222222]' : 'bg-[#FAFAFA]'
 											}`}
 										>
-											<div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDarkMode ? 'bg-white/5 text-orange-400' : 'bg-white text-orange-600 shadow-sm'}`}>
+											<div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-[#EA580C]/10 text-[#EA580C]' : 'bg-[#EA580C]/10 text-[#EA580C]'}`}>
 												<Mail size={18} />
 											</div>
 											<div className="min-w-0">
-												<dt className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Email</dt>
-												<dd className={`mt-1 truncate text-sm font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`}>
+												<dt className={`text-xs font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Email</dt>
+												<dd className={`mt-1 truncate text-sm font-semibold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
 													{profile.email || '—'}
 												</dd>
 											</div>
 										</div>
 										<div
-											className={`flex items-start gap-4 rounded-2xl px-5 py-4 transition-colors duration-200 ${
-												isDarkMode ? 'bg-white/5' : 'bg-black/[0.02]'
+											className={`flex items-start gap-4 rounded-xl px-5 py-4 transition-colors duration-200 ${
+												isDarkMode ? 'bg-[#222222]' : 'bg-[#FAFAFA]'
 											}`}
 										>
-											<div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDarkMode ? 'bg-white/5 text-orange-400' : 'bg-white text-orange-600 shadow-sm'}`}>
+											<div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-[#EA580C]/10 text-[#EA580C]' : 'bg-[#EA580C]/10 text-[#EA580C]'}`}>
 												<Phone size={18} />
 											</div>
 											<div className="min-w-0">
-												<dt className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Phone</dt>
-												<dd className={`mt-1 truncate text-sm font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-slate-800'}`}>
+												<dt className={`text-xs font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Phone</dt>
+												<dd className={`mt-1 truncate text-sm font-semibold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
 													{profile.phone || '—'}
 												</dd>
 											</div>
@@ -436,16 +433,16 @@ function Profile() {
 							<section className={`${cardBase} overflow-hidden`}>
 								<div
 									className={`flex flex-col gap-4 border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between ${
-										isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'
+										isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'
 									}`}
 								>
 									<div className="flex items-center gap-4 min-w-0">
-										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isDarkMode ? 'bg-orange-500/15 text-orange-400' : 'bg-orange-500/10 text-orange-600'}`}>
+										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-[#EA580C]/10 text-[#EA580C]' : 'bg-[#EA580C]/10 text-[#EA580C]'}`}>
 											<UserIcon size={22} strokeWidth={2} />
 										</div>
 										<div className="min-w-0">
-											<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Personal information</h3>
-											<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Name, school details, and contact</p>
+											<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Personal information</h3>
+											<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Name, school details, and contact</p>
 										</div>
 									</div>
 									<div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -456,7 +453,7 @@ function Profile() {
 										)}
 										<button type="button" onClick={() => toggleEdit('personal')} className={primaryBtnClass(editMode.personal)}>
 											{editMode.personal ? (
-												saving ? 'Saving…' : 'Save changes'
+												saving ? 'Saving...' : 'Save changes'
 											) : (
 												<>
 													<Edit2 size={16} strokeWidth={2} />
@@ -514,7 +511,7 @@ function Profile() {
 												<input id="profile-email" type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} />
 											) : (
 												<div className="flex items-center gap-2">
-													<Mail size={15} className={isDarkMode ? 'text-zinc-500' : 'text-slate-400'} />
+													<Mail size={15} className={isDarkMode ? 'text-[#666666]' : 'text-[#9CA3AF]'} />
 													<p className={valueClass}>{profile.email}</p>
 												</div>
 											)}
@@ -525,7 +522,7 @@ function Profile() {
 												<input id="profile-phone" type="tel" name="phone" value={formData.phone} onChange={handleChange} className={inputClass} />
 											) : (
 												<div className="flex items-center gap-2">
-													<Phone size={15} className={isDarkMode ? 'text-zinc-500' : 'text-slate-400'} />
+													<Phone size={15} className={isDarkMode ? 'text-[#666666]' : 'text-[#9CA3AF]'} />
 													<p className={valueClass}>{profile.phone}</p>
 												</div>
 											)}
@@ -541,16 +538,16 @@ function Profile() {
 							<section className={`${cardBase} overflow-hidden`}>
 								<div
 									className={`flex flex-col gap-4 border-b px-6 py-6 sm:flex-row sm:items-center sm:justify-between ${
-										isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'
+										isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'
 									}`}
 								>
 									<div className="flex items-center gap-4 min-w-0">
-										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isDarkMode ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-500/10 text-sky-600'}`}>
+										<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-[#EA580C]/10 text-[#EA580C]' : 'bg-[#EA580C]/10 text-[#EA580C]'}`}>
 											<MapPin size={22} strokeWidth={2} />
 										</div>
 										<div className="min-w-0">
-											<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Address</h3>
-											<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Where we can reach you</p>
+											<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Address</h3>
+											<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Where we can reach you</p>
 										</div>
 									</div>
 									<div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -561,7 +558,7 @@ function Profile() {
 										)}
 										<button type="button" onClick={() => toggleEdit('address')} className={primaryBtnClass(editMode.address)}>
 											{editMode.address ? (
-												saving ? 'Saving…' : 'Save changes'
+												saving ? 'Saving...' : 'Save changes'
 											) : (
 												<>
 													<Edit2 size={16} strokeWidth={2} />
@@ -604,19 +601,18 @@ function Profile() {
 
 						<UserActivityAnalytics orders={orders} isDarkMode={isDarkMode} />
 
-						{/* Logout Section */}
 						<section className={`${cardBase} overflow-hidden`}>
 							<div
 								className={`flex items-center gap-4 border-b px-6 py-6 ${
-									isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-black/5 bg-black/[0.02]'
+									isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'
 								}`}
 							>
-								<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isDarkMode ? 'bg-red-500/15 text-red-400' : 'bg-red-500/10 text-red-600'}`}>
+								<div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${isDarkMode ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'}`}>
 									<LogOut size={22} strokeWidth={2} />
 								</div>
 								<div className="min-w-0">
-									<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Session</h3>
-									<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Manage your login session</p>
+									<h3 className={`text-lg font-semibold tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Session</h3>
+									<p className={`text-sm mt-0.5 ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Manage your login session</p>
 								</div>
 							</div>
 							<div className="p-5 sm:p-6" ref={logoutRef}>
@@ -624,41 +620,41 @@ function Profile() {
 									<button
 										type="button"
 										onClick={() => setShowLogoutConfirm(true)}
-										className={`w-full flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all duration-200 group ${
+										className={`w-full flex items-center justify-between rounded-xl border px-5 py-4 text-left transition-all duration-200 group ${
 											isDarkMode
-												? 'border-red-500/20 hover:border-red-500/40 hover:bg-red-950/30'
-												: 'border-red-100 hover:border-red-200 hover:bg-red-50/80'
+												? 'border-red-500/20 hover:border-red-500/40 hover:bg-red-500/5'
+												: 'border-red-200 hover:border-red-300 hover:bg-red-50'
 										}`}
 									>
 										<div className="flex items-center gap-3">
-											<LogOut size={18} className={`transition-colors ${isDarkMode ? 'text-zinc-500 group-hover:text-red-400' : 'text-slate-400 group-hover:text-red-500'}`} />
+											<LogOut size={18} className={`transition-colors ${isDarkMode ? 'text-[#666666] group-hover:text-red-400' : 'text-[#9CA3AF] group-hover:text-red-500'}`} />
 											<span className={`text-sm font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>Logout from account</span>
 										</div>
-										<ChevronRight size={18} className={`transition-colors ${isDarkMode ? 'text-zinc-500 group-hover:text-red-400' : 'text-slate-400 group-hover:text-red-500'}`} />
+										<ChevronRight size={18} className={`transition-colors ${isDarkMode ? 'text-[#666666] group-hover:text-red-400' : 'text-[#9CA3AF] group-hover:text-red-500'}`} />
 									</button>
 								) : (
-									<div className={`rounded-2xl border p-5 transition-all duration-300 ${isDarkMode ? 'border-red-500/30 bg-red-950/30' : 'border-red-200 bg-red-50/60'}`}>
+									<div className={`rounded-xl border p-5 transition-all duration-300 ${isDarkMode ? 'border-red-500/30 bg-red-500/5' : 'border-red-200 bg-red-50'}`}>
 										<div className="flex items-center gap-3 mb-4">
-											<div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
+											<div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${isDarkMode ? 'bg-red-500/10' : 'bg-red-100'}`}>
 												<LogOut size={18} className="text-red-500" />
 											</div>
 											<div>
-												<p className={`text-sm font-bold ${isDarkMode ? 'text-zinc-100' : 'text-slate-900'}`}>Are you sure you want to logout?</p>
-												<p className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>You'll need to sign in again to access your account.</p>
+												<p className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Are you sure you want to logout?</p>
+												<p className={`text-xs ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>You'll need to sign in again to access your account.</p>
 											</div>
 										</div>
 										<div className="flex items-center gap-2 ml-12">
 											<button
 												type="button"
 												onClick={handleLogout}
-												className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-700 transition-all hover:shadow-md shadow-sm"
+												className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-all"
 											>
 												Yes, Logout
 											</button>
 											<button
 												type="button"
 												onClick={() => setShowLogoutConfirm(false)}
-												className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+												className={`px-4 py-2 text-xs font-bold rounded-lg border transition-all ${isDarkMode ? 'bg-[#222222] text-[#A0A0A0] border-[#2A2A2A] hover:bg-[#2A2A2A]' : 'bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#FAFAFA]'}`}
 											>
 												Cancel
 											</button>

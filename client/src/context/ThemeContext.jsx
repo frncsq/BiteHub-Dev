@@ -18,6 +18,7 @@ export const ThemeProvider = ({ children }) => {
 
     useEffect(() => {
         localStorage.setItem('theme', JSON.stringify(isDarkMode))
+        document.documentElement.classList.toggle('dark', isDarkMode)
     }, [isDarkMode])
 
     const toggleTheme = () => {
@@ -28,27 +29,29 @@ export const ThemeProvider = ({ children }) => {
         isDarkMode,
         toggleTheme,
         colors: isDarkMode ? {
-            background: '#0a0a15',
-            secondaryBg: 'rgba(20, 20, 40, 0.9)',
-            tertiary: 'rgba(40, 40, 60, 0.8)',
-            text: '#d0d0d0',
-            textSecondary: '#c0c0c0',
-            textTertiary: '#808080',
-            accent: '#ff6b6b',
-            buttonBg: '#8b0000',
-            border: 'rgba(139, 0, 0, 0.6)',
-            hoverBg: 'rgba(139, 0, 0, 0.3)',
+            background: '#111111',
+            secondaryBg: '#1A1A1A',
+            tertiary: '#222222',
+            text: '#F5F5F5',
+            textSecondary: '#A0A0A0',
+            textTertiary: '#666666',
+            accent: '#EA580C',
+            buttonBg: '#EA580C',
+            border: '#2A2A2A',
+            hoverBg: '#252525',
+            cardBg: '#1A1A1A',
         } : {
-            background: '#ffffff',
-            secondaryBg: '#f8f9fa',
-            tertiary: '#ffffff',
-            text: '#1a1a1a',
-            textSecondary: '#666666',
-            textTertiary: '#999999',
-            accent: '#ff6b6b',
-            buttonBg: '#ff6b6b',
-            border: '#e0e0e0',
-            hoverBg: '#f0f0f0',
+            background: '#FAFAFA',
+            secondaryBg: '#FFFFFF',
+            tertiary: '#F5F5F5',
+            text: '#171717',
+            textSecondary: '#6B7280',
+            textTertiary: '#9CA3AF',
+            accent: '#EA580C',
+            buttonBg: '#EA580C',
+            border: '#E5E7EB',
+            hoverBg: '#F5F5F5',
+            cardBg: '#FFFFFF',
         }
     }
 
