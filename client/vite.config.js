@@ -16,6 +16,10 @@ export default defineConfig({
         // Drop Domain on Set-Cookie from the API so the browser binds the session to the dev page origin (localhost:5173), not 127.0.0.1
         cookieDomainRewrite: '',
       },
+      '/uploads': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+      },
     },
   },
 })

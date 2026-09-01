@@ -1,6 +1,8 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import session from 'express-session';
 import { pool } from './db.js';
@@ -8,7 +10,13 @@ import { hashPassword, comparePassword } from './components/hash.js';
 import { mockRestaurantsData, mockFoodItems, mockCategories } from './mockData.js';
 import ownerRoutes from './routes/owner.js';
 import adminRoutes from './routes/admin.js';
+import adsRoutes from './routes/ads.js';
 import { rotateFlashSale } from './components/flashSale.js';
+import { expireOutdatedAds } from './controllers/adsController.js';
+import { ADS_UPLOAD_DIR } from './middleware/uploadAds.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ======================================================
 // DAILY STOCK RESET SCHEDULER
@@ -251,6 +259,54 @@ const ensureFlashSaleTable = async () => {
     }
 };
 
+/** Advertisement tables (ads + ad_clicks) for banner and sponsored content. */
+const ensureAdsTables = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ads (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        image VARCHAR(512),
+        link VARCHAR(512),
+        position VARCHAR(64) NOT NULL,
+        ad_type VARCHAR(32) DEFAULT 'banner',
+        status VARCHAR(20) DEFAULT 'active',
+        start_date TIMESTAMP,
+        end_date TIMESTAMP,
+        clicks INT DEFAULT 0,
+        impressions INT DEFAULT 0,
+        sort_order INT DEFAULT 0,
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ad_clicks (
+        id SERIAL PRIMARY KEY,
+        ad_id INT NOT NULL REFERENCES ads(id) ON DELETE CASCADE,
+        clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_agent TEXT,
+        ip_address VARCHAR(45)
+      );
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_ads_position ON ads(position);');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status);');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_ad_clicks_ad_id ON ad_clicks(ad_id);');
+    console.log('✅ Ensured ads tables exist');
+  } catch (err) {
+    console.warn('⚠️ Could not ensure ads tables:', err.message);
+  }
+};
+
+/** Hourly check to deactivate ads past their end_date. */
+const scheduleAdExpiration = () => {
+  const run = async () => {
+    if (dbConnected) await expireOutdatedAds();
+  };
+  run();
+  setInterval(run, 60 * 60 * 1000);
+};
+
 const ensureRestaurantLogoUrlColumnIsText = async () => {
   try {
     await pool.query(`
@@ -330,9 +386,11 @@ const seedDatabase = async () => {
     await seedDatabase();
     await pool.query("UPDATE restaurants SET approval_status = 'approved', is_active = TRUE WHERE approval_status = 'pending' OR approval_status IS NULL");
     await ensureFlashSaleTable();
+    await ensureAdsTables();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();
     scheduleFlashSaleRotation();
+    scheduleAdExpiration();
   } catch (err) {
     dbConnected = false;
     console.log('⚠️  Database not available, using session storage for auth');
@@ -428,6 +486,8 @@ app.use(session({
 // Note: Some legacy routes use session, but we are prioritizing JWT
 app.use('/api/owner', ownerRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/uploads/ads', express.static(ADS_UPLOAD_DIR));
+app.use('/api/ads', adsRoutes);
 // Test Endpoint
 app.get('/api/test', (req, res) => {
   res.status(200).json({ success: true, message: "API working", timestamp: new Date() });
@@ -608,6 +668,57 @@ publicCatalogRouter.get('/food/flash-sale', async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
+});
+
+
+// ── Featured foods for the landing page (public) ──
+// Retrieves a limited set of available menu items from PostgreSQL,
+// joined with their restaurant name. Ordered by average rating then
+// newest first (no explicit "featured" flag exists in the schema).
+publicCatalogRouter.get('/foods/featured', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 8, 1), 24);
+
+    const result = await pool.query(`
+      SELECT m.id, m.item_name, m.description, m.price, m.category,
+             m.image_url, m.is_available, m.current_stock,
+             m.rating as base_rating,
+             r.business_name as restaurant_name,
+             r.id as restaurant_id,
+             COALESCE(rv.avg_rating, 0) as avg_rating,
+             COALESCE(rv.review_count, 0) as review_count
+      FROM menu_items m
+      INNER JOIN restaurants r ON m.restaurant_id = r.id
+      LEFT JOIN (
+        SELECT menu_item_id, ROUND(AVG(rating)::numeric, 1) as avg_rating, COUNT(*) as review_count
+        FROM reviews WHERE menu_item_id IS NOT NULL GROUP BY menu_item_id
+      ) rv ON rv.menu_item_id = m.id
+      WHERE m.is_available = TRUE
+        AND r.approval_status = 'approved'
+        AND r.is_active = TRUE
+      ORDER BY COALESCE(rv.avg_rating, 0) DESC, m.created_at DESC
+      LIMIT $1
+    `, [limit]);
+
+    const foods = result.rows.map(f => ({
+      id: f.id,
+      name: f.item_name || 'Unnamed Item',
+      description: f.description || '',
+      price: Number(f.price || 0),
+      category: f.category || 'Main Course',
+      image: f.image_url || '',
+      restaurant: f.restaurant_name || 'Unknown Restaurant',
+      restaurantId: f.restaurant_id,
+      is_available: f.is_available,
+      current_stock: f.current_stock != null ? Number(f.current_stock) : null,
+      rating: Number(f.avg_rating) || Number(f.base_rating) || 0,
+      reviews: Number(f.review_count) || 0,
+    }));
+
+    res.status(200).json({ success: true, foods });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 
@@ -886,6 +997,73 @@ app.get('/api/orders', verifyToken, async (req, res) => {
   
   // Fallback to session if DB not available/connected
   res.status(200).json({ success: true, orders: getSessionOrders(req) });
+});
+
+// ── Recently Ordered Items (for "Order Again" section) ──
+app.get('/api/orders/recent-items', verifyToken, async (req, res) => {
+  const userId = req.userId;
+
+  if (dbConnected && userId) {
+    try {
+      // Get distinct menu items the user has ordered, most recent first.
+      // Uses DISTINCT ON to deduplicate by menu_item_id while keeping the latest order date.
+      const result = await pool.query(`
+        SELECT DISTINCT ON (oi.menu_item_id)
+          oi.menu_item_id,
+          mi.item_name,
+          mi.description,
+          mi.price,
+          mi.image_url,
+          mi.category,
+          mi.rating,
+          mi.restaurant_id,
+          mi.current_stock,
+          mi.daily_stock,
+          r.business_name as restaurant_name,
+          o.created_at as last_ordered_at,
+          o.id as order_id,
+          oi.price_at_order
+        FROM order_items oi
+        INNER JOIN orders o ON oi.order_id = o.id
+        INNER JOIN menu_items mi ON oi.menu_item_id = mi.id
+        INNER JOIN restaurants r ON mi.restaurant_id = r.id
+        WHERE o.user_id = $1
+          AND o.created_at >= NOW() - INTERVAL '90 days'
+          AND r.approval_status = 'approved'
+          AND r.is_active = TRUE
+        ORDER BY oi.menu_item_id, o.created_at DESC
+      `, [userId]);
+
+      // Sort final results by most recent order date
+      const items = result.rows
+        .sort((a, b) => new Date(b.last_ordered_at) - new Date(a.last_ordered_at))
+        .slice(0, 20)
+        .map(row => ({
+          id: row.menu_item_id,
+          name: row.item_name || 'Unnamed Item',
+          description: row.description || 'A delicious dish from our menu.',
+          price: Number(row.price || 0),
+          image: row.image_url || 'https://via.placeholder.com/400x400',
+          category: row.category || 'Main',
+          rating: Number(row.rating) || 0,
+          restaurant: row.restaurant_name || 'Unknown Restaurant',
+          restaurantId: row.restaurant_id,
+          lastOrderedAt: row.last_ordered_at,
+          orderId: row.order_id,
+          priceAtOrder: Number(row.price_at_order || row.price || 0),
+          current_stock: row.current_stock != null ? Number(row.current_stock) : null,
+          daily_stock: row.daily_stock != null ? Number(row.daily_stock) : null,
+        }));
+
+      return res.status(200).json({ success: true, items });
+    } catch (err) {
+      console.error("Error fetching recent order items:", err);
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  // No session fallback for recent items – just return empty
+  res.status(200).json({ success: true, items: [] });
 });
 
 app.post('/api/orders/create', verifyToken, async (req, res) => {

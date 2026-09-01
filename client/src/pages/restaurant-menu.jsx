@@ -20,6 +20,7 @@ import {
 import { useTheme } from "../context/ThemeContext"
 import { createApiClient } from "../services/apiClient"
 import CustomerSidebar from "../components/CustomerSidebar"
+import AdBanner from "../components/ads/AdBanner"
 import { calculateDistance, formatDistance } from "../utils/distance"
 
 const RestaurantMenuPage = () => {
@@ -339,6 +340,8 @@ const RestaurantMenuPage = () => {
                             />
                         </div>
                     </div>
+
+                    <AdBanner placement="menu_between" className="mb-4" />
 
                     {/* Menu Grid - Minimalist Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">

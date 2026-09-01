@@ -40,11 +40,18 @@ import {
     Receipt,
     Trash2,
     Info,
-    CheckCircle
+    CheckCircle,
+    RefreshCw,
+    RotateCcw,
+    ShoppingBag
 } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
 import { mockRestaurantsData, mockFoodItems, mockCategories, mockOrderService, mockCartService, mockAuthService } from "../services/mockData"
 import { createApiClient } from "../services/apiClient"
+import AdCarousel from "../components/ads/AdCarousel"
+import AdBanner from "../components/ads/AdBanner"
+import SidebarAd from "../components/ads/SidebarAd"
+import SponsoredCard from "../components/ads/SponsoredCard"
 import biteLogo from "../assets/bite.png"
 import CustomerSidebar from "../components/CustomerSidebar"
 import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
@@ -131,6 +138,8 @@ const HomePage = () => {
     const [categories, setCategories] = useState([])
     const [restaurants, setRestaurants] = useState([])
     const [popularFoods, setPopularFoods] = useState([])
+    const [recentlyOrdered, setRecentlyOrdered] = useState([])
+    const [recentlyOrderedScrollIndex, setRecentlyOrderedScrollIndex] = useState(0)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
     const [message, setMessage] = useState("")
@@ -168,7 +177,7 @@ const HomePage = () => {
     const [showRestaurantDialog, setShowRestaurantDialog] = useState(false)
     const [selectedRestaurant, setSelectedRestaurant] = useState(null)
     // Explore Menu state
-    const [activeCategoryFilter, setActiveCategoryFilter] = useState('All')
+    const [activeCategoryFilter, setActiveCategoryFilter] = useState(null)
     const [cuisineFilter, setCuisineFilter] = useState('All')
     const [hoveredFoodId, setHoveredFoodId] = useState(null)
     // Restaurant Owner State
@@ -266,6 +275,7 @@ const HomePage = () => {
     const featuredRef = useRef(null)
     const popularRef = useRef(null)
     const flashRef = useRef(null)
+    const recentlyOrderedRef = useRef(null)
     const browseFoodRef = useRef(null)
 
     const handleFlashScroll = (direction) => {
@@ -288,6 +298,7 @@ const HomePage = () => {
         fetchOrders()
         fetchCartItems()
         fetchRecommendations()
+        fetchRecentlyOrdered()
     }, [])
 
     useEffect(() => {
@@ -417,6 +428,53 @@ const HomePage = () => {
             }
         } catch (err) {
             console.error("Failed to fetch recommendations:", err)
+        }
+    }
+
+    const fetchRecentlyOrdered = async () => {
+        try {
+            const res = await apiClient.get('/orders/recent-items')
+            if (res.data?.success && res.data.items) {
+                setRecentlyOrdered(res.data.items)
+            }
+        } catch (err) {
+            console.warn("Failed to fetch recently ordered items:", err.message)
+        }
+    }
+
+    const handleRecentlyOrderedScroll = (direction) => {
+        if (!recentlyOrderedRef.current) return
+        const container = recentlyOrderedRef.current
+        const scrollAmount = container.clientWidth * 0.8
+        const nextIndex = direction === "next" ? recentlyOrderedScrollIndex + 1 : recentlyOrderedScrollIndex - 1
+        setRecentlyOrderedScrollIndex(Math.max(0, nextIndex))
+        container.scrollBy({
+            left: direction === "next" ? scrollAmount : -scrollAmount,
+            behavior: "smooth",
+        })
+    }
+
+    const handleOrderAgain = (item) => {
+        // Reorder: add to cart and open the direct checkout modal
+        addToCart(item, null, true)
+    }
+
+    const formatRecentDate = (dateString) => {
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffMs = now - date
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+        if (diffDays === 0) {
+            return 'Today'
+        } else if (diffDays === 1) {
+            return 'Yesterday'
+        } else if (diffDays < 7) {
+            return `${diffDays} days ago`
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7)
+            return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+        } else {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }
     }
 
@@ -720,7 +778,7 @@ const HomePage = () => {
     const total = subtotal + tax + deliveryFee
 
     // Filter foods (search + price + rating + category + cuisine)
-    const filteredFoods = popularFoods.filter((food) => {
+    const filteredFoods = activeCategoryFilter === null ? [] : popularFoods.filter((food) => {
         const name = food.name || ''
         const restaurantName = food.restaurant || ''
         const matchesSearch =
@@ -770,6 +828,7 @@ const HomePage = () => {
                 setShowCheckoutDialog(false)
                 // Refresh orders
                 await fetchOrders()
+                fetchRecentlyOrdered()
                 setTimeout(() => {
                     setMessage("")
                 }, 3000)
@@ -851,6 +910,7 @@ const HomePage = () => {
                 closeDirectCheckout()
                 await fetchOrders()
                 await fetchCartItems()
+                fetchRecentlyOrdered()
                 setTimeout(() => setMessage(''), 4000)
             } else {
                 setDirectCheckoutError(response.data?.message || 'Failed to place order')
@@ -1085,27 +1145,12 @@ const HomePage = () => {
                                 </button>
                             </div>
 
-                            {/* Promotional Banner / Slider */}
+                            {/* Promotional Banner / Slider (API-driven ads) */}
                             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="md:col-span-2 bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-5 md:p-6 shadow-sm relative overflow-hidden border border-orange-200/50">
-                                    <div className="absolute -right-6 -top-6 w-32 h-32 bg-orange-200 rounded-full opacity-40"></div>
-                                    <div className="absolute -right-10 bottom-0 w-40 h-40 bg-orange-300 rounded-full opacity-20"></div>
-                                    <div className="relative">
-                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-100/80 text-[10px] font-bold text-orange-700 mb-2">
-                                            <Percent size={12} /> Limited Time Student Deal
-                                        </div>
-                                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1.5 tracking-tight">
-                                            Up to 10% OFF on late-night orders
-                                        </h2>
-                                        <p className="text-xs text-gray-600 mb-4 max-w-lg leading-relaxed">
-                                            Use code <span className="font-bold text-orange-600">BITE10</span> at checkout on
-                                            orders after 9 PM. Perfect for study sessions and group projects.
-                                        </p>
-                                        <button className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-orange-600 hover:shadow-md hover:-translate-y-0.5 transition-all shadow-sm">
-                                            Claim Offer <ArrowRight size={14} />
-                                        </button>
-                                    </div>
+                                <div className="md:col-span-2 min-h-[9rem]">
+                                    <AdCarousel placement="homepage_top" className="h-full" />
                                 </div>
+                                <div className="flex flex-col gap-4">
                                 <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col justify-between border border-gray-100">
                                     <div>
                                         <h3 className="text-sm font-bold text-gray-900 mb-0.5">Delivery ETA</h3>
@@ -1135,6 +1180,13 @@ const HomePage = () => {
                                         <Truck size={12} className="text-orange-400" /> Real-time tracking enabled.
                                     </div>
                                 </div>
+                                    <SidebarAd placement="homepage_sidebar" className="hidden md:flex" />
+                                </div>
+                            </section>
+
+                            <section>
+                                <h2 className="mb-3 text-lg font-bold text-gray-900">Sponsored &amp; Partners</h2>
+                                <SponsoredCard placement="sponsored_card" limit={3} />
                             </section>
 
                             {/* Featured Restaurants Carousel */}
@@ -1472,83 +1524,274 @@ const HomePage = () => {
                                 </section>
                             )}
 
+                            {/* ====== RECENTLY ORDERED ====== */}
+                            <section className="mb-6">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex flex-col">
+                                        <h2 className={`text-xl font-bold tracking-tight flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                            Recently Ordered <RotateCcw size={20} className="text-emerald-500" />
+                                        </h2>
+                                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Quick reorder your favorites</p>
+                                    </div>
+                                    {recentlyOrdered.length > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleRecentlyOrderedScroll("prev")}
+                                                className={`p-2 rounded-full border transition ${isDarkMode ? 'border-gray-700 text-gray-400 hover:bg-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                                                aria-label="Previous recently ordered"
+                                            >
+                                                <ChevronRight className="rotate-180" size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleRecentlyOrderedScroll("next")}
+                                                className={`p-2 rounded-full border transition ${isDarkMode ? 'border-gray-700 text-gray-400 hover:bg-gray-800' : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+                                                aria-label="Next recently ordered"
+                                            >
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {recentlyOrdered.length > 0 ? (
+                                    <div
+                                        ref={recentlyOrderedRef}
+                                        className="flex gap-4 overflow-x-auto pb-4 scroll-smooth no-scrollbar"
+                                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                                    >
+                                        {recentlyOrdered.map((item) => {
+                                            const isOOS = item.current_stock !== null && item.current_stock !== undefined && item.current_stock <= 0;
+                                            return (
+                                                <div
+                                                    key={`recent-${item.id}`}
+                                                    className={`min-w-[220px] max-w-[220px] border rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group flex flex-col h-full
+                                                        ${isOOS
+                                                            ? isDarkMode ? 'bg-gray-800/30 border-gray-800 opacity-60' : 'bg-gray-50 border-gray-100 opacity-60'
+                                                            : isDarkMode
+                                                                ? 'bg-gray-800/60 border-gray-700/50 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1'
+                                                                : 'bg-white border-gray-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1'
+                                                        } shadow-sm`}
+                                                >
+                                                    {/* Food Image */}
+                                                    <div className="h-32 w-full overflow-hidden relative">
+                                                        <img
+                                                            src={item.image}
+                                                            alt={item.name}
+                                                            className={`h-full w-full object-cover group-hover:scale-110 transition-transform duration-700 ${isOOS ? 'grayscale' : ''}`}
+                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                        />
+                                                        {/* Time badge */}
+                                                        <div className={`absolute top-2 left-2 backdrop-blur-md text-[9px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm
+                                                            ${isDarkMode ? 'bg-black/60 text-gray-200' : 'bg-white/80 text-gray-700'}`}>
+                                                            <Clock size={10} />
+                                                            {formatRecentDate(item.lastOrderedAt)}
+                                                        </div>
+                                                        {isOOS && (
+                                                            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center">
+                                                                <span className="text-[10px] font-black text-white bg-red-600 px-2 py-0.5 rounded-full">SOLD OUT</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Card Content */}
+                                                    <div className="p-3 flex-1 flex flex-col">
+                                                        <h3 className={`font-bold text-xs mb-0.5 truncate group-hover:text-emerald-600 transition-colors ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                            {item.name}
+                                                        </h3>
+                                                        <p className={`text-[10px] mb-1.5 line-clamp-2 leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                            {item.description}
+                                                        </p>
+                                                        <p className={`text-[10px] mb-2 truncate font-medium ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                            {item.restaurant}
+                                                        </p>
+
+                                                        {/* Price + Rating */}
+                                                        <div className="flex items-center justify-between mb-2.5">
+                                                            <span className={`text-sm font-black ${isDarkMode ? 'text-emerald-400' : 'text-gray-900'}`}>₱{Number(item.price).toFixed(2)}</span>
+                                                            <div className="flex items-center gap-0.5">
+                                                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                                                                <span className={`text-[10px] font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.rating}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Order Again Button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (!isOOS) handleOrderAgain(item);
+                                                            }}
+                                                            disabled={isOOS}
+                                                            className={`mt-auto w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold transition-all duration-300
+                                                                ${isOOS
+                                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                                    : 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm shadow-emerald-500/25 hover:shadow-md hover:shadow-emerald-500/40 hover:from-emerald-600 hover:to-emerald-700 active:scale-[0.97]'
+                                                                }`}
+                                                        >
+                                                            <RefreshCw size={12} className={!isOOS ? 'group-hover:rotate-180 transition-transform duration-500' : ''} />
+                                                            {isOOS ? 'Unavailable' : 'Order Again'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    /* Empty State */
+                                    <div className={`flex flex-col items-center justify-center py-12 rounded-2xl border-2 border-dashed transition-colors
+                                        ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'}`}>
+                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                            <ShoppingBag size={28} className={isDarkMode ? 'text-gray-500' : 'text-gray-400'} />
+                                        </div>
+                                        <h3 className={`text-sm font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>No recent orders yet</h3>
+                                        <p className={`text-xs text-center max-w-xs leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Your recently ordered items will appear here for quick reordering. Start exploring our menu!
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                if (browseFoodRef.current) {
+                                                    browseFoodRef.current.scrollIntoView({ behavior: 'smooth' })
+                                                }
+                                            }}
+                                            className="mt-4 inline-flex items-center gap-2 px-5 py-2 bg-emerald-500 text-white text-xs font-bold rounded-full hover:bg-emerald-600 hover:shadow-md hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all"
+                                        >
+                                            <Utensils size={14} /> Browse Menu
+                                        </button>
+                                    </div>
+                                )}
+                            </section>
+
+                            <section className="mt-2">
+                                <AdBanner placement="footer" />
+                            </section>
+
                             {/* ====== EXPLORE MENU ====== */}
                             <section ref={browseFoodRef} className="scroll-mt-24">
                                 {/* Header */}
-                                <div className="mb-3">
-                                    <h2 className={`text-xl font-black mb-0.5 ${isDarkMode ? 'text-white' : 'text-black'} tracking-tight`}>Explore Menu</h2>
-                                    <p className={`text-[12px] font-bold ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>Browse all dishes from every restaurant on campus</p>
+                                <div className="mb-5">
+                                    <h2 className={`text-xl font-black mb-0.5 ${isDarkMode ? 'text-white' : 'text-gray-900'} tracking-tight`}>Explore Menu</h2>
+                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {activeCategoryFilter ? `Showing ${activeCategoryFilter} items` : 'Pick a category to start browsing'}
+                                    </p>
                                 </div>
 
-                                {/* Category Pills */}
-                                <div className="mb-4">
-                                    <p className={`text-[10px] font-black uppercase tracking-[2px] mb-2 ${isDarkMode ? 'text-orange-400' : 'text-black'}`}>Filter &amp; Categories</p>
-                                    <div className="flex flex-wrap gap-2">
+                                {/* Category Grid */}
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
                                         {['All', 'Main', 'Drinks', 'Snack', 'Dessert', 'Budget Meal', ...categories.map(c => c.name)]
                                             .filter((v, i, a) => a.indexOf(v) === i)
-                                            .map(cat => (
-                                                <button
-                                                    key={cat}
-                                                    onClick={() => setActiveCategoryFilter(cat)}
-                                                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${activeCategoryFilter === cat
-                                                        ? 'bg-orange-500 text-white border-orange-500 shadow-sm shadow-orange-200'
-                                                        : isDarkMode
-                                                            ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
-                                                            : 'bg-white text-black border-gray-200 hover:bg-gray-50'
-                                                        }`}
-                                                >
-                                                    {cat === 'All' && <Grid3x3 size={13} />}
-                                                    {cat}
-                                                </button>
-                                            ))}
+                                            .map(cat => {
+                                                const isActive = activeCategoryFilter === cat;
+                                                const catIcons = { All: '🍽️', Main: '🍛', Drinks: '🧋', Snack: '🍟', Dessert: '🍰', 'Budget Meal': '🍱' };
+                                                const icon = catIcons[cat] || '🏷️';
+                                                const itemCount = cat === 'All' ? popularFoods.length : popularFoods.filter(f => (f.category || '').toLowerCase() === cat.toLowerCase()).length;
+                                                return (
+                                                    <button
+                                                        key={cat}
+                                                        onClick={() => setActiveCategoryFilter(isActive ? null : cat)}
+                                                        className={`relative flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-2xl border-2 transition-all duration-300 group
+                                                            ${isActive
+                                                                ? 'border-orange-500 bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/25 scale-[1.03]'
+                                                                : isDarkMode
+                                                                    ? 'border-gray-700/50 bg-gray-800/50 text-gray-300 hover:border-gray-600 hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md'
+                                                                    : 'border-gray-100 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50/50 hover:-translate-y-0.5 hover:shadow-md'
+                                                            }`}
+                                                    >
+                                                        <span className={`text-2xl sm:text-3xl transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</span>
+                                                        <span className={`text-[11px] sm:text-xs font-bold text-center leading-tight ${isActive ? 'text-white' : ''}`}>{cat}</span>
+                                                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>{itemCount} items</span>
+                                                    </button>
+                                                );
+                                            })}
                                     </div>
                                 </div>
 
-                                {/* Filter Bar */}
-                                <div className={`flex flex-wrap gap-3 items-center mb-6 p-3 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-100 shadow-sm'
-                                    }`}>
-                                    {/* Price Range */}
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
-                                        }`}>
-                                        <span className="font-medium text-xs">Price Range</span>
-                                        <input
-                                            type="range" min="5" max="2000" value={priceFilter}
-                                            onChange={(e) => setPriceFilter(Number(e.target.value))}
-                                            className="w-20 accent-orange-500"
-                                        />
-                                        <span className="text-orange-600 font-bold text-xs">{priceFilter === 2000 ? 'Any Price' : `≤₱${priceFilter}`}</span>
-                                    </div>
+                                {/* Items Area - Only after category selection */}
+                                {activeCategoryFilter !== null && (
+                                    <div className="animate-fade-in">
+                                        {/* Filter Bar */}
+                                        <div className={`flex flex-wrap gap-3 items-center mb-5 p-3 rounded-2xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-100 shadow-sm'}`}>
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'}`}>
+                                                <span className="font-medium text-xs">Price</span>
+                                                <input type="range" min="5" max="2000" value={priceFilter} onChange={(e) => setPriceFilter(Number(e.target.value))} className="w-20 accent-orange-500" />
+                                                <span className="text-orange-600 font-bold text-xs">{priceFilter === 2000 ? 'Any' : `≤₱${priceFilter}`}</span>
+                                            </div>
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'}`}>
+                                                <span className="text-xs font-medium">Rating</span>
+                                                <div className="flex gap-0.5">
+                                                    {[1, 2, 3, 4, 5].map(n => (
+                                                        <button key={n} onClick={() => setMinRating(minRating === n ? 0 : n)}>
+                                                            <Star size={14} className={n <= minRating ? 'text-yellow-400 fill-yellow-400' : isDarkMode ? 'text-gray-600 fill-gray-600' : 'text-gray-300 fill-gray-300'} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <span className={`ml-auto text-xs font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{filteredFoods.length} items</span>
+                                        </div>
 
-                                    {/* Cuisine */}
-                                    <select
-                                        value={cuisineFilter}
-                                        onChange={e => setCuisineFilter(e.target.value)}
-                                        className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
-                                            }`}
-                                    >
-                                        <option value="All">Cuisine: All</option>
-                                        {[...new Set(popularFoods.map(f => f.category).filter(Boolean))].map(c => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-
-                                    {/* Rating */}
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'
-                                        }`}>
-                                        <span className="text-xs font-medium">Rating (1–5)</span>
-                                        <div className="flex gap-0.5">
-                                            {[1, 2, 3, 4, 5].map(n => (
-                                                <button key={n} onClick={() => setMinRating(minRating === n ? 0 : n)}>
-                                                    <Star size={14} className={n <= minRating ? 'text-yellow-400 fill-yellow-400' : isDarkMode ? 'text-gray-600 fill-gray-600' : 'text-gray-300 fill-gray-300'} />
-                                                </button>
-                                            ))}
+                                        {/* Food Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+                                            {filteredFoods.length === 0 ? (
+                                                <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3">
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                                                        <Utensils size={28} className={isDarkMode ? 'text-gray-600' : 'text-gray-400'} />
+                                                    </div>
+                                                    <p className={`font-bold text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>No items in "{activeCategoryFilter}"</p>
+                                                    <p className={`text-xs max-w-xs text-center ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Try adjusting your filters or select a different category</p>
+                                                    <button onClick={() => { setPriceFilter(2000); setMinRating(0); }} className="mt-2 text-xs font-semibold text-orange-500 hover:text-orange-600 transition">Reset Filters</button>
+                                                </div>
+                                            ) : filteredFoods.map((food) => {
+                                                const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock <= 0;
+                                                const isLowStock = !isOOS && food.daily_stock > 0 && food.current_stock !== null && (food.current_stock / food.daily_stock) <= 0.25;
+                                                const stockLabel = food.daily_stock !== null && food.daily_stock >= 0
+                                                    ? isOOS ? 'Out of Stock' : isLowStock ? `Low: ${food.current_stock} left` : `${food.current_stock} left`
+                                                    : null;
+                                                return (
+                                                    <div key={food.id} onMouseEnter={() => setHoveredFoodId(food.id)} onMouseLeave={() => setHoveredFoodId(null)}
+                                                        className={`relative border rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group flex flex-col h-full ${isOOS
+                                                            ? isDarkMode ? 'bg-gray-800/30 border-gray-800 opacity-75' : 'bg-gray-50 border-gray-100 opacity-75'
+                                                            : isDarkMode
+                                                                ? 'bg-gray-800/50 border-gray-800 hover:border-gray-700 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1'
+                                                                : 'bg-white border-gray-100/50 shadow-sm hover:shadow-xl hover:shadow-gray-200/40 hover:border-gray-200 hover:-translate-y-1'
+                                                        }`}>
+                                                        <div className="relative h-32 overflow-hidden bg-gray-50">
+                                                            <img src={food.image} alt={food.name} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isOOS ? 'grayscale' : ''}`} onError={e => e.target.style.display = 'none'} />
+                                                            <button onClick={(e) => { e.stopPropagation(); toggleFavorite(food.id); }} className="absolute top-2 right-2 p-1.5 rounded-full bg-white shadow-md hover:scale-110 transition-transform z-10">
+                                                                <Heart size={14} className={favorites.has(food.id) ? 'text-red-500 fill-red-500' : 'text-gray-950'} />
+                                                            </button>
+                                                            {food.discount > 0 && (<div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">-{food.discount}%</div>)}
+                                                            {stockLabel && (<div className={`absolute bottom-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm ${isOOS ? 'bg-red-600/90 text-white' : isLowStock ? 'bg-orange-500/90 text-white' : 'bg-emerald-600/90 text-white'}`}>{stockLabel}</div>)}
+                                                            {isOOS && (<div className="absolute inset-0 flex items-center justify-center bg-gray-900/30 backdrop-blur-[1px]"><span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md">OUT OF STOCK</span></div>)}
+                                                        </div>
+                                                        <div className="p-2.5" onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}>
+                                                            <div className="flex items-start justify-between gap-2 mb-1">
+                                                                <h3 className={`font-bold text-[13px] leading-tight truncate flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.name}</h3>
+                                                                <div className={`flex items-center gap-1 flex-shrink-0 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+                                                                    <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                                                                    <span className={`text-[10px] font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{food.rating > 0 ? food.rating : 'New'}</span>
+                                                                    {food.reviews > 0 && (<span className={`text-[9px] font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>({food.reviews})</span>)}
+                                                                </div>
+                                                            </div>
+                                                            <p className={`text-[11px] font-medium mb-3 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{food.description || food.restaurant}</p>
+                                                            <div className="flex items-end justify-between mb-1 mt-auto">
+                                                                <div className="flex flex-col">
+                                                                    {food.category === 'Drinks' ? (<><span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50/80 text-blue-600'}`}>🧋 View Sizes</span><span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>₱{Number(food.half_price || food.price || 0).toFixed(2)}–₱{Number(food.large_price || food.price || 0).toFixed(2)}</span></>) : food.category === 'Budget Meal' ? (<><span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50/80 text-purple-600'}`}>🍱 Combo</span><span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>From ₱{Number(food.price || 0).toFixed(2)}</span></>) : (<span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>₱{((food.price || 0) * (1 - (food.discount || 0) / 100)).toFixed(2)}</span>)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="px-3 pb-3 mt-auto flex gap-2">
+                                                            <button onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }} disabled={isOOS} className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all ${isOOS ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-transparent' : isDarkMode ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20' : 'bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100'}`}>
+                                                                <ShoppingCart size={16} strokeWidth={2.5} />
+                                                            </button>
+                                                            <button onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }} disabled={isOOS} className={`flex-1 flex items-center justify-center text-[11px] font-semibold py-2 rounded-xl transition-all shadow-sm ${isOOS ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-black hover:shadow-md dark:bg-orange-500 dark:text-white dark:hover:bg-orange-600'}`}>
+                                                                {food.category === 'Budget Meal' ? 'Order' : 'Checkout'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
-
-                                    <span className={`ml-auto text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-100' : 'text-black'}`}>
-                                        {filteredFoods.length} of {popularFoods.length} items
-                                    </span>
-                                </div>
+                                )}
 
                                 {/* Main Content Layout */}
                                 <div className="w-full">
@@ -1690,8 +1933,6 @@ const HomePage = () => {
                                     </div>
                                 </div>
                             </section>
-
-
 
                         </div>
                     )}

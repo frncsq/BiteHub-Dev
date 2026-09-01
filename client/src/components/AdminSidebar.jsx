@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, X } from 'lucide-react';
+import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, Megaphone, X } from 'lucide-react';
 import biteLogo from '../assets/bite.png';
 
 function AdminSidebar({ mobileOpen = false, onNavigate }) {
@@ -12,6 +12,7 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
     { name: 'Users', path: '/admin/users', icon: Users },
     { name: 'Orders', path: '/admin/orders', icon: ClipboardList },
     { name: 'Payments', path: '/admin/payments', icon: CreditCard },
+    { name: 'Advertisements', path: '/admin/ads', icon: Megaphone },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 }
   ];
 

@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+/* ── BiteHub Landing Page Animations ─────────────────────────────────────── */
+@keyframes bh-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes bh-float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(3deg); }
+}
+@keyframes bh-float-alt {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes bh-reveal {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bh-rise-fade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bh-float { animation: bh-float 6s ease-in-out infinite; }
+.bh-float-slow { animation: bh-float-slow 8s ease-in-out infinite; }
+.bh-float-alt { animation: bh-float-alt 5s ease-in-out infinite; }
+
+.bh-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.bh-reveal.bh-in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html { scroll-behavior: smooth; }
+
 /* ── BiteHub layout grid (container → row → columns) ─────────────────────── */
 .bh-container {
   @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8;
