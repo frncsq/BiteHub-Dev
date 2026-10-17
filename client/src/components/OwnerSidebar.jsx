@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Package, BarChart3, Settings, X } from 'lucide-react';
-import biteLogo from '../assets/bite.png';
+import kaingoLogo from '../assets/kaingo-logo.svg';
 
 function OwnerSidebar({ mobileOpen = false, onNavigate }) {
   const location = useLocation();
@@ -33,7 +33,7 @@ function OwnerSidebar({ mobileOpen = false, onNavigate }) {
         <div className="flex items-center justify-between border-b border-[#E5E7EB] p-5 dark:border-[#2A2A2A]">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
-              <img src={biteLogo} alt="" className="h-full w-full object-contain" />
+              <img src={kaingoLogo} alt="" className="h-full w-full object-contain" />
             </div>
             <span className="truncate text-lg font-bold tracking-tight text-[#171717] dark:text-[#F5F5F5]">
               Owner Portal

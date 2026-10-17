@@ -260,7 +260,7 @@ function RestaurantRegister() {
 						← Back to role selection
 					</button>
 					<h1 className="text-3xl font-bold text-[#171717] mb-1">Register Your Restaurant</h1>
-					<p className="text-[#6B7280] text-sm">Join BiteHub and start receiving orders</p>
+					<p className="text-[#6B7280] text-sm">Join KainGo and start receiving orders</p>
 				</div>
 
 				{/* Status Messages */}

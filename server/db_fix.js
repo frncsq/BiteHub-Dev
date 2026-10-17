@@ -11,7 +11,7 @@ const pool = new Pool({
 
 async function fixDB() {
   try {
-    console.log('Connecting to BiteHub database...');
+    console.log('Connecting to KainGo database...');
     // Drop tax_id column
     await pool.query('ALTER TABLE restaurants DROP COLUMN IF EXISTS tax_id;');
     console.log('✅ Dropped tax_id column successfully.');

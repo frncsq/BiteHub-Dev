@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, Megaphone, X } from 'lucide-react';
-import biteLogo from '../assets/bite.png';
+import { LayoutDashboard, Store, Users, ClipboardList, CreditCard, BarChart3, X } from 'lucide-react';
+import kaingoLogo from '../assets/kaingo-logo.svg';
 
 function AdminSidebar({ mobileOpen = false, onNavigate }) {
   const location = useLocation();
@@ -12,7 +12,6 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
     { name: 'Users', path: '/admin/users', icon: Users },
     { name: 'Orders', path: '/admin/orders', icon: ClipboardList },
     { name: 'Payments', path: '/admin/payments', icon: CreditCard },
-    { name: 'Advertisements', path: '/admin/ads', icon: Megaphone },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 }
   ];
 
@@ -34,11 +33,11 @@ function AdminSidebar({ mobileOpen = false, onNavigate }) {
         <div className="flex items-center justify-between border-b border-[#2A2A2A] p-5">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg ring-1 ring-white/10">
-              <img src={biteLogo} alt="" className="h-full w-full object-contain" />
+              <img src={kaingoLogo} alt="" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
               <span className="block truncate text-lg font-bold tracking-tight text-[#F5F5F5]">System Admin</span>
-              <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">BiteHub</span>
+              <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">KainGo</span>
             </div>
           </div>
           <button

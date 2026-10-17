@@ -1,4 +1,4 @@
-# PostgreSQL Setup Guide for BiteHub
+# PostgreSQL Setup Guide for KainGo
 
 ## Current Status
 - ✅ Node.js server running on `http://localhost:5000`
@@ -47,7 +47,7 @@ psql -U postgres
 Once in psql prompt (you'll see `postgres=#`):
 
 ```sql
--- Create the BiteHub database
+-- Create the KainGo database
 CREATE DATABASE bitehub_db;
 
 -- Connect to it
@@ -61,7 +61,7 @@ CREATE DATABASE bitehub_db;
 ## Step 5: Create Database User (Optional but Recommended)
 
 ```sql
--- Create dedicated user for BiteHub app
+-- Create dedicated user for KainGo app
 CREATE USER bitehub_user WITH PASSWORD 'bitehub_password';
 
 -- Grant privileges

@@ -236,7 +236,7 @@ function OwnerSettings() {
             <h2 className="text-base font-bold text-[#171717] flex items-center gap-2">
               <User className="text-[#EA580C]" size={18} /> Key Contact
             </h2>
-            <p className="text-sm text-[#6B7280] mt-2">Personal details for BiteHub administrative contact.</p>
+            <p className="text-sm text-[#6B7280] mt-2">Personal details for KainGo administrative contact.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>

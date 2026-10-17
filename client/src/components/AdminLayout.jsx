@@ -59,7 +59,7 @@ function AdminLayout() {
           >
             <Menu size={22} strokeWidth={2} />
           </button>
-          <span className="truncate text-base font-bold text-[#171717] dark:text-[#F5F5F5]">BiteHub Admin</span>
+          <span className="truncate text-base font-bold text-[#171717] dark:text-[#F5F5F5]">KainGo Admin</span>
         </header>
 
         <div className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">

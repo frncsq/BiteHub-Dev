@@ -61,7 +61,7 @@ function Header() {
                             <Utensils size={16} className="text-white" />
                         </div>
                         <span className="text-lg font-bold tracking-tight text-[#171717]">
-                            Bite<span className="text-[#EA580C]">Hub</span>
+                            Kain<span className="text-[#EA580C]">Go</span>
                         </span>
                     </button>
 

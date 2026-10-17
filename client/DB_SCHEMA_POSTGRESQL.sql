@@ -1,4 +1,4 @@
--- BiteHub Database Schema (PostgreSQL)
+-- KainGo Database Schema (PostgreSQL)
 -- Created for full-stack food delivery application
 
 -- ============================================

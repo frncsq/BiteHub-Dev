@@ -292,7 +292,7 @@ function Profile() {
 							Profile
 						</h1>
 						<p className={`text-sm sm:text-base max-w-xl ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
-							Manage your account details and see how you use BiteHub.
+							Manage your account details and see how you use KainGo.
 						</p>
 					</header>
 

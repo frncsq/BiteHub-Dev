@@ -22,7 +22,7 @@ function StatusBanner({ status }) {
             <h3 className="text-sm font-bold text-[#171717] dark:text-[#F5F5F5]">Registration Rejected</h3>
             <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-red-700">REJECTED</span>
           </div>
-          <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0]">Your registration was rejected by an administrator. Please contact BiteHub support for more information or to appeal this decision.</p>
+          <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0]">Your registration was rejected by an administrator. Please contact KainGo support for more information or to appeal this decision.</p>
         </div>
       </div>
     );
@@ -38,7 +38,7 @@ function StatusBanner({ status }) {
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-amber-700">PENDING REVIEW</span>
         </div>
         <p className="text-sm leading-relaxed text-[#6B7280] dark:text-[#A0A0A0]">
-          Your registration is under review by the BiteHub admin team. You can explore your dashboard, but posting menus and managing inventory will be unlocked once approved.
+          Your registration is under review by the KainGo admin team. You can explore your dashboard, but posting menus and managing inventory will be unlocked once approved.
           <span className="ml-1 font-medium text-amber-700">This page checks automatically — you'll be notified the moment you're approved!</span>
         </p>
       </div>
@@ -62,7 +62,7 @@ function ApprovalToast({ onDismiss }) {
         <div className="flex-1">
           <p className="text-base font-bold">You're Approved!</p>
           <p className="mt-0.5 text-sm text-[#F5F5F5]/90">
-            Congratulations! Your BiteHub restaurant account has been approved. You now have full access — start adding your menu!
+            Congratulations! Your KainGo restaurant account has been approved. You now have full access — start adding your menu!
           </p>
           <button
             onClick={onDismiss}

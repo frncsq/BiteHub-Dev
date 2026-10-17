@@ -1,34 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Menu, X, Search, Star, ChevronRight, ShoppingBag, ShoppingCart,
-  MapPin, Check, CheckCircle2, Zap, ChefHat, Utensils, Salad,
-  Wallet, Bell, ArrowRight, Store, Package, BarChart3, TrendingUp,
-  ClipboardList, Flame, Plus, RefreshCw, Quote,
+  Menu, X, Search, Star, ChevronRight, ShoppingCart, Check, Zap,
+  Utensils, Clock, Flame, ArrowRight, Store, Package, ClipboardList,
+  MapPin, Salad, RefreshCw, CheckCircle2, Truck, User, LogIn,
+  BarChart3, TrendingUp,
 } from "lucide-react";
-import biteLogo from "../assets/bite.png";
+import kaingoLogo from "../assets/kaingo-logo.svg";
 import { createApiClient } from "../services/apiClient";
-
-const foodImages = {
-  burger: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=70",
-  fries: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=800&q=70",
-  pizza: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=800&q=70",
-  drink: "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=800&q=70",
-  rice: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=800&q=70",
-  adobo: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=70",
-  sinigang: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=70",
-  dessert: "https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=800&q=70",
-  halo: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=800&q=70",
-  tapsilog: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=800&q=70",
-  ricebowl: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=800&q=70",
-  milktea: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=800&q=70",
-  pancit: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=800&q=70",
-  lumpia: "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=800&q=70",
-  ramen: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=70",
-  coffee: "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=800&q=70",
-  sandwich: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=70",
-  friedchicken: "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?auto=format&fit=crop&w=800&q=70",
-};
 
 const fallbackImg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23fff3e6'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='%23f97316' text-anchor='middle' dominant-baseline='middle'%3E%F0%9F%8D%94%3C/text%3E%3C/svg%3E";
 
@@ -61,7 +40,7 @@ function Reveal({ children, className = "", delay = 0 }) {
 function useScrollTop() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -69,99 +48,197 @@ function useScrollTop() {
   return scrolled;
 }
 
+/* Smart fallback for broken/missing images */
+function FoodImage({ src, alt, className, wrapperClassName }) {
+  const [imgSrc, setImgSrc] = useState(src);
+  return (
+    <div className={`relative overflow-hidden ${wrapperClassName || ""}`}>
+      <img
+        src={imgSrc || fallbackImg}
+        alt={alt || ""}
+        loading="lazy"
+        onError={() => setImgSrc(fallbackImg)}
+        className={`h-full w-full object-cover ${className || ""}`}
+      />
+    </div>
+  );
+}
+
 function Landing() {
   const navigate = useNavigate();
   const scrolled = useScrollTop();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const [featuredFoods, setFeaturedFoods] = useState([]);
-  const [foodsLoading, setFoodsLoading] = useState(true);
-  const [foodsError, setFoodsError] = useState("");
-
-  const loadFeaturedFoods = async () => {
-    setFoodsLoading(true);
-    setFoodsError("");
-    try {
-      const api = createApiClient();
-      const res = await api.get("/foods/featured?limit=8");
-      const foods = Array.isArray(res?.data?.foods) ? res.data.foods : [];
-      setFeaturedFoods(foods);
-    } catch (err) {
-      console.error("Failed to load featured foods:", err);
-      setFoodsError("Unable to load featured foods. Please try again.");
-    } finally {
-      setFoodsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadFeaturedFoods();
-  }, []);
-
-  const foodImage = (food) => {
-    if (food?.image && food.image.trim() !== "") return food.image;
-    return fallbackImg;
-  };
-
-  const formatPrice = (price) => {
-    const num = Number(price);
-    if (Number.isNaN(num)) return "—";
-    return "₱" + num.toLocaleString("en-PH", { maximumFractionDigits: 2 });
-  };
-
-  const goToFood = (food) => {
-    setMenuOpen(false);
-    navigate("/home", {
-      state: food?.restaurantId ? { focusRestaurant: food.restaurantId } : undefined,
-    });
-  };
-
-  const handleAddToCart = async (food) => {
+  // Auth + cart
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const token = localStorage.getItem("authToken");
-    if (!token || token === "null" || token === "undefined") {
-      navigate("/login");
-      return;
-    }
-    try {
-      const api = createApiClient();
-      await api.post("/cart/add", { foodId: food.id, quantity: 1 });
-    } catch (err) {
-      console.error("Add to cart failed:", err);
-    }
+    return !!(token && token !== "null" && token !== "undefined");
+  });
+  const [cartCount, setCartCount] = useState(0);
+
+  // Data
+  const [categories, setCategories] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
+  const [foods, setFoods] = useState([]);
+
+  const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+  const [loadingFoods, setLoadingFoods] = useState(true);
+  const [restaurantError, setRestaurantError] = useState("");
+  const [foodError, setFoodError] = useState("");
+
+  // Toast
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  const showToast = (message, type = "success") => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ message, type });
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
   };
 
-  const navLinks = [
-    { label: "Home", href: "#home" },
-    { label: "Restaurants", href: "#restaurants" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "About", href: "#about" },
-  ];
+  // Determine auth state (lazy init above)
 
   const go = (path) => {
     setMenuOpen(false);
     navigate(path);
   };
 
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#171717] font-sans">
+  const goMarketplace = (extra) => {
+    setMenuOpen(false);
+    navigate("/home", { state: { activeTab: "home", ...extra } });
+  };
 
-      {/* NAVBAR */}
+  // Load landing data (minimal requests)
+  const loadAll = useCallback(async () => {
+    const api = createApiClient();
+    // Food + restaurants
+    const [foodRes, restRes] = await Promise.allSettled([
+      api.get("/food/popular"),
+      api.get("/restaurants"),
+    ]);
+    if (foodRes.status === "fulfilled") {
+      setFoods(Array.isArray(foodRes.value?.data?.foods) ? foodRes.value.data.foods : []);
+      setFoodError("");
+    } else {
+      setFoodError("Unable to load popular dishes.");
+    }
+    if (restRes.status === "fulfilled") {
+      setRestaurants(Array.isArray(restRes.value?.data?.restaurants) ? restRes.value.data.restaurants : []);
+      setRestaurantError("");
+    } else {
+      setRestaurantError("Unable to load restaurants.");
+    }
+    setLoadingFoods(false);
+    setLoadingRestaurants(false);
+
+    // Categories
+    try {
+      const catRes = await api.get("/categories");
+      const cats = Array.isArray(catRes?.data?.categories) ? catRes.data.categories : [];
+      setCategories(cats);
+    } catch {
+      setCategories([]);
+    }
+
+    // Cart count (only if authenticated)
+    const token = localStorage.getItem("authToken");
+    if (token && token !== "null" && token !== "undefined") {
+      try {
+        const cartRes = await api.get("/cart");
+        const items = Array.isArray(cartRes?.data?.cart) ? cartRes.data.cart : [];
+        const count = items.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
+        setCartCount(count);
+      } catch {
+        setCartCount(0);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const id = setTimeout(loadAll, 0);
+    return () => clearTimeout(id);
+  }, [loadAll]);
+
+  const formatPrice = (price) => {
+    const num = Number(price);
+    if (Number.isNaN(num)) return "—";
+    return "₱" + num.toLocaleString("en-PH", { maximumFractionDigits: 0 });
+  };
+
+  // Add to cart - reuses existing backend endpoint
+  const addToCart = async (food) => {
+    if (!isLoggedIn) {
+      showToast("Please sign in to add items to your cart", "error");
+      setTimeout(() => go("/login"), 1100);
+      return;
+    }
+    try {
+      const api = createApiClient();
+      await api.post("/cart/add", { foodId: food.id, quantity: 1 });
+      setCartCount((c) => c + 1);
+      showToast(`Added to cart`);
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        setIsLoggedIn(false);
+        showToast("Session expired. Please sign in.", "error");
+        setTimeout(() => go("/login"), 1100);
+      } else {
+        showToast("Couldn't add to cart. Please try again.", "error");
+      }
+    }
+  };
+
+  const categoryCard = (cat) => ({
+    name: String(cat?.name || cat || "Food"),
+    emoji: cat?.icon || "🍽️",
+  });
+
+  const navLinks = [
+    { label: "Home", href: "#home" },
+    { label: "Restaurants", href: "#restaurants" },
+    { label: "Explore", href: "#explore" },
+    { label: "About", href: "#about" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white text-[#141414] font-sans antialiased">
+
+      {/* TOAST */}
+      {toast && (
+        <div
+          role="status"
+          className={`fixed left-1/2 top-5 z-[100] flex -translate-x-1/2 items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xl animate-slide-up ${
+            toast.type === "error" ? "bg-[#DC2626]" : "bg-[#EA580C]"
+          }`}
+        >
+          {toast.type === "error" ? (
+            <CheckCircle2 className="h-4 w-4 text-white" />
+          ) : (
+            <Check className="h-4 w-4 text-white" />
+          )}
+          {toast.message}
+        </div>
+      )}
+
+      {/* ─── NAVBAR ─────────────────────────────────────────────────────── */}
       <header
-        className={`sticky top-0 z-50 transition-all duration-200 ${
+        className={`sticky top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-white border-b border-[#E5E7EB]"
-            : "bg-[#FAFAFA] border-b border-transparent"
+            ? "bg-white/95 backdrop-blur-md border-b border-[#EEEEEE] shadow-sm"
+            : "bg-white border-b border-transparent"
         }`}
       >
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <button onClick={() => go("/")} className="flex items-center gap-2.5">
-            <img src={biteLogo} alt="BiteHub" className="h-9 w-9 object-contain" />
-            <span className="text-[20px] font-bold tracking-tight text-[#171717]">
-              Bite<span className="text-[#EA580C]">Hub</span>
+        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
+          {/* Brand */}
+          <button onClick={() => go("/")} className="flex shrink-0 items-center gap-2.5">
+            <img src={kaingoLogo} alt="KainGo" className="h-8 w-8 object-contain" />
+            <span className="text-lg font-bold tracking-tight text-[#141414]">
+              Kain<span className="text-[#EA580C]">Go</span>
             </span>
           </button>
 
-          <div className="hidden items-center gap-8 lg:flex">
+          {/* Center nav */}
+          <div className="hidden items-center gap-7 lg:flex">
             {navLinks.map((l) => (
               <a
                 key={l.label}
@@ -173,55 +250,102 @@ function Landing() {
             ))}
           </div>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          {/* Right actions */}
+          <div className="hidden items-center gap-2.5 lg:flex">
             <button
-              onClick={() => go("/login")}
-              className="rounded-lg px-5 py-2 text-sm font-medium text-[#171717] transition-colors hover:text-[#EA580C]"
+              onClick={() => goMarketplace()}
+              aria-label="Search food"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F5F5F5] hover:text-[#EA580C]"
             >
-              Log In
+              <Search className="h-5 w-5" />
             </button>
             <button
-              onClick={() => go("/register")}
-              className="rounded-lg bg-[#EA580C] px-5 py-2 text-sm font-medium text-white transition-all hover:bg-[#C2410C]"
+              onClick={() => go(isLoggedIn ? "/cart" : "/login")}
+              aria-label="Cart"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F5F5F5] hover:text-[#EA580C]"
             >
-              Get Started
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EA580C] px-1 text-[11px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {isLoggedIn ? (
+              <button
+                onClick={() => go("/profile")}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F5F5F5]"
+              >
+                <User className="h-4 w-4" /> Account
+              </button>
+            ) : (
+              <button
+                onClick={() => go("/login")}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F5F5F5]"
+              >
+                <LogIn className="h-4 w-4" /> Sign In
+              </button>
+            )}
+
+            <button
+              onClick={() => go(isLoggedIn ? "/home" : "/register")}
+              className="rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#D6530B] hover:shadow-md active:scale-[0.97]"
+            >
+              Order Now
             </button>
           </div>
 
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-lg p-2 text-[#171717] transition-colors hover:bg-[#E5E7EB] lg:hidden"
-            aria-label="Toggle menu"
-          >
-            {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          {/* Mobile toggle */}
+          <div className="flex items-center gap-1 lg:hidden">
+            <button
+              onClick={() => go(isLoggedIn ? "/cart" : "/login")}
+              aria-label="Cart"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] hover:bg-[#F5F5F5]"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#EA580C] px-1 text-[11px] font-bold text-white">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#141414] hover:bg-[#F5F5F5]"
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </nav>
 
+        {/* Mobile menu */}
         {menuOpen && (
-          <div className="border-t border-[#E5E7EB] bg-white lg:hidden">
-            <div className="mx-auto flex max-w-7xl flex-col gap-1 px-6 py-4">
+          <div className="border-t border-[#EEEEEE] bg-white lg:hidden animate-slide-up">
+            <div className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-4">
               {navLinks.map((l) => (
                 <a
                   key={l.label}
                   href={l.href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#EA580C]"
+                  className="rounded-lg px-3 py-3 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F9F9F9] hover:text-[#EA580C]"
                 >
                   {l.label}
                 </a>
               ))}
-              <div className="mt-3 flex flex-col gap-2 border-t border-[#E5E7EB] pt-4">
+              <div className="mt-3 flex flex-col gap-2 border-t border-[#EEEEEE] pt-4">
                 <button
-                  onClick={() => go("/login")}
-                  className="rounded-lg border border-[#E5E7EB] px-4 py-3 text-sm font-medium text-[#171717] transition-colors hover:bg-[#F3F4F6]"
+                  onClick={() => (isLoggedIn ? go("/profile") : go("/login"))}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-[#E5E5E5] px-4 py-3 text-sm font-semibold text-[#141414]"
                 >
-                  Log In
+                  {isLoggedIn ? <><User className="h-4 w-4" /> Account</> : <><LogIn className="h-4 w-4" /> Sign In</>}
                 </button>
                 <button
-                  onClick={() => go("/register")}
-                  className="rounded-lg bg-[#EA580C] px-4 py-3 text-sm font-medium text-white"
+                  onClick={() => (isLoggedIn ? go("/home") : go("/register"))}
+                  className="rounded-xl bg-[#EA580C] px-4 py-3 text-sm font-semibold text-white"
                 >
-                  Get Started
+                  Order Now
                 </button>
               </div>
             </div>
@@ -229,523 +353,446 @@ function Landing() {
         )}
       </header>
 
-      {/* HERO */}
-      <section id="home" className="relative overflow-hidden bg-gradient-to-b from-orange-50 to-[#FAFAFA]">
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pt-16 pb-20 sm:px-8 lg:grid-cols-2 lg:pt-24 lg:pb-28">
+      {/* ─── HERO ───────────────────────────────────────────────────────── */}
+      <section id="home" className="relative overflow-hidden bg-gradient-to-b from-orange-50/60 via-white to-white">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-orange-100/40 blur-3xl" />
+          <div className="absolute -right-24 top-40 h-72 w-72 rounded-full bg-amber-100/40 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pt-14 pb-16 sm:px-8 lg:grid-cols-2 lg:pt-20 lg:pb-24">
+          {/* Left */}
           <div>
             <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#EA580C]">
-                <span className="text-sm">🍴</span> UNIVERSITY FOOD MARKETPLACE
+              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#EA580C] shadow-sm">
+                <Flame className="h-3.5 w-3.5" /> SARAP NA, ORDER NA!
               </span>
             </Reveal>
             <Reveal delay={80}>
-              <h1 className="mt-6 text-[40px] font-extrabold leading-[1.08] tracking-tight text-[#171717] sm:text-[50px] lg:text-[58px]">
-                Your Campus. <br />
-                Your <span className="text-[#EA580C]">Food.</span> <br />
-                Your <span className="relative inline-block">Bite.
-                  <svg className="absolute -bottom-2 left-0 w-full text-orange-300" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none"><path d="M2 9C50 3 150 3 198 9" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/></svg>
-                </span>
+              <h1 className="mt-6 text-[38px] font-extrabold leading-[1.08] tracking-tight text-[#141414] sm:text-5xl lg:text-[54px]">
+                Your cravings,
+                <br />
+                <span className="text-[#EA580C]">one order</span> away.
               </h1>
             </Reveal>
             <Reveal delay={160}>
-              <p className="mt-7 max-w-xl text-lg leading-relaxed text-[#6B7280]">
-                Discover your favorite campus restaurants, explore delicious meals, and order
-                everything you need from one place.
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-[#6B7280]">
+                Discover delicious meals from your favorite restaurants and order
+                everything you love in just a few clicks.
               </p>
             </Reveal>
             <Reveal delay={240}>
-              <div className="mt-9 flex flex-wrap items-center gap-4">
+              <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
-                  onClick={() => go("/register")}
-                  className="group inline-flex items-center rounded-lg bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
+                  onClick={() => go(isLoggedIn ? "/home" : "/register")}
+                  className="group inline-flex items-center rounded-xl bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97]"
                 >
-                  Get Started
+                  Order Now
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </button>
                 <button
-                  onClick={() => go("/home")}
-                  className="inline-flex items-center rounded-lg border border-[#E5E7EB] bg-white px-7 py-3.5 text-base font-semibold text-[#171717] transition-all hover:border-[#EA580C] hover:text-[#EA580C]"
+                  onClick={() => goMarketplace()}
+                  className="inline-flex items-center rounded-xl border border-[#E5E5E5] bg-white px-7 py-3.5 text-base font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97]"
                 >
-                  Explore BiteHub
-                  <ChevronRight className="ml-1 h-5 w-5" />
+                  Explore Food
                 </button>
               </div>
             </Reveal>
             <Reveal delay={320}>
-              <p className="mt-6 text-sm text-[#6B7280]">
-                Already have an account?{" "}
-                <button onClick={() => go("/login")} className="font-semibold text-[#EA580C] transition-colors hover:text-[#C2410C]">
-                  Log in
-                </button>
-              </p>
+              <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-[#F5A623] text-[#F5A623]" />
+                    ))}
+                  </span>
+                  <span className="text-sm font-semibold text-[#141414]">4.8</span>
+                  <span className="text-sm text-[#6B7280]">rated</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+                  <Truck className="h-4 w-4 text-[#EA580C]" />
+                  Fast delivery
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+                  <Store className="h-4 w-4 text-[#EA580C]" />
+                  Top restaurants
+                </div>
+              </div>
             </Reveal>
           </div>
 
-          <Reveal delay={150} className="relative">
-            <div className="relative">
-              <div className="relative mx-auto w-full max-w-[440px] rounded-2xl border border-[#E5E7EB] bg-white p-4">
-                <div className="flex items-center justify-between rounded-lg bg-[#EA580C] px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/20">
-                      <ShoppingBag className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-sm font-bold text-white">BiteHub</span>
-                  </div>
-                  <div className="relative">
-                    <ShoppingCart className="h-5 w-5 text-white" />
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[#EA580C]">
-                      3
-                    </span>
-                  </div>
+          {/* Right visual */}
+          <Reveal delay={120} className="relative">
+            <div className="relative mx-auto w-full max-w-[440px]">
+              {/* Collage of real food images */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
+                  <FoodImage
+                    src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=70"
+                    alt="Burger"
+                    className="aspect-square transition-transform duration-500 hover:scale-105"
+                  />
                 </div>
-
-                <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-4 py-2.5">
-                  <Search className="h-4 w-4 text-[#A0A0A0]" />
-                  <span className="text-[13px] text-[#A0A0A0]">Search for food, restaurants...</span>
+                <div className="mt-8 overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
+                  <FoodImage
+                    src="https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600&q=70"
+                    alt="Pizza"
+                    className="aspect-square transition-transform duration-500 hover:scale-105"
+                  />
                 </div>
+                <div className="-mt-4 overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
+                  <FoodImage
+                    src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=70"
+                    alt="Ramen"
+                    className="aspect-square transition-transform duration-500 hover:scale-105"
+                  />
+                </div>
+                <div className="overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
+                  <FoodImage
+                    src="https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=70"
+                    alt="Dessert"
+                    className="aspect-square transition-transform duration-500 hover:scale-105"
+                  />
+                </div>
+              </div>
 
-                <div className="mt-4 flex gap-2 overflow-hidden">
-                  {["All", "Fast Food", "Filipino", "Drinks", "Desserts"].map((c, i) => (
-                    <span
-                      key={c}
-                      className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[11px] font-semibold ${
-                        i === 0 ? "bg-[#EA580C] text-white" : "bg-[#F3F4F6] text-[#6B7280]"
-                      }`}
+              {/* Floating cards */}
+              <div className="bh-float absolute -left-6 top-10 flex items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-4 py-3 shadow-lg sm:-left-8">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
+                  <Star className="h-4 w-4 fill-[#F5A623] text-[#F5A623]" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#141414]">4.9 rating</p>
+                  <p className="text-[11px] text-[#6B7280]">from real users</p>
+                </div>
+              </div>
+
+              <div className="bh-float-slow absolute -right-4 bottom-16 flex items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-4 py-3 shadow-lg sm:-right-8">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100">
+                  <Zap className="h-4 w-4 text-[#EA580C]" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#141414]">Fast delivery</p>
+                  <p className="text-[11px] text-[#6B7280]">In under 30 min</p>
+                </div>
+              </div>
+
+              <div className="bh-float-alt absolute -bottom-4 left-6 flex items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-4 py-3 shadow-lg">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-[#141414]">Order confirmed</p>
+                  <p className="text-[11px] text-[#6B7280]">Being prepared</p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─── CATEGORIES ─────────────────────────────────────────────────── */}
+      <section className="py-14 lg:py-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <Reveal className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
+                What's on your mind?
+              </h2>
+              <p className="mt-1.5 text-[#6B7280]">Pick a category to start exploring</p>
+            </div>
+            <button
+              onClick={() => goMarketplace()}
+              className="hidden items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline sm:flex"
+            >
+              View all <ChevronRight className="h-4 w-4" />
+            </button>
+          </Reveal>
+
+          <div className="mt-7 flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-8 lg:overflow-visible">
+            {categories.length > 0 ? (
+              categories.slice(0, 8).map((cat, i) => {
+                const c = categoryCard(cat);
+                return (
+                  <Reveal key={c.name + i} delay={(i % 8) * 40} className="shrink-0 w-[104px] lg:w-auto">
+                    <button
+                      onClick={() => goMarketplace()}
+                      className="group flex w-full flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4 transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/40 hover:shadow-lg hover:shadow-orange-50"
                     >
-                      {c}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {[
-                    { img: foodImages.burger, name: "Campus Fast Food", cat: "Fast Food", time: "15-20 min", price: "₱85", rating: "4.8", item: "Classic Burger" },
-                    { img: foodImages.adobo, name: "Kanto Grille", cat: "Filipino", time: "10-15 min", price: "₱65", rating: "4.7", item: "Pork Adobo Rice" },
-                    { img: foodImages.milktea, name: "Brew & Chill", cat: "Drinks", time: "5-10 min", price: "₱49", rating: "4.9", item: "Fresh Milk Tea" },
-                  ].map((r) => (
-                    <div key={r.name} className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white p-3">
-                      <img src={r.img} onError={(e) => (e.currentTarget.src = fallbackImg)} alt={r.name} className="h-14 w-14 rounded-lg object-cover" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-[13px] font-bold text-[#171717]">{r.name}</p>
-                          <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
-                            <Star className="h-2.5 w-2.5 fill-current" /> {r.rating}
-                          </span>
-                        </div>
-                        <p className="truncate text-[11px] text-[#A0A0A0]">{r.item} · {r.cat} · {r.time}</p>
-                        <p className="mt-0.5 text-[12px] font-bold text-[#EA580C]">{r.price}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bh-float absolute -left-6 top-14 hidden w-[170px] rounded-xl border border-[#E5E7EB] bg-white p-3 sm:block">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-50">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#171717]">Order Confirmed</p>
-                    <p className="text-[10px] text-[#6B7280]">Your food is being prepared</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bh-float-slow absolute -right-4 top-40 hidden w-[150px] rounded-xl border border-[#E5E7EB] bg-white p-3 md:block">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50">
-                    <Zap className="h-4 w-4 text-[#EA580C]" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#171717]">Fast Ordering</p>
-                    <p className="text-[10px] text-[#6B7280]">Order in a few clicks</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bh-float-alt absolute -bottom-6 left-6 hidden w-[160px] rounded-xl border border-[#E5E7EB] bg-white p-3 sm:block">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-50">
-                    <Flame className="h-4 w-4 text-[#EA580C]" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#171717]">Popular Near You</p>
-                    <p className="text-[10px] text-[#6B7280]">Student favorites</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bh-float-slow pointer-events-none absolute -right-8 top-4 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
-                🍔
-              </div>
-              <div className="bh-float pointer-events-none absolute -left-10 bottom-24 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
-                🍟
-              </div>
-              <div className="bh-float-alt pointer-events-none absolute -right-10 bottom-16 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
-                🍕
-              </div>
-              <div className="bh-float pointer-events-none absolute -left-6 top-2 hidden rounded-xl bg-white border border-[#E5E7EB] p-2.5 text-4xl lg:block">
-                🥤
-              </div>
-            </div>
-          </Reveal>
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-5 pb-16 sm:px-8">
-          <Reveal>
-            <div className="grid grid-cols-1 gap-4 rounded-xl border border-[#E5E7EB] bg-white p-6 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { icon: <Store className="h-5 w-5" />, title: "Multiple Restaurants", desc: "Explore food from different campus restaurants" },
-                { icon: <Zap className="h-5 w-5" />, title: "Easy Ordering", desc: "Order your favorite meals in just a few clicks" },
-                { icon: <Bell className="h-5 w-5" />, title: "Order Updates", desc: "Stay updated from preparation to delivery" },
-                { icon: <Wallet className="h-5 w-5" />, title: "Student-Friendly Meals", desc: "Discover affordable meals for your campus budget" },
-              ].map((b) => (
-                <div key={b.title} className="flex items-start gap-3 rounded-xl bg-[#FAFAFA] p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-[#EA580C]">
-                    {b.icon}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#171717]">{b.title}</p>
-                    <p className="mt-0.5 text-[13px] leading-snug text-[#6B7280]">{b.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="about" className="bg-[#FAFAFA] py-20 lg:py-28">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
-              WHY BITEHUB
-            </span>
-            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
-              Everything You Need to Eat Better on Campus
-            </h2>
-            <p className="mt-4 text-lg text-[#6B7280]">
-              BiteHub makes campus food ordering simple, convenient, and accessible.
-            </p>
-          </Reveal>
-
-          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: <Store className="h-6 w-6" />, title: "Discover Restaurants", desc: "Browse available campus restaurants and food vendors in one marketplace." },
-              { icon: <ClipboardList className="h-6 w-6" />, title: "Browse Menus", desc: "Explore menus, food descriptions, prices, categories, and available sizes." },
-              { icon: <ShoppingBag className="h-6 w-6" />, title: "Smart Cart", desc: "Add multiple food items to your cart without being redirected away from the current page." },
-              { icon: <Zap className="h-6 w-6" />, title: "Easy Ordering", desc: "Place food orders quickly with a simple and intuitive checkout experience." },
-              { icon: <MapPin className="h-6 w-6" />, title: "Order Tracking", desc: "Follow the progress of your order from confirmation to preparation and delivery." },
-              { icon: <Wallet className="h-6 w-6" />, title: "Budget-Friendly Meals", desc: "Easily discover affordable meals designed for students and university employees." },
-            ].map((f, i) => (
-              <Reveal key={f.title} delay={(i % 3) * 90}>
-                <div className="group h-full rounded-xl border border-[#E5E7EB] bg-white p-7 transition-all duration-200 hover:border-[#EA580C] hover:shadow-lg hover:shadow-orange-50">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-orange-50 text-[#EA580C] transition-all duration-200 group-hover:bg-[#EA580C] group-hover:text-white">
-                    {f.icon}
-                  </div>
-                  <h3 className="mt-6 text-xl font-bold text-[#171717]">{f.title}</h3>
-                  <p className="mt-2.5 leading-relaxed text-[#6B7280]">{f.desc}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="how-it-works" className="bg-white py-20 lg:py-28">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
-              HOW IT WORKS
-            </span>
-            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl">
-              From Discovery to Your Doorstep
-            </h2>
-            <p className="mt-4 text-lg text-[#6B7280]">
-              Ordering food on campus has never been easier.
-            </p>
-          </Reveal>
-
-          <div className="relative mt-16">
-            <div className="absolute left-1/2 top-8 hidden h-0.5 w-2/3 -translate-x-1/2 bg-gradient-to-r from-orange-200 via-[#EA580C]/30 to-orange-200 lg:block" />
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
-              {[
-                { num: "01", title: "DISCOVER", desc: "Find restaurants and meals available around your campus.", icon: <Search className="h-6 w-6" /> },
-                { num: "02", title: "ORDER", desc: "Choose your food, customize your order, and add it to your cart.", icon: <ShoppingBag className="h-6 w-6" /> },
-                { num: "03", title: "ENJOY", desc: "Track your order and enjoy your meal when it arrives.", icon: <Salad className="h-6 w-6" /> },
-              ].map((s, i) => (
-                <Reveal key={s.num} delay={i * 120}>
-                  <div className="relative text-center lg:pt-0">
-                    <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-[#EA580C] text-white">
-                      {s.icon}
-                      <span className="absolute -right-2 -top-2 rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold text-[#EA580C] border border-[#E5E7EB]">
-                        {s.num}
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF1E7] text-2xl transition-transform group-hover:scale-110">
+                        {c.emoji}
                       </span>
-                    </div>
-                    <h3 className="text-2xl font-bold tracking-wide text-[#171717]">{s.title}</h3>
-                    <p className="mx-auto mt-3 max-w-xs text-[#6B7280]">{s.desc}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* RESTAURANT SHOWCASE */}
-      <section id="restaurants" className="bg-[#FAFAFA] py-20 lg:py-28">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
-              Your Favorite Food, All in One Place.
-            </h2>
-            <p className="mt-4 text-lg text-[#6B7280]">
-              Discover delicious meals from restaurants and food vendors around your campus.
-            </p>
-          </Reveal>
-
-          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {foodsLoading &&
+                      <span className="text-xs font-semibold text-[#141414] group-hover:text-[#EA580C]">
+                        {c.name}
+                      </span>
+                    </button>
+                  </Reveal>
+                );
+              })
+            ) : (
               Array.from({ length: 8 }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
-                  <div className="h-44 animate-pulse bg-[#F3F4F6]" />
-                  <div className="p-5">
-                    <div className="h-4 w-2/3 animate-pulse rounded bg-[#E5E7EB]" />
-                    <div className="mt-2 h-3.5 w-full animate-pulse rounded bg-[#F3F4F6]" />
-                    <div className="mt-4 h-3.5 w-1/3 animate-pulse rounded bg-[#F3F4F6]" />
+                <div key={i} className="shrink-0 w-[104px] lg:w-auto">
+                  <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4">
+                    <div className="h-12 w-12 rounded-2xl bg-[#F3F3F3] animate-pulse" />
+                    <div className="h-3 w-14 rounded bg-[#F3F3F3] animate-pulse" />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FEATURED RESTAURANTS ───────────────────────────────────────── */}
+      <section id="restaurants" className="py-14 lg:py-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <Reveal className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
+                Explore popular restaurants
+              </h2>
+              <p className="mt-1.5 text-[#6B7280]">Hungry? We've got you covered</p>
+            </div>
+          </Reveal>
+
+          {loadingRestaurants && (
+            <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white">
+                  <div className="h-36 bg-[#F3F3F3] animate-pulse" />
+                  <div className="space-y-2 p-4">
+                    <div className="h-4 w-3/4 rounded bg-[#F3F3F3] animate-pulse" />
+                    <div className="h-3 w-1/2 rounded bg-[#F3F3F3] animate-pulse" />
                   </div>
                 </div>
               ))}
+            </div>
+          )}
 
-            {!foodsLoading && foodsError && (
-              <div className="col-span-full rounded-xl border border-orange-200 bg-orange-50 p-10 text-center">
-                <p className="text-[#9A3412]">{foodsError}</p>
-                <button
-                  onClick={loadFeaturedFoods}
-                  className="mt-4 inline-flex items-center rounded-lg bg-[#EA580C] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C]"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" /> Try Again
-                </button>
-              </div>
-            )}
+          {!loadingRestaurants && restaurantError && (
+            <div className="mt-7 rounded-2xl border border-orange-100 bg-orange-50 p-8 text-center">
+              <p className="text-[#9A3412]">{restaurantError}</p>
+              <button
+                onClick={loadAll}
+                className="mt-3 inline-flex items-center rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D6530B]"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+              </button>
+            </div>
+          )}
 
-            {!foodsLoading && !foodsError && featuredFoods.length === 0 && (
-              <div className="col-span-full rounded-xl border border-[#E5E7EB] bg-white p-10 text-center">
-                <Salad className="mx-auto h-10 w-10 text-[#A0A0A0]" />
-                <p className="mt-3 text-[#6B7280]">No featured foods available yet.</p>
-              </div>
-            )}
+          {!loadingRestaurants && !restaurantError && restaurants.length === 0 && (
+            <div className="mt-7 rounded-2xl border border-[#EEEEEE] bg-white p-10 text-center">
+              <Store className="mx-auto h-10 w-10 text-[#B0B0B0]" />
+              <p className="mt-3 text-[#6B7280]">No restaurants available right now.</p>
+            </div>
+          )}
 
-            {!foodsLoading &&
-              !foodsError &&
-              featuredFoods.map((food, i) => (
-                <Reveal key={food.id} delay={(i % 4) * 80}>
+          {!loadingRestaurants && !restaurantError && restaurants.length > 0 && (
+            <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {restaurants.slice(0, 8).map((r, i) => (
+                <Reveal key={r.id} delay={(i % 4) * 70}>
                   <button
-                    onClick={() => goToFood(food)}
-                    className="group w-full overflow-hidden rounded-xl border border-[#E5E7EB] bg-white text-left transition-all duration-200 hover:-translate-y-1 hover:border-[#EA580C] hover:shadow-lg hover:shadow-orange-50"
+                    onClick={() => navigate(`/restaurant/${r.id}`, { state: { restaurant: r } })}
+                    className="group w-full overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white text-left transition-all hover:-translate-y-1 hover:border-[#EA580C]/30 hover:shadow-xl hover:shadow-orange-50"
                   >
-                    <div className="relative h-44 overflow-hidden">
-                      <img
-                        src={foodImage(food)}
-                        onError={(e) => (e.currentTarget.src = fallbackImg)}
-                        alt={food.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <span className="absolute left-3 top-3 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-[#171717]">
-                        {food.category}
-                      </span>
-                      {Number(food.rating) > 0 && (
-                        <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#EA580C] px-2 py-1 text-[11px] font-bold text-white">
-                          <Star className="h-3 w-3 fill-current" /> {food.rating}
+                    <FoodImage
+                      src={r.image}
+                      alt={r.name}
+                      wrapperClassName="h-36 w-full"
+                      className="transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="p-4">
+                      <h3 className="truncate text-base font-bold text-[#141414] group-hover:text-[#EA580C]">
+                        {r.name}
+                      </h3>
+                      <div className="mt-1.5 flex items-center gap-2 text-[13px] text-[#6B7280]">
+                        <span className="flex items-center gap-1 font-semibold text-[#141414]">
+                          <Star className="h-3.5 w-3.5 fill-[#F5A623] text-[#F5A623]" />
+                          {Number(r.rating) > 0 ? Number(r.rating).toFixed(1) : "New"}
                         </span>
-                      )}
-                    </div>
-                    <div className="p-5">
-                      <h3 className="truncate text-lg font-bold text-[#171717] group-hover:text-[#EA580C]">{food.name}</h3>
-                      <p className="mt-1 truncate text-sm text-[#6B7280]">{food.restaurant}</p>
-                      <div className="mt-3 flex items-center justify-between">
-                        <span className="text-sm font-medium text-[#6B7280]">{food.category}</span>
-                        <span className="text-lg font-extrabold text-[#EA580C]">{formatPrice(food.price)}</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="truncate">{r.type || r.cuisines?.[0] || "Restaurant"}</span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-1.5 text-[13px] text-[#6B7280]">
+                        <Truck className="h-3.5 w-3.5 text-[#EA580C]" />
+                        {r.deliveryTime || "15-30 min"}
                       </div>
                     </div>
                   </button>
                 </Reveal>
               ))}
-          </div>
+            </div>
+          )}
+        </div>
+      </section>
 
-          <Reveal className="mt-12 text-center">
+      {/* ─── POPULAR FOOD ───────────────────────────────────────────────── */}
+      <section id="explore" className="bg-[#FAFAFA] py-14 lg:py-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <Reveal className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
+                Popular right now
+              </h2>
+              <p className="mt-1.5 text-[#6B7280]">Loved by our customers</p>
+            </div>
             <button
-              onClick={() => go("/home")}
-              className="group inline-flex items-center rounded-lg bg-[#EA580C] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
+              onClick={() => goMarketplace()}
+              className="hidden items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline sm:flex"
             >
-              Explore Restaurants
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              View all <ChevronRight className="h-4 w-4" />
             </button>
           </Reveal>
+
+          {loadingFoods && (
+            <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white">
+                  <div className="h-32 bg-[#F3F3F3] animate-pulse" />
+                  <div className="space-y-2 p-3.5">
+                    <div className="h-3.5 w-2/3 rounded bg-[#F3F3F3] animate-pulse" />
+                    <div className="h-3 w-full rounded bg-[#F3F3F3] animate-pulse" />
+                    <div className="h-3 w-1/3 rounded bg-[#F3F3F3] animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loadingFoods && foodError && (
+            <div className="mt-7 rounded-2xl border border-orange-100 bg-orange-50 p-8 text-center">
+              <p className="text-[#9A3412]">{foodError}</p>
+              <button
+                onClick={loadAll}
+                className="mt-3 inline-flex items-center rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D6530B]"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+              </button>
+            </div>
+          )}
+
+          {!loadingFoods && !foodError && foods.length === 0 && (
+            <div className="mt-7 rounded-2xl border border-[#EEEEEE] bg-white p-10 text-center">
+              <Utensils className="mx-auto h-10 w-10 text-[#B0B0B0]" />
+              <p className="mt-3 text-[#6B7280]">No popular dishes available right now.</p>
+            </div>
+          )}
+
+          {!loadingFoods && !foodError && foods.length > 0 && (
+            <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {foods.slice(0, 10).map((food, i) => {
+                const isOOS = food.current_stock != null && Number(food.current_stock) <= 0;
+                return (
+                  <Reveal key={food.id} delay={(i % 5) * 60}>
+                    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/30 hover:shadow-lg hover:shadow-orange-50">
+                      <FoodImage
+                        src={food.image}
+                        alt={food.name}
+                        wrapperClassName="h-28 w-full"
+                        className="transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="flex flex-1 flex-col p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="line-clamp-1 text-sm font-bold text-[#141414]">{food.name}</h3>
+                          {Number(food.rating) > 0 && (
+                            <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-[#141414]">
+                              <Star className="h-3 w-3 fill-[#F5A623] text-[#F5A623]" />
+                              {Number(food.rating).toFixed(1)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-[#6B7280]">
+                          {food.description || food.restaurant}
+                        </p>
+                        <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
+                          <span className="text-sm font-extrabold text-[#141414]">
+                            {formatPrice(food.price)}
+                          </span>
+                          <button
+                            onClick={() => addToCart(food)}
+                            disabled={isOOS}
+                            aria-label={isOOS ? `${food.name} sold out` : `Add ${food.name} to cart`}
+                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.96] ${
+                              isOOS
+                                ? "cursor-not-allowed bg-[#F5F5F5] text-[#9CA3AF]"
+                                : "bg-[#EA580C] text-white shadow-sm hover:bg-[#D6530B] hover:shadow-md"
+                            }`}
+                          >
+                            {isOOS ? "Sold out" : <ShoppingCart className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* BUDGET MEALS */}
-      <section className="bg-white py-20 lg:py-28">
+      {/* ─── HOW IT WORKS ───────────────────────────────────────────────── */}
+      <section className="py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <Reveal>
-              <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
-                STUDENT-FRIENDLY
-              </span>
-              <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
-                Good Food Without Breaking Your Budget.
-              </h2>
-              <p className="mt-4 text-lg text-[#6B7280]">
-                Find affordable meals and student-friendly food options available around campus — without
-                compromising on taste.
-              </p>
-              <button
-                onClick={() => go("/home")}
-                className="group mt-8 inline-flex items-center rounded-lg bg-[#EA580C] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
-              >
-                Find Budget Meals
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </button>
-            </Reveal>
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
+              How KainGo works
+            </h2>
+            <p className="mt-2 text-[#6B7280]">Get food delivered in four simple steps</p>
+          </Reveal>
 
-            <Reveal delay={120}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {foodsLoading &&
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div key={`bs-${i}`} className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
-                      <div className="h-32 animate-pulse bg-[#F3F4F6]" />
-                      <div className="p-4">
-                        <div className="h-4 w-2/3 animate-pulse rounded bg-[#E5E7EB]" />
-                        <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-[#F3F4F6]" />
-                      </div>
-                    </div>
-                  ))}
-
-                {!foodsLoading && (foodsError || featuredFoods.length === 0) && (
-                  <div className="col-span-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-8 text-center">
-                    <p className="text-[#A0A0A0]">
-                      {foodsError ? "Budget meals aren't available right now." : "No budget-friendly meals available yet."}
-                    </p>
-                    {foodsError && (
-                      <button
-                        onClick={loadFeaturedFoods}
-                        className="mt-3 inline-flex items-center rounded-lg bg-[#EA580C] px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C2410C]"
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4" /> Try Again
-                      </button>
-                    )}
+          <div className="mt-12 grid grid-cols-2 gap-6 lg:grid-cols-4">
+            {[
+              { num: "01", title: "Discover", desc: "Find restaurants and dishes you love.", icon: Search },
+              { num: "02", title: "Choose", desc: "Browse menus and customize your order.", icon: ClipboardList },
+              { num: "03", title: "Order", desc: "Add favorites to your cart and checkout.", icon: ShoppingCart },
+              { num: "04", title: "Enjoy", desc: "Sit back and enjoy your meal.", icon: Salad },
+            ].map((s, i) => (
+              <Reveal key={s.num} delay={i * 90}>
+                <div className="text-center">
+                  <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FBF1E7] text-[#EA580C]">
+                    <s.icon className="h-6 w-6" />
+                    <span className="absolute -right-2 -top-2 rounded-lg bg-[#EA580C] px-2 py-0.5 text-[11px] font-bold text-white">
+                      {s.num}
+                    </span>
                   </div>
-                )}
-
-                {!foodsLoading &&
-                  !foodsError &&
-                  featuredFoods
-                    .filter(
-                      (f) =>
-                        Number(f.price) > 0
-                    )
-                    .slice()
-                    .sort(
-                      (a, b) =>
-                        (String(a.category).toLowerCase() === "budget meal" ? 0 : 1) -
-                        (String(b.category).toLowerCase() === "budget meal" ? 0 : 1) ||
-                        Number(a.price) - Number(b.price)
-                    )
-                    .slice(0, 4)
-                    .map((b) => (
-                      <button
-                        key={b.id}
-                        onClick={() => goToFood(b)}
-                        className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-50"
-                      >
-                        <div className="relative h-32 overflow-hidden">
-                          <img
-                            src={foodImage(b)}
-                            onError={(e) => (e.currentTarget.src = fallbackImg)}
-                            alt={b.name}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
-                          />
-                          <span className="absolute left-3 top-3 rounded-lg bg-white px-2 py-0.5 text-[11px] font-bold text-[#171717]">{b.category}</span>
-                        </div>
-                        <div className="p-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="truncate font-bold text-[#171717]">{b.name}</h3>
-                            <span className="text-lg font-extrabold text-[#EA580C]">{formatPrice(b.price)}</span>
-                          </div>
-                          <div className="mt-1 flex items-center justify-between">
-                            <p className="truncate text-[12px] text-[#A0A0A0]">{b.restaurant}</p>
-                            <span className="flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-1.5 text-[12px] font-bold text-[#EA580C]">
-                              <Plus size={14} /> Order
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-              </div>
-            </Reveal>
+                  <h3 className="text-lg font-bold text-[#141414]">{s.title}</h3>
+                  <p className="mx-auto mt-1.5 max-w-[200px] text-sm leading-relaxed text-[#6B7280]">{s.desc}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="bg-[#FAFAFA] py-20 lg:py-28">
+      {/* ─── WHY CHOOSE US ──────────────────────────────────────────────── */}
+      <section id="about" className="bg-[#FAFAFA] py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <span className="inline-block rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
-              TESTIMONIALS
-            </span>
-            <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-[#171717] sm:text-4xl lg:text-[42px]">
-              What Students Are Saying
+            <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
+              Why choose KainGo
             </h2>
-            <p className="mt-4 text-lg text-[#6B7280]">
-              Hear from students and restaurant owners who love using BiteHub.
-            </p>
+            <p className="mt-2 text-[#6B7280]">Fast, reliable, and made for food lovers</p>
           </Reveal>
 
-          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              {
-                quote: "BiteHub changed how I get food on campus. I can order between classes and it's ready by the time I walk over. No more long lines!",
-                name: "Maria Santos",
-                role: "3rd Year, BS Computer Science",
-                rating: 5,
-              },
-              {
-                quote: "As a restaurant owner, BiteHub brought in so many student orders we weren't getting before. The dashboard makes tracking everything super easy.",
-                name: "Jun Reyes",
-                role: "Owner, Kanto Grille",
-                rating: 5,
-              },
-              {
-                quote: "I love that I can see all the menus and prices in one place. The budget meals section is a lifesaver during exam weeks.",
-                name: "Angela Cruz",
-                role: "2nd Year, BS Business Administration",
-                rating: 5,
-              },
-            ].map((t, i) => (
-              <Reveal key={t.name} delay={i * 100}>
-                <div className="h-full rounded-xl border border-[#E5E7EB] bg-white p-7 transition-all duration-200 hover:border-[#EA580C]">
-                  <Quote className="h-8 w-8 text-orange-200" />
-                  <p className="mt-4 text-[15px] leading-relaxed text-[#6B7280]">{t.quote}</p>
-                  <div className="mt-5 flex items-center gap-0.5">
-                    {Array.from({ length: t.rating }).map((_, j) => (
-                      <Star key={j} className="h-4 w-4 fill-[#EA580C] text-[#EA580C]" />
-                    ))}
+              { icon: Zap, title: "Fast & Convenient Ordering", desc: "Place your order quickly with a simple, intuitive checkout." },
+              { icon: Store, title: "Wide Food Selection", desc: "Browse many restaurants and cuisines all in one place." },
+              { icon: MapPin, title: "Easy Order Tracking", desc: "Follow your order from confirmation to delivery." },
+              { icon: CheckCircle2, title: "Trusted Restaurants", desc: "Order from reviewed and active restaurant partners." },
+              { icon: Package, title: "Affordable Options", desc: "Discover meals and deals that fit a range of budgets." },
+              { icon: Clock, title: "Simple & Reliable", desc: "A clean experience that's easy to use whenever you're hungry." },
+            ].map((f, i) => (
+              <Reveal key={f.title} delay={(i % 3) * 80}>
+                <div className="group flex h-full items-start gap-4 rounded-2xl border border-[#EEEEEE] bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/30 hover:shadow-lg hover:shadow-orange-50">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#FBF1E7] text-[#EA580C] transition-colors group-hover:bg-[#EA580C] group-hover:text-white">
+                    <f.icon className="h-5 w-5" />
                   </div>
-                  <div className="mt-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-sm font-bold text-[#EA580C]">
-                      {t.name.split(" ").map((n) => n[0]).join("")}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#171717]">{t.name}</p>
-                      <p className="text-xs text-[#A0A0A0]">{t.role}</p>
-                    </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#141414]">{f.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-[#6B7280]">{f.desc}</p>
                   </div>
                 </div>
               </Reveal>
@@ -754,174 +801,271 @@ function Landing() {
         </div>
       </section>
 
-      {/* RESTAURANT OWNERS */}
-      <section id="for-owners" className="bg-[#111111] py-20 lg:py-28">
-        <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 sm:px-8 lg:grid-cols-2">
-          <div>
-            <Reveal>
-              <span className="inline-block rounded-full border border-[#EA580C]/30 bg-[#EA580C]/10 px-4 py-1.5 text-xs font-semibold text-[#EA580C]">
-                FOR RESTAURANT OWNERS
-              </span>
-            </Reveal>
-            <Reveal delay={80}>
-              <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[42px]">
-                Own a Food Business?
-              </h2>
-            </Reveal>
-            <Reveal delay={150}>
-              <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#A0A0A0]">
-                Bring your restaurant to the BiteHub marketplace and reach more students and university
-                customers. Manage orders, menus, and sales all in one place.
-              </p>
-            </Reveal>
-            <Reveal delay={220}>
-              <ul className="mt-7 space-y-3">
-                {["Reach thousands of hungry students", "Manage orders in real time", "Track sales and popular items"].map((t) => (
-                  <li key={t} className="flex items-center gap-3 text-[#D4D4D4]">
-                    <Check className="h-5 w-5 shrink-0 text-[#EA580C]" /> <span>{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-            <Reveal delay={300}>
-              <button
-                onClick={() => go("/restaurant-register")}
-                className="group mt-9 inline-flex items-center rounded-lg bg-[#EA580C] px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-[#C2410C]"
-              >
-                Become a Restaurant Partner
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </button>
-            </Reveal>
-          </div>
+      {/* ─── FOR RESTAURANTS ───────────────────────────────────────────── */}
+      <section className="py-14 lg:py-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="grid items-center gap-14 lg:grid-cols-2">
+            {/* Left copy */}
+            <div>
+              <Reveal>
+                <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#EA580C] shadow-sm">
+                  <Store className="h-3.5 w-3.5" /> FOR RESTAURANTS
+                </span>
+              </Reveal>
+              <Reveal delay={80}>
+                <h2 className="mt-6 text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl lg:text-4xl">
+                  Grow your restaurant with KainGo
+                </h2>
+              </Reveal>
+              <Reveal delay={160}>
+                <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#6B7280]">
+                  Reach more customers, showcase your menu, and manage every order in one
+                  simple dashboard — from confirmation to delivery.
+                </p>
+              </Reveal>
+              <Reveal delay={220}>
+                <ul className="mt-7 space-y-3.5">
+                  {[
+                    "Reach a wider base of hungry customers",
+                    "Manage orders in real time",
+                    "Track sales and your most popular dishes",
+                    "Keep your menu and stock up to date",
+                  ].map((t) => (
+                    <li key={t} className="flex items-center gap-3 text-[#374151]">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FBF1E7]">
+                        <Check className="h-3.5 w-3.5 text-[#EA580C]" />
+                      </span>
+                      <span className="font-medium">{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+              <Reveal delay={300}>
+                <div className="mt-8 flex flex-wrap gap-4">
+                  <button
+                    onClick={() => go("/restaurant-register")}
+                    className="group inline-flex items-center rounded-xl bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97]"
+                  >
+                    Become a Partner
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </button>
+                  <button
+                    onClick={() => go("/restaurant-login")}
+                    className="inline-flex items-center rounded-xl border border-[#E5E5E5] bg-white px-7 py-3.5 text-base font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97]"
+                  >
+                    Restaurant Login
+                  </button>
+                </div>
+              </Reveal>
+            </div>
 
-          <Reveal delay={150}>
-            <div className="relative">
-              <div className="rounded-xl border border-[#2A2A2A] bg-[#1A1A1A] p-4">
-                <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
-                  <span className="text-sm font-bold text-white">Restaurant Dashboard</span>
-                  <span className="flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 text-[11px] font-bold text-green-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Open
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  {[
-                    { icon: <Package className="h-4 w-4" />, label: "Orders", value: "24" },
-                    { icon: <TrendingUp className="h-4 w-4" />, label: "Sales", value: "₱1.2k" },
-                    { icon: <Flame className="h-4 w-4" />, label: "Popular", value: "Adobo" },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-lg bg-[#2A2A2A] p-3">
-                      <div className="text-[#EA580C]">{s.icon}</div>
-                      <p className="mt-1 text-lg font-extrabold text-white">{s.value}</p>
-                      <p className="text-[11px] text-[#A0A0A0]">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 space-y-2">
-                  {[
-                    { name: "Beef Tapsilog", amt: "₱65", qty: "×2", status: "Preparing" },
-                    { name: "Chicken Rice Bowl", amt: "₱55", qty: "×1", status: "New" },
-                    { name: "Fresh Milk Tea", amt: "₱49", qty: "×3", status: "Out for delivery" },
-                  ].map((o) => (
-                    <div key={o.name} className="flex items-center justify-between rounded-lg border border-[#2A2A2A] p-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EA580C]/10 text-[#EA580C]">
-                          <Utensils className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-[12px] font-bold text-white">{o.name} {o.qty}</p>
-                          <p className="text-[11px] text-[#EA580C]">{o.amt}</p>
-                        </div>
-                      </div>
-                      <span className="rounded-full bg-[#EA580C]/10 px-2 py-0.5 text-[10px] font-bold text-[#EA580C]">{o.status}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-between rounded-lg bg-[#2A2A2A] p-3">
-                  <div className="flex items-center gap-2 text-[12px] text-[#A0A0A0]">
-                    <BarChart3 className="h-4 w-4 text-[#EA580C]" /> Sales this week
+            {/* Right dashboard mockup */}
+            <Reveal delay={120}>
+              <div className="relative">
+                <div className="overflow-hidden rounded-3xl border border-[#EEEEEE] bg-white shadow-xl shadow-orange-100/40">
+                  {/* Top bar */}
+                  <div className="flex items-center justify-between border-b border-[#F0F0F0] px-5 py-4">
+                    <span className="flex items-center gap-2 text-sm font-bold text-[#141414]">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBF1E7]">
+                        <Utensils className="h-4 w-4 text-[#EA580C]" />
+                      </span>
+                      Restaurant Dashboard
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-[11px] font-bold text-green-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Open
+                    </span>
                   </div>
-                  <span className="text-sm font-extrabold text-white">₱8,420</span>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-3 p-5">
+                    {[
+                      { icon: <Package className="h-4 w-4" />, label: "Orders", value: "24" },
+                      { icon: <TrendingUp className="h-4 w-4" />, label: "Revenue", value: "₱12.5k" },
+                      { icon: <Flame className="h-4 w-4" />, label: "Top item", value: "Burger" },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-2xl bg-[#FAFAFA] p-3.5">
+                        <div className="text-[#EA580C]">{s.icon}</div>
+                        <p className="mt-1.5 text-lg font-extrabold text-[#141414]">{s.value}</p>
+                        <p className="text-[11px] text-[#6B7280]">{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Orders */}
+                  <div className="px-5 pb-5">
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#6B7280]">
+                      Recent orders
+                    </p>
+                    <div className="mt-3 space-y-2.5">
+                      {[
+                        { name: "Classic Cheeseburger", qty: "×2", status: "Preparing" },
+                        { name: "Pepperoni Pizza", qty: "×1", status: "New" },
+                        { name: "Special Ramen", qty: "×3", status: "Delivered" },
+                      ].map((o) => (
+                        <div
+                          key={o.name}
+                          className="flex items-center justify-between rounded-xl border border-[#F0F0F0] p-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FBF1E7]">
+                              <Utensils className="h-4 w-4 text-[#EA580C]" />
+                            </span>
+                            <p className="text-[13px] font-semibold text-[#141414]">
+                              {o.name} <span className="font-normal text-[#6B7280]">{o.qty}</span>
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                              o.status === "Delivered"
+                                ? "bg-green-50 text-green-600"
+                                : o.status === "New"
+                                ? "bg-orange-50 text-[#EA580C]"
+                                : "bg-amber-50 text-amber-600"
+                            }`}
+                          >
+                            {o.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Weekly sales */}
+                  <div className="flex items-center justify-between border-t border-[#F0F0F0] px-5 py-4">
+                    <span className="flex items-center gap-2 text-sm text-[#6B7280]">
+                      <BarChart3 className="h-4 w-4 text-[#EA580C]" /> Sales this week
+                    </span>
+                    <span className="text-base font-extrabold text-[#141414]">₱42,950</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section className="px-5 py-20 sm:px-8 lg:py-28">
+      {/* ─── PROMOTIONAL CTA ────────────────────────────────────────────── */}
+      <section className="px-5 py-16 sm:px-8 lg:py-24">
         <Reveal className="mx-auto max-w-5xl">
-          <div className="relative overflow-hidden rounded-2xl bg-[#EA580C] px-8 py-16 text-center sm:px-16">
+          <div className="relative overflow-hidden rounded-3xl bg-[#EA580C] px-8 py-14 text-center sm:px-16">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/5" />
+              <div className="absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-white/5" />
+              <div className="absolute left-1/4 top-6 text-4xl opacity-15">🍔</div>
+              <div className="absolute bottom-8 right-1/4 text-4xl opacity-15">🍕</div>
+            </div>
             <div className="relative">
-              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[44px]">
-                Ready to Find Your Next Favorite Meal?
+              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                Ready to satisfy your cravings?
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-orange-100">
-                Join BiteHub and make campus food ordering easier.
+                Discover delicious food and place your next order in just a few clicks.
               </p>
-              <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-                <button
-                  onClick={() => go("/register")}
-                  className="rounded-lg bg-white px-8 py-3.5 text-base font-semibold text-[#EA580C] transition-all hover:bg-orange-50"
-                >
-                  Get Started
-                </button>
-                <button
-                  onClick={() => go("/login")}
-                  className="rounded-lg border-2 border-white/40 px-8 py-3.5 text-base font-semibold text-white transition-all hover:bg-white/10"
-                >
-                  Log In
-                </button>
-              </div>
+              <button
+                onClick={() => go(isLoggedIn ? "/home" : "/register")}
+                className="group mt-8 inline-flex items-center rounded-xl bg-white px-8 py-4 text-base font-semibold text-[#EA580C] shadow-lg transition-all hover:bg-orange-50 active:scale-[0.97]"
+              >
+                Start Ordering
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </button>
             </div>
           </div>
         </Reveal>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-[#E5E7EB] bg-white py-14">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="flex flex-col gap-10 md:flex-row md:justify-between">
-            <div className="max-w-xs">
+      {/* ─── FOOTER ─────────────────────────────────────────────────────── */}
+      <footer className="border-t border-[#EEEEEE] bg-white">
+        <div className="mx-auto max-w-7xl px-5 pb-10 pt-14 sm:px-8">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
+            {/* Brand */}
+            <div className="col-span-2 lg:col-span-2">
               <div className="flex items-center gap-2.5">
-                <img src={biteLogo} alt="BiteHub" className="h-9 w-9 object-contain" />
-                <span className="text-xl font-bold tracking-tight text-[#171717]">
-                  Bite<span className="text-[#EA580C]">Hub</span>
+                <img src={kaingoLogo} alt="KainGo" className="h-8 w-8 object-contain" />
+                <span className="text-lg font-bold tracking-tight text-[#141414]">
+                  Kain<span className="text-[#EA580C]">Go</span>
                 </span>
               </div>
-              <p className="mt-3 text-sm text-[#6B7280]">Your university food marketplace.</p>
+              <p className="mt-3 max-w-xs text-sm leading-relaxed text-[#6B7280]">
+                Your cravings, your way. Discover, order, and enjoy great meals from
+                the best restaurants.
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-x-16 gap-y-3 sm:grid-cols-3">
-              {[
-                { label: "Home", href: "#home" },
-                { label: "Restaurants", href: "#restaurants" },
-                { label: "How It Works", href: "#how-it-works" },
-                { label: "About", href: "#about" },
-                { label: "Contact", href: "#contact" },
-                { label: "Login", href: "#", action: "login" },
-                { label: "Sign Up", href: "#", action: "register" },
-              ].map((l) => (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  onClick={(e) => {
-                    if (l.action) {
-                      e.preventDefault();
-                      go(l.action === "login" ? "/login" : "/register");
-                    }
-                  }}
-                  className="text-sm font-medium text-[#6B7280] transition-colors hover:text-[#EA580C]"
+
+            {/* Platform */}
+            <div>
+              <h4 className="text-sm font-bold text-[#141414]">Platform</h4>
+              <div className="mt-4 flex flex-col gap-2.5">
+                {[
+                  { label: "Home", href: "#home" },
+                  { label: "Restaurants", href: "#restaurants" },
+                  { label: "Explore", href: "#explore" },
+                  { label: "My Orders", action: () => go(isLoggedIn ? "/orders" : "/login") },
+                ].map((l) => (
+                  <FooterLink key={l.label} item={l} />
+                ))}
+              </div>
+            </div>
+
+            {/* Support */}
+            <div>
+              <h4 className="text-sm font-bold text-[#141414]">Support</h4>
+              <div className="mt-4 flex flex-col gap-2.5">
+                {[
+                  { label: "Help Center", action: () => go("/home") },
+                  { label: "Contact", action: () => go("/home") },
+                  { label: "FAQs", action: () => go("/home") },
+                ].map((l) => (
+                  <FooterLink key={l.label} item={l} />
+                ))}
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-sm font-bold text-[#141414]">Legal</h4>
+              <div className="mt-4 flex flex-col gap-2.5">
+                {[
+                  { label: "Privacy Policy", action: () => go("/home") },
+                  { label: "Terms & Conditions", action: () => go("/home") },
+                  { label: "Login", action: () => go("/login") },
+                ].map((l) => (
+                  <FooterLink key={l.label} item={l} />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#EEEEEE] pt-6 sm:flex-row">
+            <p className="text-sm text-[#9CA3AF]">© 2026 KainGo. All rights reserved.</p>
+            <div className="flex gap-5">
+              {["Twitter", "Instagram", "Facebook"].map((s) => (
+                <button
+                  key={s}
+                  className="text-sm text-[#6B7280] transition-colors hover:text-[#EA580C]"
                 >
-                  {l.label}
-                </a>
+                  {s}
+                </button>
               ))}
             </div>
           </div>
-          <div id="contact" className="mt-12 border-t border-[#E5E7EB] pt-6" />
-          <p className="text-sm text-[#A0A0A0]">© 2026 BiteHub. All rights reserved.</p>
         </div>
       </footer>
     </div>
+  );
+}
+
+function FooterLink({ item }) {
+  if (item.href) {
+    return (
+      <a href={item.href} className="text-sm text-[#6B7280] transition-colors hover:text-[#EA580C]">
+        {item.label}
+      </a>
+    );
+  }
+  return (
+    <button onClick={item.action} className="text-left text-sm text-[#6B7280] transition-colors hover:text-[#EA580C]">
+      {item.label}
+    </button>
   );
 }
 

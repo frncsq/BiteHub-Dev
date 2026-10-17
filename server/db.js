@@ -16,6 +16,8 @@ if (process.env.NODE_ENV === 'development') {
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
         port: process.env.DB_PORT,
+        connectionTimeoutMillis: 5000,
+        statement_timeout: 10000,
     });
 }
 else {
@@ -24,6 +26,8 @@ else {
             rejectUnauthorized: false,
         },
         connectionString: `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:5432/${process.env.DB_NAME}?options=project=${process.env.ENDPOINT_ID}`,
+        connectionTimeoutMillis: 5000,
+        statement_timeout: 10000,
     })
 }
 

@@ -79,7 +79,7 @@ function AdminDashboard() {
         <div className="flex justify-between items-center">
           <div className="min-w-0 pr-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#171717] tracking-tight">System Status</h1>
-            <p className="text-[#6B7280] mt-1 text-sm">BiteHub Platform Overview</p>
+            <p className="text-[#6B7280] mt-1 text-sm">KainGo Platform Overview</p>
           </div>
         </div>
 

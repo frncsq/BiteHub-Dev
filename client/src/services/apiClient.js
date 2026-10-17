@@ -14,6 +14,42 @@ import {
 // Check if we're in mock mode with fallback data support
 const MOCK_MODE_ENABLED = false; // Set to false to use real backend API
 
+/** Normalize JWT from localStorage (plain string or legacy mock JSON). */
+export function getStoredAuthToken() {
+	const raw = localStorage.getItem('authToken')
+	if (raw == null) return null
+	const trimmed = String(raw).trim()
+	if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null
+
+	if (trimmed.startsWith('{')) {
+		try {
+			const parsed = JSON.parse(trimmed)
+			const t = parsed?.token ?? parsed?.accessToken ?? parsed?.jwt
+			return t && String(t).trim() ? String(t).trim() : null
+		} catch {
+			return null
+		}
+	}
+
+	if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+		try {
+			return JSON.parse(trimmed)
+		} catch {
+			return trimmed.slice(1, -1)
+		}
+	}
+
+	return trimmed
+}
+
+const PUBLIC_AUTH_PATHS = [
+	'/customer/login',
+	'/customer/register',
+	'/owner/login',
+	'/owner/register',
+	'/admin/login',
+]
+
 /** Empty string in Vite dev uses the dev-server proxy (see vite.config.js) so the browser never cross-posts to :5000. */
 export function getApiBaseUrl() {
 	// If VITE_API_URL is explicitly set to something else, use it.
@@ -41,6 +77,7 @@ export const createApiClient = () => {
 	const client = axios.create({
 		baseURL: baseURL, 
 		timeout: 15000,
+		withCredentials: true,
 		headers: {
 			'Content-Type': 'application/json',
 		}
@@ -49,9 +86,8 @@ export const createApiClient = () => {
 	// INTERCEPTOR: Attach Authorization header (JWT) automatically
 	client.interceptors.request.use(
 		(config) => {
-			const token = localStorage.getItem('authToken')
-			if (token && token !== 'null' && token !== 'undefined') {
-				// Attach token as Bearer <token>
+			const token = getStoredAuthToken()
+			if (token) {
 				config.headers.Authorization = `Bearer ${token}`
 			}
 			return config
@@ -66,15 +102,22 @@ export const createApiClient = () => {
 			const status = error.response?.status;
 			
 			if (status === 401) {
-				// Only clear and redirect if we're not already on the login page
-				// to avoid infinite loops.
+				const requestUrl = error.config?.url || ''
+				const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((p) => requestUrl.includes(p))
+				if (isPublicAuthRequest) {
+					return Promise.reject(error)
+				}
+
 				console.warn("🔒 Unauthorized access - 401");
 				
 				const isLoginPath = window.location.pathname === '/login' || 
+								  window.location.pathname === '/register' ||
 								  window.location.pathname === '/restaurant-login' ||
 								  window.location.pathname === '/admin-login';
 				
-				if (!isLoginPath) {
+				const hadToken = !!getStoredAuthToken()
+
+				if (!isLoginPath && hadToken) {
 					console.warn("Clearing invalid token and redirecting to login.");
 					localStorage.removeItem('authToken');
 					

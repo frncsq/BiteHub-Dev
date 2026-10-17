@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react'
-import { createApiClient } from './services/apiClient'
-import biteLogo from './assets/bite.png'
+import { createApiClient, getStoredAuthToken } from './services/apiClient'
+import kaingoLogo from './assets/kaingo-logo.svg'
 
 function Login() {
 	const navigate = useNavigate();
@@ -51,7 +51,12 @@ function Login() {
 			if (response.data.success) {
 				const { token } = response.data;
 				if (token) {
-					localStorage.setItem('authToken', token);
+					localStorage.setItem('authToken', String(token).trim());
+				}
+				if (!getStoredAuthToken()) {
+					setMessage('Login succeeded but no auth token was returned. Please try again.');
+					setMessageType('error');
+					return;
 				}
 				setMessage('Login successful! Redirecting...');
 				setMessageType('success');
@@ -88,16 +93,16 @@ function Login() {
 					onClick={() => navigate('/')}
 					className="mb-8 text-sm font-medium text-[#6B7280] hover:text-[#EA580C] flex items-center gap-1.5 transition-colors"
 				>
-					← Back to BiteHub
+					← Back to KainGo
 				</button>
 
 				{/* Logo */}
 				<div className="flex items-center gap-2.5 mb-8">
-					<div className="w-10 h-10 rounded-xl bg-[#EA580C] flex items-center justify-center">
-						<img src={biteLogo} alt="" className="w-6 h-6 object-contain" />
+					<div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+						<img src={kaingoLogo} alt="" className="w-10 h-10 object-contain" />
 					</div>
 					<span className="text-xl font-bold tracking-tight text-[#171717]">
-						Bite<span className="text-[#EA580C]">Hub</span>
+						Kain<span className="text-[#EA580C]">Go</span>
 					</span>
 				</div>
 

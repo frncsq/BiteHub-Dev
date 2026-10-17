@@ -10,10 +10,7 @@ import { hashPassword, comparePassword } from './components/hash.js';
 import { mockRestaurantsData, mockFoodItems, mockCategories } from './mockData.js';
 import ownerRoutes from './routes/owner.js';
 import adminRoutes from './routes/admin.js';
-import adsRoutes from './routes/ads.js';
 import { rotateFlashSale } from './components/flashSale.js';
-import { expireOutdatedAds } from './controllers/adsController.js';
-import { ADS_UPLOAD_DIR } from './middleware/uploadAds.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -259,54 +256,6 @@ const ensureFlashSaleTable = async () => {
     }
 };
 
-/** Advertisement tables (ads + ad_clicks) for banner and sponsored content. */
-const ensureAdsTables = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS ads (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        image VARCHAR(512),
-        link VARCHAR(512),
-        position VARCHAR(64) NOT NULL,
-        ad_type VARCHAR(32) DEFAULT 'banner',
-        status VARCHAR(20) DEFAULT 'active',
-        start_date TIMESTAMP,
-        end_date TIMESTAMP,
-        clicks INT DEFAULT 0,
-        impressions INT DEFAULT 0,
-        sort_order INT DEFAULT 0,
-        metadata JSONB DEFAULT '{}',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS ad_clicks (
-        id SERIAL PRIMARY KEY,
-        ad_id INT NOT NULL REFERENCES ads(id) ON DELETE CASCADE,
-        clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        user_agent TEXT,
-        ip_address VARCHAR(45)
-      );
-    `);
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_ads_position ON ads(position);');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status);');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_ad_clicks_ad_id ON ad_clicks(ad_id);');
-    console.log('✅ Ensured ads tables exist');
-  } catch (err) {
-    console.warn('⚠️ Could not ensure ads tables:', err.message);
-  }
-};
-
-/** Hourly check to deactivate ads past their end_date. */
-const scheduleAdExpiration = () => {
-  const run = async () => {
-    if (dbConnected) await expireOutdatedAds();
-  };
-  run();
-  setInterval(run, 60 * 60 * 1000);
-};
-
 const ensureRestaurantLogoUrlColumnIsText = async () => {
   try {
     await pool.query(`
@@ -386,11 +335,9 @@ const seedDatabase = async () => {
     await seedDatabase();
     await pool.query("UPDATE restaurants SET approval_status = 'approved', is_active = TRUE WHERE approval_status = 'pending' OR approval_status IS NULL");
     await ensureFlashSaleTable();
-    await ensureAdsTables();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();
     scheduleFlashSaleRotation();
-    scheduleAdExpiration();
   } catch (err) {
     dbConnected = false;
     console.log('⚠️  Database not available, using session storage for auth');
@@ -422,10 +369,26 @@ app.use((req, res, next) => {
 // 2. CORS: reflect request Origin so credentialed requests work from any dev URL
 //    (localhost / 127.0.0.1 / LAN IP). The cors package handles preflight reliably.
 // 2. CORS: Strict configuration for credentialed requests
+const allowedDevOrigins = new Set([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+]);
+
 app.use(
   cors({
-    origin: 'http://localhost:5173', // Allow exactly the frontend dev port
-    credentials: true, // If sessions/cookies are still needed for some parts
+    origin(origin, callback) {
+      // Same-origin / server-to-server requests may omit Origin
+      if (!origin || allowedDevOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      if (process.env.CLIENT_ORIGIN && origin === process.env.CLIENT_ORIGIN) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     exposedHeaders: ['Set-Cookie'],
@@ -444,6 +407,15 @@ const verifyToken = (req, res, next) => {
   }
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (req.session?.userId) {
+      req.userId = req.session.userId;
+      req.user = {
+        id: req.session.userId,
+        email: req.session.profile?.email,
+      };
+      console.log(`[AUTH] ✅ Session user ${req.userId} (no Bearer header)`);
+      return next();
+    }
     return res.status(401).json({ success: false, message: 'Authorization required (Bearer token missing)' });
   }
 
@@ -486,8 +458,6 @@ app.use(session({
 // Note: Some legacy routes use session, but we are prioritizing JWT
 app.use('/api/owner', ownerRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/uploads/ads', express.static(ADS_UPLOAD_DIR));
-app.use('/api/ads', adsRoutes);
 // Test Endpoint
 app.get('/api/test', (req, res) => {
   res.status(200).json({ success: true, message: "API working", timestamp: new Date() });
@@ -977,15 +947,30 @@ app.get('/api/orders', verifyToken, async (req, res) => {
       
       const orders = ordersResult.rows;
       
-      // For each order, get its items
-      for (let order of orders) {
+      // Load items for all orders in a single query instead of one query per
+      // order (avoids an N+1 round-trip that saturates the connection pool).
+      const orderIds = orders.map((order) => order.id);
+      if (orderIds.length > 0) {
         const itemsResult = await pool.query(`
           SELECT oi.*, COALESCE(mi.item_name, 'Unknown Item') as name, mi.image_url 
           FROM order_items oi 
           LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id 
-          WHERE oi.order_id = $1
-        `, [order.id]);
-        order.items = itemsResult.rows;
+          WHERE oi.order_id = ANY($1::int[])
+          ORDER BY oi.id
+        `, [orderIds]);
+        
+        const itemsByOrder = new Map(orderIds.map((id) => [id, []]));
+        for (const item of itemsResult.rows) {
+          const bucket = itemsByOrder.get(item.order_id);
+          if (bucket) bucket.push(item);
+        }
+        for (const order of orders) {
+          order.items = itemsByOrder.get(order.id) || [];
+        }
+      } else {
+        for (const order of orders) {
+          order.items = [];
+        }
       }
       
       return res.status(200).json({ success: true, orders });
@@ -1409,7 +1394,7 @@ app.get('/api/cart', verifyToken, async (req, res) => {
           price: isNaN(finalPrice) ? 0 : finalPrice,
           image: row.image_url || row.image || 'https://images.unsplash.com/photo-1546700854-955607ea004e?w=500&q=80',
           description: row.description || "Freshly made with premium ingredients.",
-          restaurant: row.restaurant || row.business_name || 'BiteHub Partner',
+          restaurant: row.restaurant || row.business_name || 'KainGo Partner',
           restaurant_id: row.restaurant_id,
           quantity: sItem.quantity,
           size: sItem.size,
@@ -1451,7 +1436,7 @@ app.get('/api/cart', verifyToken, async (req, res) => {
           price: finalPrice,
           image: item.image || 'https://images.unsplash.com/photo-1546700854-955607ea004e?w=500&q=80',
           description: item.description || 'Freshly made with premium ingredients.',
-          restaurant: item.restaurant || 'BiteHub Partner',
+          restaurant: item.restaurant || 'KainGo Partner',
           quantity: i.quantity,
           size: i.size
         };
@@ -1670,7 +1655,7 @@ app.post('/api/customer/logout', (req, res) => {
 // ==========================================
 
 app.get('/', (req, res) => {
-  res.json({ message: 'BiteHub API Server', version: '1.0.0', status: 'running' });
+  res.json({ message: 'KainGo API Server', version: '1.0.0', status: 'running' });
 });
 
 // 404 Not Found Handler

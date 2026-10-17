@@ -20,7 +20,6 @@ import {
 import { useTheme } from "../context/ThemeContext"
 import { createApiClient } from "../services/apiClient"
 import CustomerSidebar from "../components/CustomerSidebar"
-import AdBanner from "../components/ads/AdBanner"
 import { calculateDistance, formatDistance } from "../utils/distance"
 
 const RestaurantMenuPage = () => {
@@ -267,7 +266,7 @@ const RestaurantMenuPage = () => {
 
             <div className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-[72px]' : 'md:pl-[240px]'}`}>
                 {/* Restaurant Header */}
-                <div className="relative h-[200px] w-full overflow-hidden">
+                <div className="relative h-[168px] sm:h-[200px] w-full overflow-hidden">
                     <div className="absolute inset-0 z-0">
                         <img 
                             src={restaurant.image} 
@@ -280,10 +279,10 @@ const RestaurantMenuPage = () => {
                         }}></div>
                     </div>
                     
-                    <div className="relative z-10 h-full max-w-5xl mx-auto px-6 flex flex-col justify-end pb-6">
+                    <div className="relative z-10 h-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col justify-end pb-5">
                         <button 
                             onClick={() => navigate(-1)}
-                            className="absolute top-5 left-6 md:left-0 flex items-center justify-center w-9 h-9 rounded-xl transition-all"
+                            className="absolute top-5 left-4 sm:left-6 md:left-0 flex items-center justify-center w-9 h-9 rounded-xl transition-all"
                             style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: textPrimary }}
                         >
                             <ArrowLeft size={16} />
@@ -312,20 +311,31 @@ const RestaurantMenuPage = () => {
                     </div>
                 </div>
 
-                <main className="max-w-5xl mx-auto px-6 py-6">
+                                <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 pb-24 md:pb-6">
+                    {/* Search (mobile) */}
+                    <div className="relative mb-3 flex items-center md:hidden">
+                        <Search size={15} className="absolute left-3" style={{ color: textSecondary }} />
+                        <input
+                            type="text"
+                            placeholder="Search menu..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="h-11 w-full rounded-xl pl-9 pr-3 text-sm outline-none"
+                            style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, color: textPrimary }}
+                        />
+                    </div>
+
                     {/* Category Tabs & Search */}
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-1">
+                    <div className="mb-4 flex items-center gap-4">
+                        <div className="-mx-1 flex flex-1 items-center gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
                             {categories.map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveCategory(cat)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                                        activeCategory === cat 
-                                        ? 'bg-[#EA580C] text-white' 
-                                        : ''
+                                    className={`h-9 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition-all ${
+                                        activeCategory === cat ? 'bg-[#EA580C] text-white' : ''
                                     }`}
-                                    style={activeCategory !== cat ? { 
+                                    style={activeCategory !== cat ? {
                                         color: textSecondary,
                                         backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'
                                     } : {}}
@@ -342,69 +352,84 @@ const RestaurantMenuPage = () => {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-8 pr-3 py-2 rounded-xl text-xs outline-none transition-all w-40 focus:w-56"
-                                style={{ 
-                                    backgroundColor: cardBg, 
-                                    border: `1px solid ${borderColor}`, 
-                                    color: textPrimary 
+                                style={{
+                                    backgroundColor: cardBg,
+                                    border: `1px solid ${borderColor}`,
+                                    color: textPrimary
                                 }}
                             />
                         </div>
                     </div>
 
-                    <AdBanner placement="menu_between" className="mb-4" />
-
                     {/* Menu Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
                         {filteredMenu.length === 0 ? (
-                            <div className="col-span-full py-28 text-center">
+                            <div className="col-span-full py-24 text-center">
                                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
                                     <Utensils size={28} style={{ color: textSecondary }} />
                                 </div>
                                 <p className="text-sm font-medium" style={{ color: textSecondary }}>No items found</p>
                             </div>
                         ) : (
-                            filteredMenu.map(item => (
-                                <div 
-                                    key={item.id}
-                                    className="group flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all hover:shadow-md"
-                                    style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
-                                    onClick={() => { 
-                                        setSelectedFood(item); 
-                                        setFoodQuantity(1);
-                                        setShowFoodModal(true); 
-                                    }}
-                                >
-                                    <div className="relative aspect-[4/3] overflow-hidden">
-                                        <img 
-                                            src={item.image} 
-                                            alt={item.name} 
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                        <div className="absolute top-2 right-2">
-                                            <button 
+                            filteredMenu.map(item => {
+                                const isOOS = item.current_stock !== null && item.current_stock !== undefined && item.current_stock <= 0;
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className="group flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all hover:shadow-md"
+                                        style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}`, opacity: isOOS ? 0.75 : 1 }}
+                                        onClick={() => {
+                                            if (isOOS) return;
+                                            setSelectedFood(item);
+                                            setFoodQuantity(1);
+                                            setShowFoodModal(true);
+                                        }}
+                                    >
+                                        <div className="relative aspect-[4/3] overflow-hidden">
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                loading="lazy"
+                                                className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isOOS ? 'grayscale' : ''}`}
+                                            />
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
-                                                className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                                                className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center transition-all"
                                                 style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
+                                                aria-label="Toggle favorite"
                                             >
                                                 <Heart size={13} className={favorites.has(item.id) ? 'fill-red-500 text-red-500' : 'text-white'} />
                                             </button>
+                                            {isOOS && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/45">
+                                                    <span className="rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">Sold out</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
 
-                                    <div className="p-3 flex flex-col flex-1">
-                                        <h3 className="text-sm font-semibold mb-1.5 line-clamp-1" style={{ color: textPrimary }}>{item.name}</h3>
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <span className="text-sm font-bold text-[#EA580C]">₱{Number(item.price).toFixed(2)}</span>
-                                            <button 
-                                                className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                                                style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}
-                                            >
-                                                <Plus size={14} style={{ color: textSecondary }} />
-                                            </button>
+                                        <div className="p-2 sm:p-2.5 flex flex-col flex-1">
+                                            <h3 className="text-[13px] font-semibold leading-snug line-clamp-2 min-h-[2.25rem]" style={{ color: textPrimary }}>{item.name}</h3>
+                                            <div className="mt-0.5 flex items-center gap-1 text-[11px]" style={{ color: textSecondary }}>
+                                                <Star size={10} className="shrink-0 text-amber-400 fill-amber-400" />
+                                                <span className="font-semibold" style={{ color: textPrimary }}>{item.rating > 0 ? item.rating : 'New'}</span>
+                                                <span className="truncate">{item.category ? `· ${item.category}` : ''}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-auto pt-1.5">
+                                                <span className="text-[15px] font-bold text-[#EA580C]">₱{Number(item.price).toFixed(0)}</span>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); addToCart(item, 1); }}
+                                                    disabled={isOOS}
+                                                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition active:scale-90 ${isOOS ? 'cursor-not-allowed' : 'hover:opacity-90'}`}
+                                                    style={isOOS ? { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : '#F3F4F6', color: isDarkMode ? '#6B7280' : '#9CA3AF' } : { backgroundColor: '#EA580C', color: '#fff' }}
+                                                    aria-label="Add to cart"
+                                                >
+                                                    <Plus size={15} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </main>
@@ -588,7 +613,7 @@ const RestaurantMenuPage = () => {
 
             {/* Notification Toast */}
             {message && (
-                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl shadow-xl animate-fade-in-up flex items-center gap-2 ${
+                <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-xl shadow-xl animate-fade-in-up flex items-center gap-2 ${
                     messageType === "success" ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
                 }`}>
                     <span className="text-sm font-medium">{message}</span>

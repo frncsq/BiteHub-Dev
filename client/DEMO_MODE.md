@@ -1,8 +1,8 @@
-# BiteHub - Demo Mode Guide
+# KainGo - Demo Mode Guide
 
 ## Overview
 
-BiteHub is now fully functional in **Demo Mode** without requiring a backend server. All features work using mock data stored locally in your browser.
+KainGo is now fully functional in **Demo Mode** without requiring a backend server. All features work using mock data stored locally in your browser.
 
 ## Demo Credentials
 

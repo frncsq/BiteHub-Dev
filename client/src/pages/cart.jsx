@@ -100,7 +100,7 @@ function Cart() {
 
     const groupedCart = cartItems.reduce((acc, item) => {
         const storeId = item.restaurant_id || item.restaurantId || item.restaurant || 'Unknown';
-        const storeName = item.restaurant || 'BiteHub Partner';
+        const storeName = item.restaurant || 'KainGo Partner';
         if (!acc[storeId]) acc[storeId] = { storeName, items: [], storeId };
         acc[storeId].items.push(item);
         return acc;

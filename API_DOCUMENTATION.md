@@ -1,4 +1,4 @@
-# BiteHub API Documentation
+# KainGo API Documentation
 
 ## Base URL
 ```

@@ -25,7 +25,6 @@ import AdminRestaurants from "./pages/admin/restaurants.jsx";
 import AdminUsers from "./pages/admin/users.jsx";
 import AdminOrders from "./pages/admin/orders.jsx";
 import AdminPayments from "./pages/admin/payments.jsx";
-import AdminAds from "./pages/admin/ads.jsx";
 
 import RestaurantMenu from "./pages/restaurant-menu.jsx";
 
@@ -71,7 +70,6 @@ function App() {
            <Route path="users" element={<AdminUsers />} />
            <Route path="orders" element={<AdminOrders />} />
            <Route path="payments" element={<AdminPayments />} />
-           <Route path="ads" element={<AdminAds />} />
            <Route path="analytics" element={<AdminDashboard />} /> {/* Maps to dashboard for now */}
            {/* Fallback internal redirect */}
            <Route index element={<Navigate to="/admin/dashboard" replace />} />

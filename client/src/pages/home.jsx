@@ -48,12 +48,8 @@ import {
 import { useTheme } from "../context/ThemeContext"
 import { mockRestaurantsData, mockFoodItems, mockCategories, mockOrderService, mockCartService, mockAuthService } from "../services/mockData"
 import { createApiClient } from "../services/apiClient"
-import AdCarousel from "../components/ads/AdCarousel"
-import AdBanner from "../components/ads/AdBanner"
-import SidebarAd from "../components/ads/SidebarAd"
-import SponsoredCard from "../components/ads/SponsoredCard"
-import biteLogo from "../assets/bite.png"
 import CustomerSidebar from "../components/CustomerSidebar"
+import FoodMenuCard from "../components/FoodMenuCard"
 import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
 import { calculateDistance, formatDistance } from "../utils/distance"
 
@@ -119,7 +115,7 @@ const HomePage = () => {
         setNotifications([
             {
                 id: 'sys-1',
-                title: 'Welcome to BiteHub!',
+                title: 'Welcome to KainGo!',
                 message: 'Explore our wide variety of restaurants and place your first order today!',
                 time: new Date().toISOString(),
                 type: 'system',
@@ -177,9 +173,8 @@ const HomePage = () => {
     const [showRestaurantDialog, setShowRestaurantDialog] = useState(false)
     const [selectedRestaurant, setSelectedRestaurant] = useState(null)
     // Explore Menu state
-    const [activeCategoryFilter, setActiveCategoryFilter] = useState(null)
+    const [activeCategoryFilter, setActiveCategoryFilter] = useState('All')
     const [cuisineFilter, setCuisineFilter] = useState('All')
-    const [hoveredFoodId, setHoveredFoodId] = useState(null)
     // Restaurant Owner State
     const [liveOrders, setLiveOrders] = useState([])
     // Food Detail Modal State
@@ -778,7 +773,7 @@ const HomePage = () => {
     const total = subtotal + tax + deliveryFee
 
     // Filter foods (search + price + rating + category + cuisine)
-    const filteredFoods = activeCategoryFilter === null ? [] : popularFoods.filter((food) => {
+    const filteredFoods = popularFoods.filter((food) => {
         const name = food.name || ''
         const restaurantName = food.restaurant || ''
         const matchesSearch =
@@ -954,7 +949,7 @@ const HomePage = () => {
             <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.background }}>
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
-                    <p style={{ color: colors.text }} className="text-lg">Loading BiteHub...</p>
+                    <p style={{ color: colors.text }} className="text-lg">Loading KainGo...</p>
                 </div>
             </div>
         )
@@ -1090,7 +1085,7 @@ const HomePage = () => {
                 </header>
 
                 {/* PAGE CONTENT */}
-                <main className="bh-container py-4 pb-24 sm:py-6 md:py-8 md:pb-20">
+                <main className="bh-container py-4 pb-24 sm:py-6 sm:pb-24 md:py-8 md:pb-20">
                     {/* Error/Success Messages - Floating Toast */}
                     {(error || message) && (
                         <div className={`fixed top-20 left-4 right-4 z-[100] sm:left-auto sm:right-6 sm:min-w-[300px] sm:w-auto rounded-xl border px-4 py-3 text-sm flex items-center justify-between animate-fade-in font-medium ${messageType === 'success'
@@ -1140,12 +1135,7 @@ const HomePage = () => {
                                 </button>
                             </div>
 
-                            {/* Promotional Banner / Slider (API-driven ads) */}
-                            <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="md:col-span-2 min-h-[9rem]">
-                                    <AdCarousel placement="homepage_top" className="h-full" />
-                                </div>
-                                <div className="flex flex-col gap-4">
+                            <section>
                                 <div className={`rounded-xl p-4 flex flex-col justify-between border ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-white border-[#E5E7EB]'}`}>
                                     <div>
                                         <h3 className={`text-sm font-bold mb-0.5 ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Delivery ETA</h3>
@@ -1175,13 +1165,6 @@ const HomePage = () => {
                                         <Truck size={12} className="text-[#EA580C]" /> Real-time tracking enabled.
                                     </div>
                                 </div>
-                                    <SidebarAd placement="homepage_sidebar" className="hidden md:flex" />
-                                </div>
-                            </section>
-
-                            <section>
-                                <h2 className={`mb-3 text-lg font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Sponsored &amp; Partners</h2>
-                                <SponsoredCard placement="sponsored_card" limit={3} />
                             </section>
 
                             {/* Featured Restaurants Carousel */}
@@ -1654,277 +1637,91 @@ const HomePage = () => {
                                 )}
                             </section>
 
-                            <section className="mt-2">
-                                <AdBanner placement="footer" />
-                            </section>
-
                             {/* ====== EXPLORE MENU ====== */}
                             <section ref={browseFoodRef} className="scroll-mt-24">
                                 {/* Header */}
-                                <div className="mb-5">
-                                    <h2 className={`text-xl font-black mb-0.5 ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'} tracking-tight`}>Explore Menu</h2>
-                                    <p className={`text-xs ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
-                                        {activeCategoryFilter ? `Showing ${activeCategoryFilter} items` : 'Pick a category to start browsing'}
-                                    </p>
+                                <div className="mb-3 flex items-end justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <h2 className={`text-lg font-black tracking-tight ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Explore Menu</h2>
+                                        <p className={`text-[11px] ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
+                                            {activeCategoryFilter === 'All' ? 'All available dishes' : `Showing ${activeCategoryFilter}`}
+                                        </p>
+                                    </div>
+                                    <span className={`shrink-0 text-[11px] font-semibold ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
+                                        {filteredFoods.length} items
+                                    </span>
                                 </div>
 
-                                {/* Category Grid */}
-                                <div className="mb-6">
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                                        {['All', 'Main', 'Drinks', 'Snack', 'Dessert', 'Budget Meal', ...categories.map(c => c.name)]
-                                            .filter((v, i, a) => a.indexOf(v) === i)
-                                            .map(cat => {
-                                                const isActive = activeCategoryFilter === cat;
-                                                const catIcons = { All: '🍽️', Main: '🍛', Drinks: '🧋', Snack: '🍟', Dessert: '🍰', 'Budget Meal': '🍱' };
-                                                const icon = catIcons[cat] || '🏷️';
-                                                const itemCount = cat === 'All' ? popularFoods.length : popularFoods.filter(f => (f.category || '').toLowerCase() === cat.toLowerCase()).length;
-                                                return (
-                                                    <button
-                                                        key={cat}
-                                                        onClick={() => setActiveCategoryFilter(isActive ? null : cat)}
-                                                        className={`relative flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border transition-all duration-300 group
-                                                            ${isActive
-                                                                ? 'border-[#EA580C] bg-[#EA580C] text-white'
-                                                                : isDarkMode
-                                                                    ? 'border-[#2A2A2A] bg-[#1A1A1A] text-[#A0A0A0] hover:border-[#3A3A3A] hover:bg-[#222222]'
-                                                                    : 'border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#EA580C] hover:bg-[#FFF7F0]'
-                                                            }`}
-                                                    >
-                                                        <span className={`text-2xl sm:text-3xl transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</span>
-                                                        <span className={`text-[11px] sm:text-xs font-bold text-center leading-tight ${isActive ? 'text-white' : ''}`}>{cat}</span>
-                                                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : isDarkMode ? 'bg-[#111111] text-[#A0A0A0]' : 'bg-[#FAFAFA] text-[#6B7280]'}`}>{itemCount} items</span>
-                                                    </button>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-
-                                {/* Items Area - Only after category selection */}
-                                {activeCategoryFilter !== null && (
-                                    <div className="animate-fade-in">
-                                        {/* Filter Bar */}
-                                        <div className={`flex flex-wrap gap-3 items-center mb-5 p-3 rounded-xl border ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-white border-[#E5E7EB]'}`}>
-                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A] text-[#A0A0A0]' : 'bg-[#FAFAFA] border-[#E5E7EB] text-[#6B7280]'}`}>
-                                                <span className="font-medium text-xs">Price</span>
-                                                <input type="range" min="5" max="2000" value={priceFilter} onChange={(e) => setPriceFilter(Number(e.target.value))} className="w-20 accent-[#EA580C]" />
-                                                <span className="text-[#EA580C] font-bold text-xs">{priceFilter === 2000 ? 'Any' : `≤₱${priceFilter}`}</span>
-                                            </div>
-                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A] text-[#A0A0A0]' : 'bg-[#FAFAFA] border-[#E5E7EB] text-[#6B7280]'}`}>
-                                                <span className="text-xs font-medium">Rating</span>
-                                                <div className="flex gap-0.5">
-                                                    {[1, 2, 3, 4, 5].map(n => (
-                                                        <button key={n} onClick={() => setMinRating(minRating === n ? 0 : n)}>
-                                                            <Star size={14} className={n <= minRating ? 'text-yellow-400 fill-yellow-400' : isDarkMode ? 'text-[#3A3A3A] fill-[#3A3A3A]' : 'text-[#D1D5DB] fill-[#D1D5DB]'} />
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <span className={`ml-auto text-xs font-bold ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>{filteredFoods.length} items</span>
-                                        </div>
-
-                                        {/* Food Grid */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-                                            {filteredFoods.length === 0 ? (
-                                                <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#1A1A1A]' : 'bg-[#FAFAFA]'}`}>
-                                                        <Utensils size={28} className={isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'} />
-                                                    </div>
-                                                    <p className={`font-bold text-sm ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>No items in "{activeCategoryFilter}"</p>
-                                                    <p className={`text-xs max-w-xs text-center ${isDarkMode ? 'text-[#6B7280]' : 'text-[#9CA3AF]'}`}>Try adjusting your filters or select a different category</p>
-                                                    <button onClick={() => { setPriceFilter(2000); setMinRating(0); }} className="mt-2 text-xs font-semibold text-[#EA580C] hover:text-orange-600 transition">Reset Filters</button>
-                                                </div>
-                                            ) : filteredFoods.map((food) => {
-                                                const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock <= 0;
-                                                const isLowStock = !isOOS && food.daily_stock > 0 && food.current_stock !== null && (food.current_stock / food.daily_stock) <= 0.25;
-                                                const stockLabel = food.daily_stock !== null && food.daily_stock >= 0
-                                                    ? isOOS ? 'Out of Stock' : isLowStock ? `Low: ${food.current_stock} left` : `${food.current_stock} left`
-                                                    : null;
-                                                return (
-                                                    <div key={food.id} onMouseEnter={() => setHoveredFoodId(food.id)} onMouseLeave={() => setHoveredFoodId(null)}
-                                                        className={`relative border rounded-xl overflow-hidden transition-all duration-300 cursor-pointer group flex flex-col h-full ${isOOS
-                                                            ? isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A] opacity-75' : 'bg-[#FAFAFA] border-[#E5E7EB] opacity-75'
-                                                            : isDarkMode
-                                                                ? 'bg-[#1A1A1A] border-[#2A2A2A] hover:border-[#3A3A3A] hover:-translate-y-1'
-                                                                : 'bg-white border-[#E5E7EB] hover:border-[#D1D5DB] hover:-translate-y-1'
-                                                        }`}>
-                                                        <div className={`relative h-32 overflow-hidden ${isDarkMode ? 'bg-[#111111]' : 'bg-[#FAFAFA]'}`}>
-                                                            <img src={food.image} alt={food.name} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isOOS ? 'grayscale' : ''}`} onError={e => e.target.style.display = 'none'} />
-                                                            <button onClick={(e) => { e.stopPropagation(); toggleFavorite(food.id); }} className={`absolute top-2 right-2 p-1.5 rounded-full border transition-transform hover:scale-110 z-10 ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-white border-[#E5E7EB]'}`}>
-                                                                <Heart size={14} className={favorites.has(food.id) ? 'text-red-500 fill-red-500' : isDarkMode ? 'text-[#A0A0A0]' : 'text-[#171717]'} />
-                                                            </button>
-                                                            {food.discount > 0 && (<div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">-{food.discount}%</div>)}
-                                                            {stockLabel && (<div className={`absolute bottom-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isOOS ? 'bg-red-600 text-white' : isLowStock ? 'bg-[#EA580C] text-white' : 'bg-emerald-600 text-white'}`}>{stockLabel}</div>)}
-                                                            {isOOS && (<div className="absolute inset-0 flex items-center justify-center bg-gray-900/60"><span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full">OUT OF STOCK</span></div>)}
-                                                        </div>
-                                                        <div className="p-2.5" onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}>
-                                                            <div className="flex items-start justify-between gap-2 mb-1">
-                                                                <h3 className={`font-bold text-[13px] leading-tight truncate flex-1 ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>{food.name}</h3>
-                                                                <div className={`flex items-center gap-1 flex-shrink-0 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A]' : 'bg-[#FAFAFA] border-[#E5E7EB]'}`}>
-                                                                    <Star size={10} className="text-yellow-400 fill-yellow-400" />
-                                                                    <span className={`text-[10px] font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>{food.rating > 0 ? food.rating : 'New'}</span>
-                                                                    {food.reviews > 0 && (<span className={`text-[9px] font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>({food.reviews})</span>)}
-                                                                </div>
-                                                            </div>
-                                                            <p className={`text-[11px] font-medium mb-3 truncate ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>{food.description || food.restaurant}</p>
-                                                            <div className="flex items-end justify-between mb-1 mt-auto">
-                                                                <div className="flex flex-col">
-                                                                    {food.category === 'Drinks' ? (<><span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>🧋 View Sizes</span><span className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>₱{Number(food.half_price || food.price || 0).toFixed(2)}–₱{Number(food.large_price || food.price || 0).toFixed(2)}</span></>) : food.category === 'Budget Meal' ? (<><span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'}`}>🍱 Combo</span><span className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>From ₱{Number(food.price || 0).toFixed(2)}</span></>) : (<span className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>₱{((food.price || 0) * (1 - (food.discount || 0) / 100)).toFixed(2)}</span>)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="px-3 pb-3 mt-auto flex gap-2">
-                                                            <button onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }} disabled={isOOS} className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all ${isOOS ? 'bg-[#F5F5F5] text-[#9CA3AF] cursor-not-allowed border border-transparent' : isDarkMode ? 'bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] hover:bg-[#EA580C]/20' : 'bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] hover:bg-[#EA580C]/20'}`}>
-                                                                <ShoppingCart size={16} strokeWidth={2.5} />
-                                                            </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }} disabled={isOOS} className={`flex-1 flex items-center justify-center text-[11px] font-semibold py-2 rounded-xl transition-all ${isOOS ? 'bg-[#F5F5F5] text-[#9CA3AF] cursor-not-allowed' : isDarkMode ? 'bg-[#EA580C] text-white hover:bg-orange-600' : 'bg-[#EA580C] text-white hover:bg-orange-600'}`}>
-                                                                {food.category === 'Budget Meal' ? 'Order' : 'Checkout'}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Main Content Layout */}
-                                <div className="w-full">
-                                    {/* Main Food Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
-                                        {filteredFoods.length === 0 ? (
-                                            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-3">
-                                                <Utensils size={40} className={isDarkMode ? 'text-[#3A3A3A]' : 'text-[#D1D5DB]'} />
-                                                <p className={`font-semibold text-lg ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>No menu items found</p>
-                                                <p className={`text-sm ${isDarkMode ? 'text-[#6B7280]' : 'text-[#9CA3AF]'}`}>Try adjusting your filters or check back later</p>
-                                            </div>
-                                        ) : filteredFoods.map((food) => {
-                                            const isOOS = food.current_stock !== null && food.current_stock !== undefined && food.current_stock <= 0;
-                                            const isLowStock = !isOOS && food.daily_stock > 0 && food.current_stock !== null && (food.current_stock / food.daily_stock) <= 0.25;
-                                            const stockLabel = food.daily_stock !== null && food.daily_stock >= 0
-                                                ? isOOS ? 'Out of Stock'
-                                                    : isLowStock ? `Low: ${food.current_stock} left`
-                                                        : `${food.current_stock} left`
-                                                : null;
-
+                                {/* Category Chips */}
+                                <div className="-mx-3 mb-3 flex gap-2 overflow-x-auto px-3 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:px-0">
+                                    {['All', 'Main', 'Drinks', 'Snack', 'Dessert', 'Budget Meal', ...categories.map(c => c.name)]
+                                        .filter((v, i, a) => a.indexOf(v) === i)
+                                        .map(cat => {
+                                            const isActive = activeCategoryFilter === cat;
+                                            const catIcons = { All: '🍽️', Main: '🍛', Drinks: '🧋', Snack: '🍟', Dessert: '🍰', 'Budget Meal': '🍱' };
+                                            const icon = catIcons[cat] || '🏷️';
                                             return (
-                                                <div
-                                                    key={food.id}
-                                                    onMouseEnter={() => setHoveredFoodId(food.id)}
-                                                    onMouseLeave={() => setHoveredFoodId(null)}
-                                                    className={`relative border rounded-xl overflow-hidden transition-all duration-300 cursor-pointer group flex flex-col h-full ${isOOS
-                                                        ? isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A] opacity-75' : 'bg-[#FAFAFA] border-[#E5E7EB] opacity-75'
+                                                <button
+                                                    key={cat}
+                                                    onClick={() => setActiveCategoryFilter(cat)}
+                                                    className={`flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[12px] font-semibold transition ${isActive
+                                                        ? 'border-[#EA580C] bg-[#EA580C] text-white'
                                                         : isDarkMode
-                                                            ? 'bg-[#1A1A1A] border-[#2A2A2A] hover:border-[#3A3A3A] hover:-translate-y-1'
-                                                            : 'bg-white border-[#E5E7EB] hover:border-[#D1D5DB] hover:-translate-y-1'
+                                                            ? 'border-[#2A2A2A] bg-[#1A1A1A] text-[#A0A0A0] hover:border-[#3A3A3A]'
+                                                            : 'border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#EA580C] hover:text-[#EA580C]'
                                                         }`}
                                                 >
-                                                    {/* Food Image */}
-                                                    <div className={`relative h-32 overflow-hidden ${isDarkMode ? 'bg-[#111111]' : 'bg-[#FAFAFA]'}`}>
-                                                        <img
-                                                            src={food.image}
-                                                            alt={food.name}
-                                                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isOOS ? 'grayscale' : ''}`}
-                                                            onError={e => e.target.style.display = 'none'}
-                                                        />
-                                                        {/* Favorite */}
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); toggleFavorite(food.id); }}
-                                                            className={`absolute top-2 right-2 p-1.5 rounded-full border transition-transform hover:scale-110 z-10 ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-white border-[#E5E7EB]'}`}
-                                                        >
-                                                            <Heart size={14} className={favorites.has(food.id) ? 'text-red-500 fill-red-500' : isDarkMode ? 'text-[#A0A0A0]' : 'text-[#171717]'} />
-                                                        </button>
-                                                        {food.discount > 0 && (
-                                                            <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                                                                -{food.discount}%
-                                                            </div>
-                                                        )}
-                                                        {stockLabel && (
-                                                            <div className={`absolute bottom-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isOOS ? 'bg-red-600 text-white'
-                                                                : isLowStock ? 'bg-[#EA580C] text-white'
-                                                                    : 'bg-emerald-600 text-white'
-                                                                }`}>
-                                                                {stockLabel}
-                                                            </div>
-                                                        )}
-                                                        {isOOS && (
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/60">
-                                                                <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full">
-                                                                    OUT OF STOCK
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="p-2.5" onClick={() => { if (!isOOS) { setSelectedFood(food); setSelectedModalSize('Medium'); setShowFoodModal(true); } }}>
-                                                        <div className="flex items-start justify-between gap-2 mb-1">
-                                                            <h3 className={`font-bold text-[13px] leading-tight truncate flex-1 ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>{food.name}</h3>
-                                                            <div className={`flex items-center gap-1 flex-shrink-0 px-1.5 py-0.5 rounded-md border ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A]' : 'bg-[#FAFAFA] border-[#E5E7EB]'}`}>
-                                                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
-                                                                <span className={`text-[10px] font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>{food.rating > 0 ? food.rating : 'New'}</span>
-                                                                {food.reviews > 0 && (
-                                                                    <span className={`text-[9px] font-medium ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>({food.reviews})</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <p className={`text-[11px] font-medium mb-3 truncate ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
-                                                            {food.description || food.restaurant}
-                                                        </p>
-
-                                                        <div className="flex items-end justify-between mb-1 mt-auto">
-                                                            <div className="flex flex-col">
-                                                                {food.category === 'Drinks' ? (
-                                                                    <>
-                                                                        <span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'
-                                                                            }`}>🧋 View Sizes</span>
-                                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
-                                                                            ₱{Number(food.half_price || food.price || 0).toFixed(2)}–₱{Number(food.large_price || food.price || 0).toFixed(2)}
-                                                                        </span>
-                                                                    </>
-                                                                ) : food.category === 'Budget Meal' ? (
-                                                                    <>
-                                                                        <span className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-md mb-1 w-fit ${isDarkMode ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-50 text-purple-600'
-                                                                            }`}>🍱 Combo</span>
-                                                                        <span className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
-                                                                            From ₱{Number(food.price || 0).toFixed(2)}
-                                                                        </span>
-                                                                    </>
-                                                                ) : (
-                                                                    <span className={`text-sm font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
-                                                                        ₱{((food.price || 0) * (1 - (food.discount || 0) / 100)).toFixed(2)}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="px-3 pb-3 mt-auto flex gap-2">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); addToCart(food, null, false); }}
-                                                            disabled={isOOS}
-                                                            className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl transition-all ${isOOS
-                                                                ? isDarkMode ? 'bg-[#111111] text-[#6B7280] cursor-not-allowed border border-transparent' : 'bg-[#F5F5F5] text-[#9CA3AF] cursor-not-allowed border border-transparent'
-                                                                : isDarkMode
-                                                                    ? 'bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] hover:bg-[#EA580C]/20'
-                                                                    : 'bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] hover:bg-[#EA580C]/20'
-                                                                }`}
-                                                        >
-                                                            <ShoppingCart size={16} strokeWidth={2.5} />
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); addToCart(food, null, true); }}
-                                                            disabled={isOOS}
-                                                            className={`flex-1 flex items-center justify-center text-[11px] font-semibold py-2 rounded-xl transition-all ${isOOS
-                                                                ? isDarkMode ? 'bg-[#111111] text-[#6B7280] cursor-not-allowed' : 'bg-[#F5F5F5] text-[#9CA3AF] cursor-not-allowed'
-                                                                : isDarkMode ? 'bg-[#EA580C] text-white hover:bg-orange-600' : 'bg-[#EA580C] text-white hover:bg-orange-600'
-                                                                }`}
-                                                        >
-                                                            {food.category === 'Budget Meal' ? 'Order' : 'Checkout'}
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                    <span className="text-sm leading-none">{icon}</span>
+                                                    {cat}
+                                                </button>
                                             );
                                         })}
+                                </div>
+
+                                {/* Filter Row */}
+                                <div className={`mb-3 flex items-center gap-2 overflow-x-auto rounded-xl border px-2.5 py-2 scrollbar-none ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-white border-[#E5E7EB]'}`}>
+                                    <div className={`flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A] text-[#A0A0A0]' : 'bg-[#FAFAFA] border-[#E5E7EB] text-[#6B7280]'}`}>
+                                        <Sliders size={12} />
+                                        <span className="font-semibold">Price</span>
+                                        <input type="range" min="5" max="2000" value={priceFilter} onChange={(e) => setPriceFilter(Number(e.target.value))} className="w-16 accent-[#EA580C]" aria-label="Maximum price" />
+                                        <span className="font-bold text-[#EA580C]">{priceFilter === 2000 ? 'Any' : `≤₱${priceFilter}`}</span>
                                     </div>
+                                    <div className={`flex h-8 shrink-0 items-center gap-1 rounded-lg border px-2.5 ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A]' : 'bg-[#FAFAFA] border-[#E5E7EB]'}`}>
+                                        <span className={`text-[11px] font-semibold ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Rating</span>
+                                        <div className="flex gap-0.5">
+                                            {[1, 2, 3, 4, 5].map(n => (
+                                                <button key={n} onClick={() => setMinRating(minRating === n ? 0 : n)} aria-label={`Minimum ${n} stars`}>
+                                                    <Star size={13} className={n <= minRating ? 'text-yellow-400 fill-yellow-400' : isDarkMode ? 'text-[#3A3A3A] fill-[#3A3A3A]' : 'text-[#D1D5DB] fill-[#D1D5DB]'} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Food Grid */}
+                                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5">
+                                    {filteredFoods.length === 0 ? (
+                                        <div className="col-span-full flex flex-col items-center justify-center gap-3 py-16">
+                                            <div className={`flex h-16 w-16 items-center justify-center rounded-full ${isDarkMode ? 'bg-[#1A1A1A]' : 'bg-[#FAFAFA]'}`}>
+                                                <Utensils size={28} className={isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'} />
+                                            </div>
+                                            <p className={`text-sm font-bold ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>No items in "{activeCategoryFilter}"</p>
+                                            <p className={`max-w-xs text-center text-xs ${isDarkMode ? 'text-[#6B7280]' : 'text-[#9CA3AF]'}`}>Try adjusting your filters or select a different category</p>
+                                            <button onClick={() => { setPriceFilter(2000); setMinRating(0); }} className="mt-2 text-xs font-semibold text-[#EA580C] transition hover:text-orange-600">Reset Filters</button>
+                                        </div>
+                                    ) : (
+                                        filteredFoods.map((food) => (
+                                            <FoodMenuCard
+                                                key={food.id}
+                                                food={food}
+                                                isDarkMode={isDarkMode}
+                                                isFavorite={favorites.has(food.id)}
+                                                onToggleFavorite={toggleFavorite}
+                                                onOpen={(f) => { setSelectedFood(f); setSelectedModalSize('Medium'); setShowFoodModal(true); }}
+                                                onAddToCart={(f) => addToCart(f, null, false)}
+                                            />
+                                        ))
+                                    )}
                                 </div>
                             </section>
 

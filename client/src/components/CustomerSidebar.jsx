@@ -4,7 +4,7 @@ import {
     Menu, ChevronRight, Home, ShoppingCart, Package, User, Settings, X,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import biteLogo from '../assets/bite.png';
+import kaingoLogo from '../assets/kaingo-logo.svg';
 
 const menuItems = [
     { id: "home", label: "Home", icon: Home, path: "/home" },
@@ -12,6 +12,14 @@ const menuItems = [
     { id: "orders", label: "Orders", icon: Package, path: "/orders" },
     { id: "profile", label: "Profile", icon: User, path: "/profile" },
     { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
+];
+
+const bottomTabs = [
+    { id: "home", label: "Home", icon: Home, path: "/home" },
+    { id: "cart", label: "Cart", icon: ShoppingCart, path: "/cart" },
+    { id: "orders", label: "Orders", icon: Package, path: "/orders" },
+    { id: "profile", label: "Profile", icon: User, path: "/profile" },
+    { id: "more", label: "More", icon: Menu },
 ];
 
 function CustomerSidebar({
@@ -89,20 +97,6 @@ function CustomerSidebar({
 
     return (
         <>
-            {/* Mobile FAB */}
-            {!isControlled && (
-                <button
-                    type="button"
-                    className={`bh-touch fixed bottom-5 right-5 z-40 flex items-center justify-center rounded-full bg-[#EA580C] text-white shadow-lg transition-all duration-200 hover:bg-[#DC2626] md:hidden ${
-                        mobileDrawerOpen ? 'pointer-events-none opacity-0' : 'opacity-100'
-                    }`}
-                    onClick={() => setMobileDrawerOpen(true)}
-                    aria-label="Open navigation menu"
-                >
-                    <Menu size={20} strokeWidth={2} />
-                </button>
-            )}
-
             {/* Mobile backdrop */}
             <div
                 className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-200 md:hidden ${
@@ -122,13 +116,13 @@ function CustomerSidebar({
                 <div className={`flex h-16 items-center justify-between border-b ${isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'} px-4`}>
                     <div className="flex min-w-0 items-center gap-2.5">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
-                            <img src={biteLogo} alt="BiteHub" className="h-full w-full object-contain" />
+                            <img src={kaingoLogo} alt="KainGo" className="h-full w-full object-contain" />
                         </div>
                         {(!sidebarCollapsed || mobileDrawerOpen) && (
                             <span className={`truncate font-bold text-lg tracking-tight ${
                                 isDarkMode ? 'text-white' : 'text-[#171717]'
                             }`}>
-                                Bite<span className="text-[#EA580C]">Hub</span>
+                                Kain<span className="text-[#EA580C]">Go</span>
                             </span>
                         )}
                     </div>
@@ -195,11 +189,45 @@ function CustomerSidebar({
                 {(!sidebarCollapsed || mobileDrawerOpen) && (
                     <div className={`border-t px-4 py-4 ${isDarkMode ? 'border-[#2A2A2A]' : 'border-[#E5E7EB]'}`}>
                         <p className={`text-[11px] font-medium ${isDarkMode ? 'text-[#666666]' : 'text-[#9CA3AF]'}`}>
-                            &copy; 2026 BiteHub
+                            &copy; 2026 KainGo
                         </p>
                     </div>
                 )}
             </aside>
+
+            {/* Mobile bottom navigation */}
+            <nav
+                className={`fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t md:hidden ${sidebarBg}`}
+                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+                aria-label="Mobile primary navigation"
+            >
+                {bottomTabs.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.id !== 'more' && currentTab === item.id;
+                    return (
+                        <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                                if (item.id === 'more') {
+                                    setMobileDrawerOpen(true);
+                                } else {
+                                    handleItemClick(item);
+                                }
+                            }}
+                            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[10px] font-medium transition-colors ${
+                                isActive
+                                    ? 'text-[#EA580C]'
+                                    : isDarkMode ? 'text-[#A0A0A0] hover:text-[#F5F5F5]' : 'text-[#6B7280] hover:text-[#171717]'
+                            }`}
+                            aria-current={isActive ? 'page' : undefined}
+                        >
+                            <Icon size={20} strokeWidth={isActive ? 2.4 : 2} />
+                            <span>{item.label}</span>
+                        </button>
+                    );
+                })}
+            </nav>
         </>
     );
 }

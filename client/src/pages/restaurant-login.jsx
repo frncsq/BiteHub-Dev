@@ -280,7 +280,7 @@ function RestaurantLogin() {
 						<div className="space-y-1 text-center">
 							<h2 className="text-xl font-bold text-[#171717] tracking-tight">Manage Your Restaurant</h2>
 							<p className="text-[#6B7280] text-xs max-w-[200px] leading-relaxed">
-								Access your dashboard to manage orders, menu items, delivery settings, and grow your business with BiteHub.
+								Access your dashboard to manage orders, menu items, delivery settings, and grow your business with KainGo.
 							</p>
 							<div className="flex items-center justify-center gap-1.5 pt-2 text-[11px] text-[#6B7280] font-medium">
 								<CheckCircle size={14} className="text-[#EA580C]" />

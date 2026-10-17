@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChefHat, Users, ArrowRight } from 'lucide-react'
-import logo from '../assets/bite.png'
+import kaingoLogo from '../assets/kaingo-logo.svg'
 
 function StartUp() {
 	const navigate = useNavigate();
@@ -21,12 +21,12 @@ function StartUp() {
 				{/* Header Section */}
 				<div className="text-center mb-10">
 					<img
-						src={logo}
-						alt="BiteHub"
+						src={kaingoLogo}
+						alt="KainGo"
 						className="w-48 h-48 object-contain mx-auto mb-4 hover:scale-105 transition-transform duration-300"
 					/>
 					<h1 className="text-3xl md:text-4xl font-bold text-[#171717] mb-2 tracking-tight">
-						Welcome to <span className="text-[#EA580C]">BiteHub</span>
+						Welcome to <span className="text-[#EA580C]">KainGo</span>
 					</h1>
 					<p className="text-base text-[#6B7280] max-w-md mx-auto">
 						Choose your journey and start your food experience

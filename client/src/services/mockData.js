@@ -1,4 +1,4 @@
-// Mock Data Service for BiteHub
+// Mock Data Service for KainGo
 // This provides mock data for testing purposes
 
 // Mock Users Database

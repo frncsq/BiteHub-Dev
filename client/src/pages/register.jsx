@@ -5,7 +5,7 @@ import {
 	User, Mail, Lock, Phone, MapPin, Building2,
 	BookOpen, Eye, EyeOff, ArrowRight
 } from "lucide-react";
-import biteLogo from "../assets/bite.png";
+import kaingoLogo from "../assets/kaingo-logo.svg";
 
 const Register = () => {
 	const [fullName, setFullName] = useState("");
@@ -116,18 +116,18 @@ const Register = () => {
 				</button>
 
 				<div className="flex items-center gap-2.5 mb-8">
-					<div className="w-10 h-10 rounded-xl bg-[#EA580C] flex items-center justify-center">
-						<img src={biteLogo} alt="" className="w-6 h-6 object-contain" />
+					<div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+						<img src={kaingoLogo} alt="" className="w-10 h-10 object-contain" />
 					</div>
 					<span className="text-xl font-bold tracking-tight text-[#171717]">
-						Bite<span className="text-[#EA580C]">Hub</span>
+						Kain<span className="text-[#EA580C]">Go</span>
 					</span>
 				</div>
 
 				<div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 shadow-sm">
 					<div className="mb-8">
 						<h1 className="text-2xl font-bold text-[#171717] tracking-tight">Create your account</h1>
-						<p className="text-sm text-[#6B7280] mt-1">Join the BiteHub community to start ordering</p>
+						<p className="text-sm text-[#6B7280] mt-1">Join the KainGo community to start ordering</p>
 					</div>
 
 					{/* Status Message */}

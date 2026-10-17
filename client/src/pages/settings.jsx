@@ -170,7 +170,7 @@ function Settings() {
 											isDarkMode ? "text-[#A0A0A0]" : "text-[#6B7280]"
 										}`}
 									>
-										Customize how BiteHub looks on your device
+										Customize how KainGo looks on your device
 									</p>
 								</div>
 							</div>
