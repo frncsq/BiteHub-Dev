@@ -210,6 +210,72 @@ const ensureRestaurantIsActiveColumn = async () => {
   }
 };
 
+const ensureApprovalStatusColumn = async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE restaurants
+      ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) NOT NULL DEFAULT 'pending';
+    `);
+    console.log('✅ Ensured restaurants.approval_status column exists');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure restaurants.approval_status column:', err.message);
+  }
+};
+
+const ensureAdminsTable = async () => {
+  try {
+    try {
+      await pool.query("CREATE TYPE admin_role_enum AS ENUM ('super_admin', 'support_staff')");
+    } catch (e) {
+      // enum already exists — ignore
+    }
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role admin_role_enum DEFAULT 'support_staff',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Seed a default super admin if the table is empty
+    const count = await pool.query('SELECT COUNT(*) FROM admins');
+    if (parseInt(count.rows[0].count) === 0) {
+      const email = process.env.ADMIN_EMAIL || 'admin@bitehub.com';
+      const password = process.env.ADMIN_PASSWORD || 'adminpassword123';
+      const hash = await hashPassword(password);
+      await pool.query(
+        `INSERT INTO admins (username, email, password_hash, role)
+         VALUES ($1, $2, $3, 'super_admin')
+         ON CONFLICT (email) DO NOTHING`,
+        ['superadmin', email, hash]
+      );
+      console.log(`✅ Seeded default super admin (${email})`);
+    }
+    console.log('✅ Ensured admins table exists');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure admins table:', err.message);
+  }
+};
+
+const ensureOrdersLocationColumns = async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS delivery_building VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS delivery_room VARCHAR(255);
+    `);
+    console.log('✅ Ensured orders.delivery_building and delivery_room columns exist');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure orders location columns:', err.message);
+  }
+};
+
 const ensureReviewsTable = async () => {
   try {
     await pool.query(`
@@ -330,8 +396,11 @@ const seedDatabase = async () => {
     await ensureStockColumns();
     await ensureBudgetMealTables();
     await ensureRestaurantIsActiveColumn();
+    await ensureApprovalStatusColumn();
     await ensureRestaurantLocationColumns();
+    await ensureOrdersLocationColumns();
     await ensureReviewsTable();
+    await ensureAdminsTable();
     await seedDatabase();
     await pool.query("UPDATE restaurants SET approval_status = 'approved', is_active = TRUE WHERE approval_status = 'pending' OR approval_status IS NULL");
     await ensureFlashSaleTable();
