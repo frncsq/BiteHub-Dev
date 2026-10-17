@@ -2,14 +2,45 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Menu, X, Search, Star, ChevronRight, ShoppingCart, Check, Zap,
-  Utensils, Clock, Flame, ArrowRight, Store, Package, ClipboardList,
+  Utensils, UtensilsCrossed, Clock, Flame, ArrowRight, Store, Package, ClipboardList,
   MapPin, Salad, RefreshCw, CheckCircle2, Truck, User, LogIn,
-  BarChart3, TrendingUp,
+  BarChart3, TrendingUp, Pizza, Hamburger, Sandwich, Fish, Soup, CupSoda,
+  Coffee, EggFried, Drumstick, Wheat, Croissant, IceCreamCone, Cookie, Wallet, CakeSlice,
 } from "lucide-react";
 import kaingoLogo from "../assets/kaingo-logo.svg";
 import { createApiClient } from "../services/apiClient";
 
 const fallbackImg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23fff3e6'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='%23f97316' text-anchor='middle' dominant-baseline='middle'%3E%F0%9F%8D%94%3C/text%3E%3C/svg%3E";
+
+// Maps a category name to a professional line icon (checked in order).
+const CATEGORY_ICON_MAP = [
+  { match: /pizza/i, Icon: Pizza },
+  { match: /burger|hamburger|cheeseburger/i, Icon: Hamburger },
+  { match: /sandwich|sub\b|wrap|panini/i, Icon: Sandwich },
+  { match: /sushi|sashimi|maki|japanese|seafood|fish/i, Icon: Fish },
+  { match: /mexican|taco|burrito|quesadilla|nachos/i, Icon: Flame },
+  { match: /indian|curry|masala|biryani|tandoor/i, Icon: Soup },
+  { match: /dessert|sweet|cake|pastry|bakery|ice cream/i, Icon: IceCreamCone },
+  { match: /coffee|tea\b|latte|espresso|brew|cappuccino/i, Icon: Coffee },
+  { match: /drink|beverage|juice|soda|shake|smoothie|inumin/i, Icon: CupSoda },
+  { match: /breakfast|egg\b|brunch|silog/i, Icon: EggFried },
+  { match: /chicken|wing|poultry|drumstick|ihaw/i, Icon: Drumstick },
+  { match: /grill|bbq|barbecue|barbecue|roast|steak/i, Icon: Flame },
+  { match: /noodle|ramen|pasta|soup|stew|broth|pancit|mami/i, Icon: Soup },
+  { match: /salad|veggie|vegetable|healthy|green/i, Icon: Salad },
+  { match: /rice|grain|wheat|pares/i, Icon: Wheat },
+  { match: /bread|bakery|toast|dough|pastry|pandesal/i, Icon: Croissant },
+  { match: /cake|cupcake|sliced/i, Icon: CakeSlice },
+  { match: /snack|appetizer|starter|finger|merienda|pulutan/i, Icon: Cookie },
+  { match: /budget|value|affordable|combo|deal|bundle|sulit/i, Icon: Wallet },
+  { match: /main|course|entree|dish|meal|platter|signature|special|ulam|viand/i, Icon: UtensilsCrossed },
+];
+
+const categoryIcon = (name) => {
+  const n = String(name || "");
+  const found = CATEGORY_ICON_MAP.find(({ match }) => match.test(n));
+  return found ? found.Icon : UtensilsCrossed;
+};
 
 function Reveal({ children, className = "", delay = 0 }) {
   const ref = useRef(null);
@@ -188,10 +219,10 @@ function Landing() {
     }
   };
 
-  const categoryCard = (cat) => ({
-    name: String(cat?.name || cat || "Food"),
-    emoji: cat?.icon || "🍽️",
-  });
+  const categoryCard = (cat) => {
+    const name = String(cat?.name || cat || "Food");
+    return { name, Icon: categoryIcon(name) };
+  };
 
   const navLinks = [
     { label: "Home", href: "#home" },
@@ -519,8 +550,8 @@ function Landing() {
                       onClick={() => goMarketplace()}
                       className="group flex w-full flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4 transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/40 hover:shadow-lg hover:shadow-orange-50"
                     >
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF1E7] text-2xl transition-transform group-hover:scale-110">
-                        {c.emoji}
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF1E7] text-[#EA580C] transition-all duration-200 group-hover:bg-[#EA580C] group-hover:text-white group-hover:scale-110">
+                        <c.Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
                       </span>
                       <span className="text-xs font-semibold text-[#141414] group-hover:text-[#EA580C]">
                         {c.name}
