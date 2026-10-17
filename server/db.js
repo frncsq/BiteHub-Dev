@@ -17,7 +17,18 @@ const baseConfig = {
 // Prefer an explicit connection string whenever one is provided (Neon / Render /
 // Supabase / etc.). This is independent of NODE_ENV so a stray NODE_ENV value
 // can't silently switch the app onto a localhost database.
-const connectionString = (process.env.DATABASE_URL || "").trim();
+// Strip accidental surrounding quotes (common when pasting into a dashboard).
+const stripWrappingQuotes = (value) => {
+  let s = (value || "").trim();
+  if ((s.startsWith("'") && s.endsWith("'")) || (s.startsWith('"') && s.endsWith('"'))) {
+    s = s.slice(1, -1).trim();
+  } else {
+    s = s.replace(/^['"]+/, "").replace(/['"]+$/, "").trim();
+  }
+  return s;
+};
+
+const connectionString = stripWrappingQuotes(process.env.DATABASE_URL);
 const isLocalHost = /(localhost|127\.0\.0\.1)/i.test(connectionString);
 
 let newPool;
