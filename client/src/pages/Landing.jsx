@@ -1,16 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Menu, X, Search, Star, ChevronRight, ShoppingCart, Check, Zap,
-  Utensils, UtensilsCrossed, Clock, Flame, ArrowRight, Store, Package, ClipboardList,
-  MapPin, Salad, RefreshCw, CheckCircle2, Truck, User, LogIn,
-  BarChart3, TrendingUp, Pizza, Hamburger, Sandwich, Fish, Soup, CupSoda,
-  Coffee, EggFried, Drumstick, Wheat, Croissant, IceCreamCone, Cookie, Wallet, CakeSlice,
+  Menu, X, Search, Star, ChevronRight, ShoppingCart, Check, Utensils,
+  UtensilsCrossed, Flame, ArrowRight, Store, RefreshCw, CheckCircle2,
+  User, LogIn, ClipboardList, Package, TrendingUp, Salad, Pizza, Hamburger,
+  Sandwich, Fish, Soup, CupSoda, Coffee, EggFried, Drumstick, Wheat, Croissant,
+  IceCreamCone, Cookie, Wallet, CakeSlice, Sparkles, Heart, BadgeCheck, AlertCircle,
 } from "lucide-react";
 import kaingoLogo from "../assets/kaingo-logo.svg";
 import { createApiClient } from "../services/apiClient";
 
-const fallbackImg = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23fff3e6'/%3E%3Ctext x='50%25' y='50%25' font-size='60' fill='%23f97316' text-anchor='middle' dominant-baseline='middle'%3E%F0%9F%8D%94%3C/text%3E%3C/svg%3E";
+/* Neutral placeholder shown when an image is missing or fails to load. */
+const fallbackImg =
+  "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23FBF1E7'/%3E%3Cg fill='none' stroke='%23EA580C' stroke-width='8' stroke-linecap='round'%3E%3Ccircle cx='200' cy='150' r='52'/%3E%3Ccircle cx='200' cy='150' r='30'/%3E%3C/g%3E%3C/svg%3E";
+
+const HERO_MAIN = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=75";
+const HERO_SIDE = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=75";
+
+/* Shared button styles for a consistent visual language. */
+const BTN_PRIMARY =
+  "group inline-flex items-center justify-center gap-2 rounded-xl bg-[#EA580C] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C] focus-visible:ring-offset-2";
+const BTN_SECONDARY =
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E5E5] bg-white px-6 py-3 text-sm font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-offset-2";
 
 // Maps a category name to a professional line icon (checked in order).
 const CATEGORY_ICON_MAP = [
@@ -25,7 +36,7 @@ const CATEGORY_ICON_MAP = [
   { match: /drink|beverage|juice|soda|shake|smoothie|inumin/i, Icon: CupSoda },
   { match: /breakfast|egg\b|brunch|silog/i, Icon: EggFried },
   { match: /chicken|wing|poultry|drumstick|ihaw/i, Icon: Drumstick },
-  { match: /grill|bbq|barbecue|barbecue|roast|steak/i, Icon: Flame },
+  { match: /grill|bbq|barbecue|roast|steak/i, Icon: Flame },
   { match: /noodle|ramen|pasta|soup|stew|broth|pancit|mami/i, Icon: Soup },
   { match: /salad|veggie|vegetable|healthy|green/i, Icon: Salad },
   { match: /rice|grain|wheat|pares/i, Icon: Wheat },
@@ -41,6 +52,8 @@ const categoryIcon = (name) => {
   const found = CATEGORY_ICON_MAP.find(({ match }) => match.test(n));
   return found ? found.Icon : UtensilsCrossed;
 };
+
+const year = new Date().getFullYear();
 
 function Reveal({ children, className = "", delay = 0 }) {
   const ref = useRef(null);
@@ -79,19 +92,51 @@ function useScrollTop() {
   return scrolled;
 }
 
-/* Smart fallback for broken/missing images */
-function FoodImage({ src, alt, className, wrapperClassName }) {
+/* Image with graceful fallback. Fills its (relative, sized) wrapper. */
+function FoodImage({ src, alt, className, wrapperClassName, priority = false }) {
   const [imgSrc, setImgSrc] = useState(src);
   return (
     <div className={`relative overflow-hidden ${wrapperClassName || ""}`}>
       <img
         src={imgSrc || fallbackImg}
         alt={alt || ""}
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
         onError={() => setImgSrc(fallbackImg)}
-        className={`h-full w-full object-cover ${className || ""}`}
+        className={`absolute inset-0 h-full w-full object-cover ${className || ""}`}
       />
     </div>
+  );
+}
+
+function SectionHeading({ eyebrow, icon: EyebrowIcon, title, subtitle, align = "left", action }) {
+  const centered = align === "center";
+  return (
+    <Reveal
+      className={
+        centered
+          ? "mx-auto max-w-2xl text-center"
+          : "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+      }
+    >
+      <div className={centered ? "" : "max-w-2xl"}>
+        {eyebrow && (
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#EA580C] ${
+              centered ? "mx-auto" : ""
+            }`}
+          >
+            {EyebrowIcon && <EyebrowIcon className="h-3.5 w-3.5" aria-hidden="true" />}
+            {eyebrow}
+          </span>
+        )}
+        <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl lg:text-[34px]">
+          {title}
+        </h2>
+        {subtitle && <p className="mt-2 text-base text-[#6B7280]">{subtitle}</p>}
+      </div>
+      {action}
+    </Reveal>
   );
 }
 
@@ -109,6 +154,7 @@ function Landing() {
 
   // Data
   const [categories, setCategories] = useState([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [restaurants, setRestaurants] = useState([]);
   const [foods, setFoods] = useState([]);
 
@@ -127,8 +173,6 @@ function Landing() {
     toastTimer.current = setTimeout(() => setToast(null), 2600);
   };
 
-  // Determine auth state (lazy init above)
-
   const go = (path) => {
     setMenuOpen(false);
     navigate(path);
@@ -142,7 +186,6 @@ function Landing() {
   // Load landing data (minimal requests)
   const loadAll = useCallback(async () => {
     const api = createApiClient();
-    // Food + restaurants
     const [foodRes, restRes] = await Promise.allSettled([
       api.get("/food/popular"),
       api.get("/restaurants"),
@@ -169,6 +212,8 @@ function Landing() {
       setCategories(cats);
     } catch {
       setCategories([]);
+    } finally {
+      setCategoriesLoaded(true);
     }
 
     // Cart count (only if authenticated)
@@ -207,7 +252,7 @@ function Landing() {
       const api = createApiClient();
       await api.post("/cart/add", { foodId: food.id, quantity: 1 });
       setCartCount((c) => c + 1);
-      showToast(`Added to cart`);
+      showToast("Added to cart");
     } catch (err) {
       if (err?.response?.status === 401) {
         setIsLoggedIn(false);
@@ -227,9 +272,12 @@ function Landing() {
   const navLinks = [
     { label: "Home", href: "#home" },
     { label: "Restaurants", href: "#restaurants" },
-    { label: "Explore", href: "#explore" },
+    { label: "How It Works", href: "#how" },
     { label: "About", href: "#about" },
   ];
+
+  const heroFood = foods.length > 0 ? foods[0] : null;
+  const orderPath = isLoggedIn ? "/home" : "/register";
 
   return (
     <div className="min-h-screen bg-white text-[#141414] font-sans antialiased">
@@ -238,14 +286,15 @@ function Landing() {
       {toast && (
         <div
           role="status"
+          aria-live="polite"
           className={`fixed left-1/2 top-5 z-[100] flex -translate-x-1/2 items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xl animate-slide-up ${
             toast.type === "error" ? "bg-[#DC2626]" : "bg-[#EA580C]"
           }`}
         >
           {toast.type === "error" ? (
-            <CheckCircle2 className="h-4 w-4 text-white" />
+            <AlertCircle className="h-4 w-4 text-white" />
           ) : (
-            <Check className="h-4 w-4 text-white" />
+            <CheckCircle2 className="h-4 w-4 text-white" />
           )}
           {toast.message}
         </div>
@@ -261,20 +310,24 @@ function Landing() {
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
           {/* Brand */}
-          <button onClick={() => go("/")} className="flex shrink-0 items-center gap-2.5">
-            <img src={kaingoLogo} alt="KainGo" className="h-8 w-8 object-contain" />
+          <button
+            onClick={() => go("/")}
+            aria-label="KainGo home"
+            className="flex shrink-0 items-center gap-2.5 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+          >
+            <img src={kaingoLogo} alt="" className="h-8 w-8 object-contain" />
             <span className="text-lg font-bold tracking-tight text-[#141414]">
               Kain<span className="text-[#EA580C]">Go</span>
             </span>
           </button>
 
           {/* Center nav */}
-          <div className="hidden items-center gap-7 lg:flex">
+          <div className="mx-auto hidden items-center gap-7 lg:flex">
             {navLinks.map((l) => (
               <a
                 key={l.label}
                 href={l.href}
-                className="text-sm font-medium text-[#6B7280] transition-colors hover:text-[#EA580C]"
+                className="rounded-md text-sm font-medium text-[#6B7280] transition-colors hover:text-[#EA580C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
               >
                 {l.label}
               </a>
@@ -285,15 +338,15 @@ function Landing() {
           <div className="hidden items-center gap-2.5 lg:flex">
             <button
               onClick={() => goMarketplace()}
-              aria-label="Search food"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F5F5F5] hover:text-[#EA580C]"
+              aria-label="Search restaurants and dishes"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F5F5F5] hover:text-[#EA580C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
             >
               <Search className="h-5 w-5" />
             </button>
             <button
               onClick={() => go(isLoggedIn ? "/cart" : "/login")}
-              aria-label="Cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F5F5F5] hover:text-[#EA580C]"
+              aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ""}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] transition-colors hover:bg-[#F5F5F5] hover:text-[#EA580C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
@@ -306,33 +359,33 @@ function Landing() {
             {isLoggedIn ? (
               <button
                 onClick={() => go("/profile")}
-                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F5F5F5]"
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F5F5F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
               >
                 <User className="h-4 w-4" /> Account
               </button>
             ) : (
               <button
                 onClick={() => go("/login")}
-                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F5F5F5]"
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#141414] transition-colors hover:bg-[#F5F5F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
               >
-                <LogIn className="h-4 w-4" /> Sign In
+                <LogIn className="h-4 w-4" /> Log In
               </button>
             )}
 
             <button
               onClick={() => go(isLoggedIn ? "/home" : "/register")}
-              className="rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#D6530B] hover:shadow-md active:scale-[0.97]"
+              className="rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#D6530B] hover:shadow-md active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C] focus-visible:ring-offset-2"
             >
-              Order Now
+              {isLoggedIn ? "Order Now" : "Get Started"}
             </button>
           </div>
 
-          {/* Mobile toggle */}
+          {/* Mobile actions */}
           <div className="flex items-center gap-1 lg:hidden">
             <button
               onClick={() => go(isLoggedIn ? "/cart" : "/login")}
-              aria-label="Cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] hover:bg-[#F5F5F5]"
+              aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ""}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B7280] hover:bg-[#F5F5F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
@@ -342,255 +395,255 @@ function Landing() {
               )}
             </button>
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#141414] hover:bg-[#F5F5F5]"
-              aria-label="Toggle menu"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#141414] hover:bg-[#F5F5F5] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
             >
               {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </nav>
 
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="border-t border-[#EEEEEE] bg-white lg:hidden animate-slide-up">
-            <div className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-4">
-              {navLinks.map((l) => (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-lg px-3 py-3 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F9F9F9] hover:text-[#EA580C]"
-                >
-                  {l.label}
-                </a>
-              ))}
-              <div className="mt-3 flex flex-col gap-2 border-t border-[#EEEEEE] pt-4">
-                <button
-                  onClick={() => (isLoggedIn ? go("/profile") : go("/login"))}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-[#E5E5E5] px-4 py-3 text-sm font-semibold text-[#141414]"
-                >
-                  {isLoggedIn ? <><User className="h-4 w-4" /> Account</> : <><LogIn className="h-4 w-4" /> Sign In</>}
-                </button>
-                <button
-                  onClick={() => (isLoggedIn ? go("/home") : go("/register"))}
-                  className="rounded-xl bg-[#EA580C] px-4 py-3 text-sm font-semibold text-white"
-                >
-                  Order Now
-                </button>
-              </div>
+        {/* Mobile menu (animated open/close) */}
+        <div
+          className={`overflow-hidden border-[#EEEEEE] bg-white transition-[max-height,opacity] duration-300 ease-out lg:hidden ${
+            menuOpen ? "max-h-[520px] border-t opacity-100" : "max-h-0 opacity-0"
+          }`}
+          aria-hidden={!menuOpen}
+        >
+          <div className="mx-auto flex max-w-7xl flex-col gap-1 px-5 py-4">
+            {navLinks.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                tabIndex={menuOpen ? 0 : -1}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg px-3 py-3 text-sm font-medium text-[#6B7280] transition-colors hover:bg-[#F9F9F9] hover:text-[#EA580C]"
+              >
+                {l.label}
+              </a>
+            ))}
+            <div className="mt-3 flex flex-col gap-2 border-t border-[#EEEEEE] pt-4">
+              <button
+                onClick={() => (isLoggedIn ? go("/profile") : go("/login"))}
+                tabIndex={menuOpen ? 0 : -1}
+                className="flex items-center justify-center gap-2 rounded-xl border border-[#E5E5E5] px-4 py-3 text-sm font-semibold text-[#141414]"
+              >
+                {isLoggedIn ? <><User className="h-4 w-4" /> Account</> : <><LogIn className="h-4 w-4" /> Log In</>}
+              </button>
+              <button
+                onClick={() => go(isLoggedIn ? "/home" : "/register")}
+                tabIndex={menuOpen ? 0 : -1}
+                className="rounded-xl bg-[#EA580C] px-4 py-3 text-sm font-semibold text-white"
+              >
+                {isLoggedIn ? "Order Now" : "Get Started"}
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </header>
 
       {/* ─── HERO ───────────────────────────────────────────────────────── */}
-      <section id="home" className="relative overflow-hidden bg-gradient-to-b from-orange-50/60 via-white to-white">
-        <div className="pointer-events-none absolute inset-0">
+      <section
+        id="home"
+        aria-label="Introduction"
+        className="relative scroll-mt-20 overflow-hidden bg-gradient-to-b from-orange-50/60 via-white to-white"
+      >
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
           <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-orange-100/40 blur-3xl" />
           <div className="absolute -right-24 top-40 h-72 w-72 rounded-full bg-amber-100/40 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pt-14 pb-16 sm:px-8 lg:grid-cols-2 lg:pt-20 lg:pb-24">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pb-16 pt-14 sm:px-8 lg:grid-cols-2 lg:gap-10 lg:pb-24 lg:pt-20">
           {/* Left */}
           <div>
             <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#EA580C] shadow-sm">
-                <Flame className="h-3.5 w-3.5" /> SARAP NA, ORDER NA!
+              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-[#EA580C] shadow-sm">
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Sarap na, order na!
               </span>
             </Reveal>
             <Reveal delay={80}>
               <h1 className="mt-6 text-[38px] font-extrabold leading-[1.08] tracking-tight text-[#141414] sm:text-5xl lg:text-[54px]">
-                Your cravings,
+                Good food. Great choices.
                 <br />
-                <span className="text-[#EA580C]">one order</span> away.
+                <span className="text-[#EA580C]">One order away.</span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
               <p className="mt-6 max-w-lg text-lg leading-relaxed text-[#6B7280]">
-                Discover delicious meals from your favorite restaurants and order
-                everything you love in just a few clicks.
+                KainGo brings local restaurants and their menus together in one place.
+                Discover dishes you love, build your order, and check out online in a
+                few simple taps.
               </p>
             </Reveal>
             <Reveal delay={240}>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
-                  onClick={() => go(isLoggedIn ? "/home" : "/register")}
-                  className="group inline-flex items-center rounded-xl bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97]"
+                  onClick={() => go(orderPath)}
+                  className="group inline-flex items-center rounded-xl bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C] focus-visible:ring-offset-2"
                 >
                   Order Now
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </button>
-                <button
-                  onClick={() => goMarketplace()}
-                  className="inline-flex items-center rounded-xl border border-[#E5E5E5] bg-white px-7 py-3.5 text-base font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97]"
+                <a
+                  href="#restaurants"
+                  className="inline-flex items-center rounded-xl border border-[#E5E5E5] bg-white px-7 py-3.5 text-base font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-offset-2"
                 >
-                  Explore Food
-                </button>
+                  Explore Restaurants
+                </a>
               </div>
             </Reveal>
             <Reveal delay={320}>
-              <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-[#F5A623] text-[#F5A623]" />
-                    ))}
-                  </span>
-                  <span className="text-sm font-semibold text-[#141414]">4.8</span>
-                  <span className="text-sm text-[#6B7280]">rated</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-                  <Truck className="h-4 w-4 text-[#EA580C]" />
-                  Fast delivery
-                </div>
-                <div className="flex items-center gap-2 text-sm text-[#6B7280]">
-                  <Store className="h-4 w-4 text-[#EA580C]" />
-                  Top restaurants
-                </div>
-              </div>
+              <ul className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3">
+                <li className="flex items-center gap-2 text-sm text-[#6B7280]">
+                  <Store className="h-4 w-4 text-[#EA580C]" aria-hidden="true" />
+                  Discover local restaurants
+                </li>
+                <li className="flex items-center gap-2 text-sm text-[#6B7280]">
+                  <ShoppingCart className="h-4 w-4 text-[#EA580C]" aria-hidden="true" />
+                  Order online in a few taps
+                </li>
+                <li className="flex items-center gap-2 text-sm text-[#6B7280]">
+                  <ClipboardList className="h-4 w-4 text-[#EA580C]" aria-hidden="true" />
+                  Manage your orders
+                </li>
+              </ul>
             </Reveal>
           </div>
 
           {/* Right visual */}
           <Reveal delay={120} className="relative">
-            <div className="relative mx-auto w-full max-w-[440px]">
-              {/* Collage of real food images */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
-                  <FoodImage
-                    src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=70"
-                    alt="Burger"
-                    className="aspect-square transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
-                <div className="mt-8 overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
-                  <FoodImage
-                    src="https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600&q=70"
-                    alt="Pizza"
-                    className="aspect-square transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
-                <div className="-mt-4 overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
-                  <FoodImage
-                    src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=70"
-                    alt="Ramen"
-                    className="aspect-square transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
-                <div className="overflow-hidden rounded-3xl shadow-xl shadow-orange-100/60">
-                  <FoodImage
-                    src="https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=600&q=70"
-                    alt="Dessert"
-                    className="aspect-square transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
+            <div className="relative mx-auto w-full max-w-md lg:max-w-[460px]">
+              <div className="overflow-hidden rounded-[28px] border border-[#F0F0F0] bg-white shadow-2xl shadow-orange-100/50">
+                <img
+                  src={`${HERO_MAIN}&w=900`}
+                  srcSet={`${HERO_MAIN}&w=600 600w, ${HERO_MAIN}&w=900 900w, ${HERO_MAIN}&w=1200 1200w`}
+                  sizes="(min-width: 1024px) 460px, 90vw"
+                  width="900"
+                  height="1125"
+                  alt="A table spread of freshly prepared dishes"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="aspect-[4/5] w-full object-cover"
+                />
               </div>
 
-              {/* Floating cards */}
-              <div className="bh-float absolute -left-6 top-10 flex items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-4 py-3 shadow-lg sm:-left-8">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
-                  <Star className="h-4 w-4 fill-[#F5A623] text-[#F5A623]" />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-[#141414]">4.9 rating</p>
-                  <p className="text-[11px] text-[#6B7280]">from real users</p>
-                </div>
+              <div className="absolute -bottom-6 -left-5 hidden w-44 overflow-hidden rounded-[22px] border-4 border-white bg-white shadow-xl sm:block">
+                <img
+                  src={`${HERO_SIDE}&w=400`}
+                  width="400"
+                  height="400"
+                  alt="A freshly made burger"
+                  loading="eager"
+                  decoding="async"
+                  className="aspect-square w-full object-cover"
+                />
               </div>
 
-              <div className="bh-float-slow absolute -right-4 bottom-16 flex items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-4 py-3 shadow-lg sm:-right-8">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100">
-                  <Zap className="h-4 w-4 text-[#EA580C]" />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-[#141414]">Fast delivery</p>
-                  <p className="text-[11px] text-[#6B7280]">In under 30 min</p>
+              {heroFood && (
+                <div className="absolute -right-3 top-8 w-48 rounded-2xl border border-[#F0F0F0] bg-white/95 p-2.5 shadow-xl backdrop-blur sm:-right-5">
+                  <div className="flex items-center gap-2.5">
+                    <FoodImage
+                      src={heroFood.image}
+                      alt={heroFood.name}
+                      wrapperClassName="h-12 w-12 shrink-0 rounded-xl"
+                      priority
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#EA580C]">
+                        Popular now
+                      </p>
+                      <p className="truncate text-[13px] font-bold text-[#141414]">{heroFood.name}</p>
+                      <p className="text-[12px] font-semibold text-[#6B7280]">
+                        {formatPrice(heroFood.price)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="bh-float-alt absolute -bottom-4 left-6 flex items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-4 py-3 shadow-lg">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-[#141414]">Order confirmed</p>
-                  <p className="text-[11px] text-[#6B7280]">Being prepared</p>
-                </div>
-              </div>
+              )}
             </div>
           </Reveal>
         </div>
       </section>
 
       {/* ─── CATEGORIES ─────────────────────────────────────────────────── */}
-      <section className="py-14 lg:py-20">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
-                What's on your mind?
-              </h2>
-              <p className="mt-1.5 text-[#6B7280]">Pick a category to start exploring</p>
-            </div>
-            <button
-              onClick={() => goMarketplace()}
-              className="hidden items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline sm:flex"
-            >
-              View all <ChevronRight className="h-4 w-4" />
-            </button>
-          </Reveal>
+      {(categories.length > 0 || !categoriesLoaded) && (
+        <section id="categories" className="scroll-mt-20 py-14 lg:py-20">
+          <div className="mx-auto max-w-7xl px-5 sm:px-8">
+            <SectionHeading
+              eyebrow="Browse the menu"
+              icon={UtensilsCrossed}
+              title="What are you craving?"
+              subtitle="Pick a category and start exploring dishes."
+              action={
+                <button
+                  onClick={() => goMarketplace()}
+                  className="hidden items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline sm:inline-flex"
+                >
+                  View all <ChevronRight className="h-4 w-4" />
+                </button>
+              }
+            />
 
-          <div className="mt-7 flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-8 lg:overflow-visible">
-            {categories.length > 0 ? (
-              categories.slice(0, 8).map((cat, i) => {
-                const c = categoryCard(cat);
-                return (
-                  <Reveal key={c.name + i} delay={(i % 8) * 40} className="shrink-0 w-[104px] lg:w-auto">
-                    <button
-                      onClick={() => goMarketplace()}
-                      className="group flex w-full flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4 transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/40 hover:shadow-lg hover:shadow-orange-50"
+            <div className="mt-7 grid grid-cols-3 gap-3 min-[420px]:grid-cols-4 lg:grid-cols-8">
+              {categories.length > 0
+                ? categories.slice(0, 8).map((cat, i) => {
+                    const c = categoryCard(cat);
+                    return (
+                      <Reveal key={c.name + i} delay={(i % 8) * 40}>
+                        <button
+                          onClick={() => goMarketplace()}
+                          className="group flex w-full flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4 transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/40 hover:shadow-lg hover:shadow-orange-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+                        >
+                          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF1E7] text-[#EA580C] transition-all duration-200 group-hover:scale-110 group-hover:bg-[#EA580C] group-hover:text-white">
+                            <c.Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
+                          </span>
+                          <span className="line-clamp-2 text-xs font-semibold text-[#141414] group-hover:text-[#EA580C]">
+                            {c.name}
+                          </span>
+                        </button>
+                      </Reveal>
+                    );
+                  })
+                : Array.from({ length: 8 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4"
                     >
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FBF1E7] text-[#EA580C] transition-all duration-200 group-hover:bg-[#EA580C] group-hover:text-white group-hover:scale-110">
-                        <c.Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
-                      </span>
-                      <span className="text-xs font-semibold text-[#141414] group-hover:text-[#EA580C]">
-                        {c.name}
-                      </span>
-                    </button>
-                  </Reveal>
-                );
-              })
-            ) : (
-              Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="shrink-0 w-[104px] lg:w-auto">
-                  <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-[#EEEEEE] bg-white px-2 py-4">
-                    <div className="h-12 w-12 rounded-2xl bg-[#F3F3F3] animate-pulse" />
-                    <div className="h-3 w-14 rounded bg-[#F3F3F3] animate-pulse" />
-                  </div>
-                </div>
-              ))
-            )}
+                      <div className="h-12 w-12 rounded-2xl bg-[#F3F3F3] animate-pulse" />
+                      <div className="h-3 w-14 rounded bg-[#F3F3F3] animate-pulse" />
+                    </div>
+                  ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─── FEATURED RESTAURANTS ───────────────────────────────────────── */}
-      <section id="restaurants" className="py-14 lg:py-20">
+      <section id="restaurants" className="scroll-mt-20 py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
-                Explore popular restaurants
-              </h2>
-              <p className="mt-1.5 text-[#6B7280]">Hungry? We've got you covered</p>
-            </div>
-          </Reveal>
+          <SectionHeading
+            eyebrow="Explore"
+            icon={Store}
+            title="Discover your next favorite"
+            subtitle="Browse restaurants and explore their full menus."
+            action={
+              <button
+                onClick={() => goMarketplace()}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline"
+              >
+                View all restaurants <ChevronRight className="h-4 w-4" />
+              </button>
+            }
+          />
 
           {loadingRestaurants && (
             <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white">
-                  <div className="h-36 bg-[#F3F3F3] animate-pulse" />
+                  <div className="aspect-[16/10] w-full bg-[#F3F3F3] animate-pulse" />
                   <div className="space-y-2 p-4">
                     <div className="h-4 w-3/4 rounded bg-[#F3F3F3] animate-pulse" />
                     <div className="h-3 w-1/2 rounded bg-[#F3F3F3] animate-pulse" />
@@ -602,7 +655,8 @@ function Landing() {
 
           {!loadingRestaurants && restaurantError && (
             <div className="mt-7 rounded-2xl border border-orange-100 bg-orange-50 p-8 text-center">
-              <p className="text-[#9A3412]">{restaurantError}</p>
+              <AlertCircle className="mx-auto h-8 w-8 text-[#EA580C]" />
+              <p className="mt-2 text-[#9A3412]">{restaurantError}</p>
               <button
                 onClick={loadAll}
                 className="mt-3 inline-flex items-center rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D6530B]"
@@ -615,72 +669,77 @@ function Landing() {
           {!loadingRestaurants && !restaurantError && restaurants.length === 0 && (
             <div className="mt-7 rounded-2xl border border-[#EEEEEE] bg-white p-10 text-center">
               <Store className="mx-auto h-10 w-10 text-[#B0B0B0]" />
-              <p className="mt-3 text-[#6B7280]">No restaurants available right now.</p>
+              <p className="mt-3 text-[#6B7280]">No restaurants are available right now.</p>
+              <p className="mt-1 text-sm text-[#9CA3AF]">Please check back soon.</p>
             </div>
           )}
 
           {!loadingRestaurants && !restaurantError && restaurants.length > 0 && (
             <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {restaurants.slice(0, 8).map((r, i) => (
-                <Reveal key={r.id} delay={(i % 4) * 70}>
-                  <button
-                    onClick={() => navigate(`/restaurant/${r.id}`, { state: { restaurant: r } })}
-                    className="group w-full overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white text-left transition-all hover:-translate-y-1 hover:border-[#EA580C]/30 hover:shadow-xl hover:shadow-orange-50"
-                  >
-                    <FoodImage
-                      src={r.image}
-                      alt={r.name}
-                      wrapperClassName="h-36 w-full"
-                      className="transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="p-4">
-                      <h3 className="truncate text-base font-bold text-[#141414] group-hover:text-[#EA580C]">
-                        {r.name}
-                      </h3>
-                      <div className="mt-1.5 flex items-center gap-2 text-[13px] text-[#6B7280]">
-                        <span className="flex items-center gap-1 font-semibold text-[#141414]">
-                          <Star className="h-3.5 w-3.5 fill-[#F5A623] text-[#F5A623]" />
-                          {Number(r.rating) > 0 ? Number(r.rating).toFixed(1) : "New"}
+              {restaurants.slice(0, 8).map((r, i) => {
+                const rating = Number(r.rating);
+                const cuisine = r.type || r.cuisines?.[0] || "Restaurant";
+                return (
+                  <Reveal key={r.id} delay={(i % 4) * 70}>
+                    <button
+                      onClick={() => navigate(`/restaurant/${r.id}`, { state: { restaurant: r } })}
+                      aria-label={`${r.name}, ${cuisine}`}
+                      className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white text-left transition-all hover:-translate-y-1 hover:border-[#EA580C]/30 hover:shadow-xl hover:shadow-orange-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+                    >
+                      <div className="relative">
+                        <FoodImage
+                          src={r.image}
+                          alt={r.name}
+                          wrapperClassName="aspect-[16/10] w-full"
+                          className="transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[11px] font-bold text-[#141414] shadow-sm backdrop-blur">
+                          <Star className="h-3 w-3 fill-[#F5A623] text-[#F5A623]" aria-hidden="true" />
+                          {rating > 0 ? rating.toFixed(1) : "New"}
                         </span>
-                        <span aria-hidden="true">·</span>
-                        <span className="truncate">{r.type || r.cuisines?.[0] || "Restaurant"}</span>
                       </div>
-                      <div className="mt-2 flex items-center gap-1.5 text-[13px] text-[#6B7280]">
-                        <Truck className="h-3.5 w-3.5 text-[#EA580C]" />
-                        {r.deliveryTime || "15-30 min"}
+                      <div className="flex flex-1 flex-col p-4">
+                        <h3 className="truncate text-base font-bold text-[#141414] transition-colors group-hover:text-[#EA580C]">
+                          {r.name}
+                        </h3>
+                        <p className="mt-1 truncate text-[13px] text-[#6B7280]">{cuisine}</p>
+                        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#EA580C]">
+                          View menu
+                          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        </span>
                       </div>
-                    </div>
-                  </button>
-                </Reveal>
-              ))}
+                    </button>
+                  </Reveal>
+                );
+              })}
             </div>
           )}
         </div>
       </section>
 
       {/* ─── POPULAR FOOD ───────────────────────────────────────────────── */}
-      <section id="explore" className="bg-[#FAFAFA] py-14 lg:py-20">
+      <section id="popular" className="scroll-mt-20 bg-[#FAFAFA] py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
-                Popular right now
-              </h2>
-              <p className="mt-1.5 text-[#6B7280]">Loved by our customers</p>
-            </div>
-            <button
-              onClick={() => goMarketplace()}
-              className="hidden items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline sm:flex"
-            >
-              View all <ChevronRight className="h-4 w-4" />
-            </button>
-          </Reveal>
+          <SectionHeading
+            eyebrow="Trending"
+            icon={Flame}
+            title="Popular right now"
+            subtitle="Dishes customers are ordering most."
+            action={
+              <button
+                onClick={() => goMarketplace()}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-[#EA580C] hover:underline"
+              >
+                View all <ChevronRight className="h-4 w-4" />
+              </button>
+            }
+          />
 
           {loadingFoods && (
-            <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white">
-                  <div className="h-32 bg-[#F3F3F3] animate-pulse" />
+                  <div className="aspect-[4/3] w-full bg-[#F3F3F3] animate-pulse" />
                   <div className="space-y-2 p-3.5">
                     <div className="h-3.5 w-2/3 rounded bg-[#F3F3F3] animate-pulse" />
                     <div className="h-3 w-full rounded bg-[#F3F3F3] animate-pulse" />
@@ -693,7 +752,8 @@ function Landing() {
 
           {!loadingFoods && foodError && (
             <div className="mt-7 rounded-2xl border border-orange-100 bg-orange-50 p-8 text-center">
-              <p className="text-[#9A3412]">{foodError}</p>
+              <AlertCircle className="mx-auto h-8 w-8 text-[#EA580C]" />
+              <p className="mt-2 text-[#9A3412]">{foodError}</p>
               <button
                 onClick={loadAll}
                 className="mt-3 inline-flex items-center rounded-xl bg-[#EA580C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D6530B]"
@@ -706,7 +766,7 @@ function Landing() {
           {!loadingFoods && !foodError && foods.length === 0 && (
             <div className="mt-7 rounded-2xl border border-[#EEEEEE] bg-white p-10 text-center">
               <Utensils className="mx-auto h-10 w-10 text-[#B0B0B0]" />
-              <p className="mt-3 text-[#6B7280]">No popular dishes available right now.</p>
+              <p className="mt-3 text-[#6B7280]">No popular dishes are available right now.</p>
             </div>
           )}
 
@@ -714,37 +774,38 @@ function Landing() {
             <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {foods.slice(0, 10).map((food, i) => {
                 const isOOS = food.current_stock != null && Number(food.current_stock) <= 0;
+                const rating = Number(food.rating);
                 return (
                   <Reveal key={food.id} delay={(i % 5) * 60}>
                     <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#EEEEEE] bg-white transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/30 hover:shadow-lg hover:shadow-orange-50">
                       <FoodImage
                         src={food.image}
                         alt={food.name}
-                        wrapperClassName="h-28 w-full"
+                        wrapperClassName="aspect-[4/3] w-full"
                         className="transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="flex flex-1 flex-col p-3">
+                      <div className="flex flex-1 flex-col p-3.5">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="line-clamp-1 text-sm font-bold text-[#141414]">{food.name}</h3>
-                          {Number(food.rating) > 0 && (
+                          {rating > 0 && (
                             <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-[#141414]">
-                              <Star className="h-3 w-3 fill-[#F5A623] text-[#F5A623]" />
-                              {Number(food.rating).toFixed(1)}
+                              <Star className="h-3 w-3 fill-[#F5A623] text-[#F5A623]" aria-hidden="true" />
+                              {rating.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <p className="mt-0.5 line-clamp-1 text-xs leading-snug text-[#6B7280]">
-                          {food.description || food.restaurant}
+                          {food.restaurant || food.description}
                         </p>
-                        <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
+                        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                           <span className="text-sm font-extrabold text-[#141414]">
                             {formatPrice(food.price)}
                           </span>
                           <button
                             onClick={() => addToCart(food)}
                             disabled={isOOS}
-                            aria-label={isOOS ? `${food.name} sold out` : `Add ${food.name} to cart`}
-                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.96] ${
+                            aria-label={isOOS ? `${food.name} is sold out` : `Add ${food.name} to cart`}
+                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 ${
                               isOOS
                                 ? "cursor-not-allowed bg-[#F5F5F5] text-[#9CA3AF]"
                                 : "bg-[#EA580C] text-white shadow-sm hover:bg-[#D6530B] hover:shadow-md"
@@ -764,32 +825,38 @@ function Landing() {
       </section>
 
       {/* ─── HOW IT WORKS ───────────────────────────────────────────────── */}
-      <section className="py-14 lg:py-20">
+      <section id="how" className="scroll-mt-20 py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
-              How KainGo works
-            </h2>
-            <p className="mt-2 text-[#6B7280]">Get food delivered in four simple steps</p>
-          </Reveal>
+          <SectionHeading
+            eyebrow="Getting started"
+            icon={Search}
+            align="center"
+            title="How KainGo works"
+            subtitle="Ordering your next meal takes just three steps."
+          />
 
-          <div className="mt-12 grid grid-cols-2 gap-6 lg:grid-cols-4">
+          <div className="relative mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
+            <div
+              className="pointer-events-none absolute left-[16.66%] right-[16.66%] top-8 hidden border-t-2 border-dashed border-orange-200 sm:block"
+              aria-hidden="true"
+            />
             {[
-              { num: "01", title: "Discover", desc: "Find restaurants and dishes you love.", icon: Search },
-              { num: "02", title: "Choose", desc: "Browse menus and customize your order.", icon: ClipboardList },
-              { num: "03", title: "Order", desc: "Add favorites to your cart and checkout.", icon: ShoppingCart },
-              { num: "04", title: "Enjoy", desc: "Sit back and enjoy your meal.", icon: Salad },
+              { num: "01", title: "Discover", desc: "Browse restaurants and dishes available on KainGo.", icon: Search },
+              { num: "02", title: "Choose Your Favorites", desc: "Explore menus, pick the dishes you love, and add them to your cart.", icon: Heart },
+              { num: "03", title: "Place Your Order", desc: "Review your cart and complete your order online.", icon: ShoppingCart },
             ].map((s, i) => (
               <Reveal key={s.num} delay={i * 90}>
-                <div className="text-center">
-                  <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FBF1E7] text-[#EA580C]">
-                    <s.icon className="h-6 w-6" />
+                <div className="relative flex flex-col items-center text-center">
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FBF1E7] text-[#EA580C]">
+                    <s.icon className="h-6 w-6" aria-hidden="true" />
                     <span className="absolute -right-2 -top-2 rounded-lg bg-[#EA580C] px-2 py-0.5 text-[11px] font-bold text-white">
                       {s.num}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-[#141414]">{s.title}</h3>
-                  <p className="mx-auto mt-1.5 max-w-[200px] text-sm leading-relaxed text-[#6B7280]">{s.desc}</p>
+                  <h3 className="mt-5 text-lg font-bold text-[#141414]">{s.title}</h3>
+                  <p className="mx-auto mt-1.5 max-w-[260px] text-sm leading-relaxed text-[#6B7280]">
+                    {s.desc}
+                  </p>
                 </div>
               </Reveal>
             ))}
@@ -798,28 +865,29 @@ function Landing() {
       </section>
 
       {/* ─── WHY CHOOSE US ──────────────────────────────────────────────── */}
-      <section id="about" className="bg-[#FAFAFA] py-14 lg:py-20">
+      <section id="about" className="scroll-mt-20 bg-[#FAFAFA] py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-[#141414] sm:text-3xl">
-              Why choose KainGo
-            </h2>
-            <p className="mt-2 text-[#6B7280]">Fast, reliable, and made for food lovers</p>
-          </Reveal>
+          <SectionHeading
+            eyebrow="About KainGo"
+            icon={BadgeCheck}
+            align="center"
+            title="Why choose KainGo"
+            subtitle="Everything you need to discover food and order with ease."
+          />
 
           <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { icon: Zap, title: "Fast & Convenient Ordering", desc: "Place your order quickly with a simple, intuitive checkout." },
-              { icon: Store, title: "Wide Food Selection", desc: "Browse many restaurants and cuisines all in one place." },
-              { icon: MapPin, title: "Easy Order Tracking", desc: "Follow your order from confirmation to delivery." },
-              { icon: CheckCircle2, title: "Trusted Restaurants", desc: "Order from reviewed and active restaurant partners." },
-              { icon: Package, title: "Affordable Options", desc: "Discover meals and deals that fit a range of budgets." },
-              { icon: Clock, title: "Simple & Reliable", desc: "A clean experience that's easy to use whenever you're hungry." },
+              { icon: Store, title: "Browse Local Restaurants", desc: "Explore restaurants and their full menus in one place." },
+              { icon: UtensilsCrossed, title: "Variety of Dishes", desc: "Discover a wide range of cuisines and categories to match your cravings." },
+              { icon: ShoppingCart, title: "Simple Cart & Checkout", desc: "Add items to your cart and complete your order online in a few steps." },
+              { icon: Heart, title: "Save Your Favorites", desc: "Bookmark the dishes you love and find them again easily." },
+              { icon: ClipboardList, title: "Order History", desc: "Review your current and past orders whenever you need." },
+              { icon: BadgeCheck, title: "Trusted Partners", desc: "Order from reviewed and active restaurant partners." },
             ].map((f, i) => (
               <Reveal key={f.title} delay={(i % 3) * 80}>
                 <div className="group flex h-full items-start gap-4 rounded-2xl border border-[#EEEEEE] bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-[#EA580C]/30 hover:shadow-lg hover:shadow-orange-50">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#FBF1E7] text-[#EA580C] transition-colors group-hover:bg-[#EA580C] group-hover:text-white">
-                    <f.icon className="h-5 w-5" />
+                    <f.icon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-[#141414]">{f.title}</h3>
@@ -833,14 +901,14 @@ function Landing() {
       </section>
 
       {/* ─── FOR RESTAURANTS ───────────────────────────────────────────── */}
-      <section className="py-14 lg:py-20">
+      <section id="partner" className="scroll-mt-20 py-14 lg:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="grid items-center gap-14 lg:grid-cols-2">
             {/* Left copy */}
             <div>
               <Reveal>
-                <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-[#EA580C] shadow-sm">
-                  <Store className="h-3.5 w-3.5" /> FOR RESTAURANTS
+                <span className="inline-flex items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#EA580C]">
+                  <Store className="h-3.5 w-3.5" aria-hidden="true" /> For Restaurants
                 </span>
               </Reveal>
               <Reveal delay={80}>
@@ -850,21 +918,21 @@ function Landing() {
               </Reveal>
               <Reveal delay={160}>
                 <p className="mt-4 max-w-lg text-lg leading-relaxed text-[#6B7280]">
-                  Reach more customers, showcase your menu, and manage every order in one
-                  simple dashboard — from confirmation to delivery.
+                  Put your menu in front of more customers and manage every order from a
+                  single dashboard — from your dishes and stock to your daily operations.
                 </p>
               </Reveal>
               <Reveal delay={220}>
                 <ul className="mt-7 space-y-3.5">
                   {[
-                    "Reach a wider base of hungry customers",
-                    "Manage orders in real time",
-                    "Track sales and your most popular dishes",
-                    "Keep your menu and stock up to date",
+                    "Reach more hungry customers in your area",
+                    "Manage incoming orders from one dashboard",
+                    "Keep your menu, prices, and stock up to date",
+                    "Review your sales and top-selling dishes",
                   ].map((t) => (
                     <li key={t} className="flex items-center gap-3 text-[#374151]">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FBF1E7]">
-                        <Check className="h-3.5 w-3.5 text-[#EA580C]" />
+                        <Check className="h-3.5 w-3.5 text-[#EA580C]" aria-hidden="true" />
                       </span>
                       <span className="font-medium">{t}</span>
                     </li>
@@ -875,14 +943,14 @@ function Landing() {
                 <div className="mt-8 flex flex-wrap gap-4">
                   <button
                     onClick={() => go("/restaurant-register")}
-                    className="group inline-flex items-center rounded-xl bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97]"
+                    className="group inline-flex items-center rounded-xl bg-[#EA580C] px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-200 transition-all hover:bg-[#D6530B] hover:shadow-xl active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C] focus-visible:ring-offset-2"
                   >
                     Become a Partner
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </button>
                   <button
                     onClick={() => go("/restaurant-login")}
-                    className="inline-flex items-center rounded-xl border border-[#E5E5E5] bg-white px-7 py-3.5 text-base font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97]"
+                    className="inline-flex items-center rounded-xl border border-[#E5E5E5] bg-white px-7 py-3.5 text-base font-semibold text-[#141414] transition-all hover:border-[#EA580C] hover:text-[#EA580C] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-offset-2"
                   >
                     Restaurant Login
                   </button>
@@ -890,83 +958,55 @@ function Landing() {
               </Reveal>
             </div>
 
-            {/* Right dashboard mockup */}
+            {/* Right feature panel (illustrative — no fabricated figures) */}
             <Reveal delay={120}>
-              <div className="relative">
-                <div className="overflow-hidden rounded-3xl border border-[#EEEEEE] bg-white shadow-xl shadow-orange-100/40">
-                  {/* Top bar */}
-                  <div className="flex items-center justify-between border-b border-[#F0F0F0] px-5 py-4">
-                    <span className="flex items-center gap-2 text-sm font-bold text-[#141414]">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBF1E7]">
-                        <Utensils className="h-4 w-4 text-[#EA580C]" />
+              <div className="overflow-hidden rounded-3xl border border-[#EEEEEE] bg-white shadow-xl shadow-orange-100/40">
+                <div className="flex items-center justify-between border-b border-[#F0F0F0] px-5 py-4">
+                  <span className="flex items-center gap-2 text-sm font-bold text-[#141414]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FBF1E7]">
+                      <Utensils className="h-4 w-4 text-[#EA580C]" aria-hidden="true" />
+                    </span>
+                    Restaurant Dashboard
+                  </span>
+                  <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-[11px] font-bold text-[#6B7280]">
+                    Preview
+                  </span>
+                </div>
+
+                <div className="space-y-3 p-5">
+                  {[
+                    { icon: Utensils, title: "Menu management", desc: "Add dishes, update prices, and set availability." },
+                    { icon: ClipboardList, title: "Order tracking", desc: "See new and in-progress orders as they come in." },
+                    { icon: Package, title: "Inventory", desc: "Monitor stock levels for every item on your menu." },
+                    { icon: TrendingUp, title: "Sales analytics", desc: "Review your performance and top-selling dishes." },
+                  ].map((f) => (
+                    <div
+                      key={f.title}
+                      className="flex items-center gap-3.5 rounded-2xl border border-[#F0F0F0] p-3.5"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FBF1E7] text-[#EA580C]">
+                        <f.icon className="h-5 w-5" aria-hidden="true" />
                       </span>
-                      Restaurant Dashboard
-                    </span>
-                    <span className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-[11px] font-bold text-green-600">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Open
-                    </span>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-3 p-5">
-                    {[
-                      { icon: <Package className="h-4 w-4" />, label: "Orders", value: "24" },
-                      { icon: <TrendingUp className="h-4 w-4" />, label: "Revenue", value: "₱12.5k" },
-                      { icon: <Flame className="h-4 w-4" />, label: "Top item", value: "Burger" },
-                    ].map((s) => (
-                      <div key={s.label} className="rounded-2xl bg-[#FAFAFA] p-3.5">
-                        <div className="text-[#EA580C]">{s.icon}</div>
-                        <p className="mt-1.5 text-lg font-extrabold text-[#141414]">{s.value}</p>
-                        <p className="text-[11px] text-[#6B7280]">{s.label}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-[#141414]">{f.title}</p>
+                        <p className="truncate text-[12px] text-[#6B7280]">{f.desc}</p>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Orders */}
-                  <div className="px-5 pb-5">
-                    <p className="text-xs font-bold uppercase tracking-wide text-[#6B7280]">
-                      Recent orders
-                    </p>
-                    <div className="mt-3 space-y-2.5">
-                      {[
-                        { name: "Classic Cheeseburger", qty: "×2", status: "Preparing" },
-                        { name: "Pepperoni Pizza", qty: "×1", status: "New" },
-                        { name: "Special Ramen", qty: "×3", status: "Delivered" },
-                      ].map((o) => (
-                        <div
-                          key={o.name}
-                          className="flex items-center justify-between rounded-xl border border-[#F0F0F0] p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FBF1E7]">
-                              <Utensils className="h-4 w-4 text-[#EA580C]" />
-                            </span>
-                            <p className="text-[13px] font-semibold text-[#141414]">
-                              {o.name} <span className="font-normal text-[#6B7280]">{o.qty}</span>
-                            </p>
-                          </div>
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                              o.status === "Delivered"
-                                ? "bg-green-50 text-green-600"
-                                : o.status === "New"
-                                ? "bg-orange-50 text-[#EA580C]"
-                                : "bg-amber-50 text-amber-600"
-                            }`}
-                          >
-                            {o.status}
-                          </span>
-                        </div>
-                      ))}
                     </div>
-                  </div>
+                  ))}
+                </div>
 
-                  {/* Weekly sales */}
-                  <div className="flex items-center justify-between border-t border-[#F0F0F0] px-5 py-4">
-                    <span className="flex items-center gap-2 text-sm text-[#6B7280]">
-                      <BarChart3 className="h-4 w-4 text-[#EA580C]" /> Sales this week
-                    </span>
-                    <span className="text-base font-extrabold text-[#141414]">₱42,950</span>
+                <div className="border-t border-[#F0F0F0] px-5 py-4">
+                  <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#6B7280]">
+                    <TrendingUp className="h-4 w-4 text-[#EA580C]" aria-hidden="true" /> Sales overview
+                  </p>
+                  <div className="mt-3 flex h-16 items-end gap-1.5" aria-hidden="true">
+                    {[38, 55, 42, 68, 50, 80, 62].map((h, idx) => (
+                      <div
+                        key={idx}
+                        className="flex-1 rounded-t-md bg-gradient-to-t from-orange-200 to-[#EA580C]"
+                        style={{ height: `${h}%` }}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -979,22 +1019,23 @@ function Landing() {
       <section className="px-5 py-16 sm:px-8 lg:py-24">
         <Reveal className="mx-auto max-w-5xl">
           <div className="relative overflow-hidden rounded-3xl bg-[#EA580C] px-8 py-14 text-center sm:px-16">
-            <div className="pointer-events-none absolute inset-0">
+            <div className="pointer-events-none absolute inset-0" aria-hidden="true">
               <div className="absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/5" />
               <div className="absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-white/5" />
-              <div className="absolute left-1/4 top-6 text-4xl opacity-15">🍔</div>
-              <div className="absolute bottom-8 right-1/4 text-4xl opacity-15">🍕</div>
+              <Sparkles className="absolute left-[12%] top-8 h-8 w-8 text-white/15" />
+              <UtensilsCrossed className="absolute bottom-8 right-[12%] h-8 w-8 text-white/15" />
             </div>
             <div className="relative">
               <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Ready to satisfy your cravings?
+                Your next favorite meal is waiting
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-orange-100">
-                Discover delicious food and place your next order in just a few clicks.
+                Explore local restaurants on KainGo, find something you'll love, and
+                place your order in a few taps.
               </p>
               <button
-                onClick={() => go(isLoggedIn ? "/home" : "/register")}
-                className="group mt-8 inline-flex items-center rounded-xl bg-white px-8 py-4 text-base font-semibold text-[#EA580C] shadow-lg transition-all hover:bg-orange-50 active:scale-[0.97]"
+                onClick={() => go(orderPath)}
+                className="group mt-8 inline-flex items-center rounded-xl bg-white px-8 py-4 text-base font-semibold text-[#EA580C] shadow-lg transition-all hover:bg-orange-50 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#EA580C]"
               >
                 Start Ordering
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -1007,44 +1048,58 @@ function Landing() {
       {/* ─── FOOTER ─────────────────────────────────────────────────────── */}
       <footer className="border-t border-[#EEEEEE] bg-white">
         <div className="mx-auto max-w-7xl px-5 pb-10 pt-14 sm:px-8">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-6">
             {/* Brand */}
-            <div className="col-span-2 lg:col-span-2">
+            <div className="col-span-2">
               <div className="flex items-center gap-2.5">
-                <img src={kaingoLogo} alt="KainGo" className="h-8 w-8 object-contain" />
+                <img src={kaingoLogo} alt="" className="h-8 w-8 object-contain" />
                 <span className="text-lg font-bold tracking-tight text-[#141414]">
                   Kain<span className="text-[#EA580C]">Go</span>
                 </span>
               </div>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-[#6B7280]">
-                Your cravings, your way. Discover, order, and enjoy great meals from
-                the best restaurants.
+                Good food, great choices — all in one place. Discover restaurants,
+                explore their menus, and order online.
               </p>
             </div>
 
             {/* Platform */}
             <div>
-              <h4 className="text-sm font-bold text-[#141414]">Platform</h4>
+              <h3 className="text-sm font-bold text-[#141414]">Platform</h3>
               <div className="mt-4 flex flex-col gap-2.5">
                 {[
                   { label: "Home", href: "#home" },
                   { label: "Restaurants", href: "#restaurants" },
-                  { label: "Explore", href: "#explore" },
-                  { label: "My Orders", action: () => go(isLoggedIn ? "/orders" : "/login") },
+                  { label: "How It Works", href: "#how" },
+                  { label: "About", href: "#about" },
                 ].map((l) => (
                   <FooterLink key={l.label} item={l} />
                 ))}
               </div>
             </div>
 
-            {/* Support */}
+            {/* Account */}
             <div>
-              <h4 className="text-sm font-bold text-[#141414]">Support</h4>
+              <h3 className="text-sm font-bold text-[#141414]">Account</h3>
               <div className="mt-4 flex flex-col gap-2.5">
                 {[
-                  { label: "Help Center", action: () => go("/home") },
-                  { label: "Contact", action: () => go("/home") },
-                  { label: "FAQs", action: () => go("/home") },
+                  { label: isLoggedIn ? "Account" : "Log In", action: () => go(isLoggedIn ? "/profile" : "/login") },
+                  { label: "Sign Up", action: () => go("/register") },
+                  { label: "My Orders", action: () => go(isLoggedIn ? "/orders" : "/login") },
+                  { label: "My Cart", action: () => go(isLoggedIn ? "/cart" : "/login") },
+                ].map((l) => (
+                  <FooterLink key={l.label} item={l} />
+                ))}
+              </div>
+            </div>
+
+            {/* For restaurants */}
+            <div>
+              <h3 className="text-sm font-bold text-[#141414]">For Restaurants</h3>
+              <div className="mt-4 flex flex-col gap-2.5">
+                {[
+                  { label: "Become a Partner", action: () => go("/restaurant-register") },
+                  { label: "Restaurant Login", action: () => go("/restaurant-login") },
                 ].map((l) => (
                   <FooterLink key={l.label} item={l} />
                 ))}
@@ -1053,12 +1108,15 @@ function Landing() {
 
             {/* Legal */}
             <div>
-              <h4 className="text-sm font-bold text-[#141414]">Legal</h4>
+              <h3 className="text-sm font-bold text-[#141414]">Legal</h3>
               <div className="mt-4 flex flex-col gap-2.5">
                 {[
-                  { label: "Privacy Policy", action: () => go("/home") },
-                  { label: "Terms & Conditions", action: () => go("/home") },
-                  { label: "Login", action: () => go("/login") },
+                  { label: "Terms of Service", action: () => go("/legal/terms") },
+                  { label: "Privacy Policy", action: () => go("/legal/privacy") },
+                  { label: "Cookie Policy", action: () => go("/legal/cookies") },
+                  { label: "Refund & Cancellation", action: () => go("/legal/refunds") },
+                  { label: "Acceptable Use", action: () => go("/legal/acceptable-use") },
+                  { label: "Partner Agreement", action: () => go("/legal/partner-agreement") },
                 ].map((l) => (
                   <FooterLink key={l.label} item={l} />
                 ))}
@@ -1067,17 +1125,8 @@ function Landing() {
           </div>
 
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#EEEEEE] pt-6 sm:flex-row">
-            <p className="text-sm text-[#9CA3AF]">© 2026 KainGo. All rights reserved.</p>
-            <div className="flex gap-5">
-              {["Twitter", "Instagram", "Facebook"].map((s) => (
-                <button
-                  key={s}
-                  className="text-sm text-[#6B7280] transition-colors hover:text-[#EA580C]"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <p className="text-sm text-[#9CA3AF]">© {year} KainGo. All rights reserved.</p>
+            <p className="text-sm text-[#9CA3AF]">Sarap na, order na!</p>
           </div>
         </div>
       </footer>
@@ -1086,15 +1135,17 @@ function Landing() {
 }
 
 function FooterLink({ item }) {
+  const className =
+    "text-left text-sm text-[#6B7280] transition-colors hover:text-[#EA580C] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 rounded";
   if (item.href) {
     return (
-      <a href={item.href} className="text-sm text-[#6B7280] transition-colors hover:text-[#EA580C]">
+      <a href={item.href} className={className}>
         {item.label}
       </a>
     );
   }
   return (
-    <button onClick={item.action} className="text-left text-sm text-[#6B7280] transition-colors hover:text-[#EA580C]">
+    <button onClick={item.action} className={className}>
       {item.label}
     </button>
   );

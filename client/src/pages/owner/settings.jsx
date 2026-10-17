@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createApiClient } from '../../services/apiClient';
-import { Save, Building2, User, FileText, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
+import { useOwnerTheme } from '../../context/OwnerThemeContext';
+import { Save, Building2, User, FileText, CheckCircle, AlertCircle, LogOut, Palette, Sun, Moon } from 'lucide-react';
 
 function OwnerSettings() {
+  const { ownerTheme, setOwnerTheme } = useOwnerTheme();
   const [formData, setFormData] = useState({
     business_name: '',
     business_address: '',
@@ -140,8 +142,8 @@ function OwnerSettings() {
       {/* Header & Main Save Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#171717]">Settings</h1>
-          <p className="text-sm text-[#6B7280] mt-1">Manage your restaurant profile, contact details, and account.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#171717] dark:text-[#F5F5F5]">Settings</h1>
+          <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-1">Manage your restaurant profile, contact details, and account.</p>
         </div>
         <button
           onClick={handleSubmit}
@@ -153,31 +155,73 @@ function OwnerSettings() {
       </div>
 
       {message && (
-        <div className={`p-4 rounded-xl mb-8 flex items-center gap-3 text-sm font-medium ${messageType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-          {messageType === 'success' ? <CheckCircle size={18} className="text-[#16A34A]" /> : <AlertCircle size={18} className="text-[#DC2626]" />}
+        <div className={`p-4 rounded-xl mb-8 flex items-center gap-3 text-sm font-medium ${messageType === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/25' : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-500/25'}`}>
+          {messageType === 'success' ? <CheckCircle size={18} className="text-[#16A34A] dark:text-[#22C55E]" /> : <AlertCircle size={18} className="text-[#DC2626] dark:text-[#EF4444]" />}
           {message}
         </div>
       )}
 
+      {/* Appearance (applies instantly, not part of the form) */}
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 mb-6">
+        <div>
+          <h2 className="text-base font-bold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2">
+            <Palette className="text-[#EA580C]" size={18} /> Appearance
+          </h2>
+          <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-2">Choose how the restaurant dashboard looks on this device. Light is the default.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
+          {[
+            { key: 'light', label: 'Light', hint: 'Default', Icon: Sun },
+            { key: 'dark', label: 'Dark', hint: 'Easier on the eyes', Icon: Moon },
+          ].map((opt) => {
+            const active = ownerTheme === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setOwnerTheme(opt.key)}
+                aria-pressed={active}
+                className={`relative flex items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
+                  active
+                    ? 'border-[#EA580C] bg-[#FFF7ED] dark:bg-[#EA580C]/10 ring-2 ring-orange-100 dark:ring-[#EA580C]/20'
+                    : 'border-[#E5E7EB] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] hover:border-orange-300 dark:hover:border-[#EA580C]/40 hover:bg-[#FAFAFA] dark:hover:bg-white/5'
+                }`}
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${active ? 'bg-[#EA580C]/10 text-[#EA580C]' : 'bg-[#FAFAFA] dark:bg-[#222222] text-[#6B7280] dark:text-[#A0A0A0]'}`}>
+                  <opt.Icon size={18} />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5]">{opt.label}</span>
+                  <span className="text-xs text-[#6B7280] dark:text-[#A0A0A0]">{opt.hint}</span>
+                </div>
+                {active && (
+                  <CheckCircle size={16} className="absolute right-3 top-3 text-[#EA580C]" aria-hidden="true" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Main Settings Form Container */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden divide-y divide-[#E5E7EB]">
+      <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] overflow-hidden divide-y divide-[#E5E7EB] dark:divide-[#2A2A2A]">
 
         {/* Profile Section */}
         <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
           <div>
-            <h2 className="text-base font-bold text-[#171717] flex items-center gap-2">
+            <h2 className="text-base font-bold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2">
               <Building2 className="text-[#EA580C]" size={18} /> Business Profile
             </h2>
-            <p className="text-sm text-[#6B7280] mt-2">Update your restaurant's name, logo, and core details.</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-2">Update your restaurant's name, logo, and core details.</p>
           </div>
           <div className="space-y-6">
             {/* Logo Upload */}
             <div className="flex gap-6 items-center">
-               <div className="relative w-24 h-24 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] flex items-center justify-center overflow-hidden shrink-0 group">
+               <div className="relative w-24 h-24 rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] bg-[#FAFAFA] dark:bg-[#111111] flex items-center justify-center overflow-hidden shrink-0 group">
                   {formData.restaurant_logo_url ? (
                     <img src={formData.restaurant_logo_url} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
-                    <Building2 className="text-gray-300" size={32} />
+                    <Building2 className="text-gray-300 dark:text-[#555555]" size={32} />
                   )}
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -185,9 +229,9 @@ function OwnerSettings() {
                   </div>
                </div>
                <div className="flex-1">
-                 <label className="block text-sm font-semibold text-[#171717] mb-1.5">Restaurant Photo</label>
-                 <p className="text-xs text-[#6B7280] mb-3">Square, high-res image recommended (max 5MB).</p>
-                 <button type="button" className="relative px-4 py-2 border border-[#E5E7EB] bg-white hover:bg-[#FAFAFA] text-sm font-semibold text-gray-700 rounded-lg transition-colors overflow-hidden">
+                 <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1.5">Restaurant Photo</label>
+                 <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0] mb-3">Square, high-res image recommended (max 5MB).</p>
+                 <button type="button" className="relative px-4 py-2 border border-[#E5E7EB] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] hover:bg-[#FAFAFA] dark:hover:bg-white/5 text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] rounded-lg transition-colors overflow-hidden">
                     Choose File
                     <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                  </button>
@@ -197,20 +241,20 @@ function OwnerSettings() {
             {/* Core Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
               <div className="sm:col-span-2">
-                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">Business Name</label>
-                <input required type="text" name="business_name" value={formData.business_name} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] outline-none" />
+                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">Business Name</label>
+                <input required type="text" name="business_name" value={formData.business_name} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:bg-white dark:focus:bg-[#1A1A1A] focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] dark:text-[#F5F5F5] outline-none" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">Email (Login ID)</label>
-                <input type="email" value={formData.business_email} disabled className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl text-[#6B7280] cursor-not-allowed outline-none" />
+                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">Email (Login ID)</label>
+                <input type="email" value={formData.business_email} disabled className="w-full px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl text-[#6B7280] dark:text-[#A0A0A0] cursor-not-allowed outline-none" />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">City</label>
-                <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] outline-none" />
+                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">City</label>
+                <input required type="text" name="city" value={formData.city} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:bg-white dark:focus:bg-[#1A1A1A] focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] dark:text-[#F5F5F5] outline-none" />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">Full Address</label>
-                <input required type="text" name="business_address" value={formData.business_address} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] outline-none" />
+                <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">Full Address</label>
+                <input required type="text" name="business_address" value={formData.business_address} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:bg-white dark:focus:bg-[#1A1A1A] focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] dark:text-[#F5F5F5] outline-none" />
               </div>
             </div>
           </div>
@@ -219,57 +263,57 @@ function OwnerSettings() {
         {/* Public Description */}
         <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
           <div>
-            <h2 className="text-base font-bold text-[#171717] flex items-center gap-2">
+            <h2 className="text-base font-bold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2">
               <FileText className="text-[#EA580C]" size={18} /> About Section
             </h2>
-            <p className="text-sm text-[#6B7280] mt-2">Write a short description to welcome customers.</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-2">Write a short description to welcome customers.</p>
           </div>
           <div>
-            <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">Public Description</label>
-            <textarea rows="4" name="description" value={formData.description} onChange={handleChange} placeholder="Tell customers about your cuisine, history, and specialties..." className="w-full px-4 py-3 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] outline-none resize-none"></textarea>
+            <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">Public Description</label>
+            <textarea rows="4" name="description" value={formData.description} onChange={handleChange} placeholder="Tell customers about your cuisine, history, and specialties..." className="w-full px-4 py-3 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:bg-white dark:focus:bg-[#1A1A1A] focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] dark:text-[#F5F5F5] outline-none resize-none"></textarea>
           </div>
         </div>
 
         {/* Owner Details */}
         <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
           <div>
-            <h2 className="text-base font-bold text-[#171717] flex items-center gap-2">
+            <h2 className="text-base font-bold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2">
               <User className="text-[#EA580C]" size={18} /> Key Contact
             </h2>
-            <p className="text-sm text-[#6B7280] mt-2">Personal details for KainGo administrative contact.</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-2">Personal details for KainGo administrative contact.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">Full Name</label>
-              <input required type="text" name="owner_name" value={formData.owner_name} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] outline-none" />
+              <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">Full Name</label>
+              <input required type="text" name="owner_name" value={formData.owner_name} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:bg-white dark:focus:bg-[#1A1A1A] focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] dark:text-[#F5F5F5] outline-none" />
             </div>
             <div>
-              <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] mb-1.5">Contact Phone</label>
-              <input required type="tel" name="owner_phone" value={formData.owner_phone} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] border border-[#E5E7EB] rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] outline-none" />
+              <label className="block text-[11px] font-bold tracking-widest uppercase text-[#6B7280] dark:text-[#A0A0A0] mb-1.5">Contact Phone</label>
+              <input required type="tel" name="owner_phone" value={formData.owner_phone} onChange={handleChange} className="w-full px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:bg-white dark:focus:bg-[#1A1A1A] focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] transition-all text-[#171717] dark:text-[#F5F5F5] outline-none" />
             </div>
           </div>
         </div>
 
         {/* Account Actions */}
-        <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 bg-[#FAFAFA]">
+        <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8 bg-[#FAFAFA] dark:bg-[#111111]">
           <div>
-            <h2 className="text-base font-bold text-[#DC2626] flex items-center gap-2">
+            <h2 className="text-base font-bold text-[#DC2626] dark:text-[#EF4444] flex items-center gap-2">
               <LogOut size={18} /> Session
             </h2>
-            <p className="text-sm text-[#6B7280] mt-2">Safely log out of your owner account on this device.</p>
+            <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-2">Safely log out of your owner account on this device.</p>
           </div>
           <div className="relative" ref={logoutRef}>
             {!showLogoutConfirm ? (
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-[#E5E7EB] hover:border-red-200 hover:bg-red-50 hover:text-[#DC2626] text-[#DC2626] font-semibold rounded-xl transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-[#1A1A1A] border border-[#E5E7EB] dark:border-[#2A2A2A] hover:border-red-200 hover:bg-red-50 hover:text-[#DC2626] text-[#DC2626] dark:text-[#EF4444] font-semibold rounded-xl transition-all"
               >
                 <LogOut size={16} /> Logout from account
               </button>
             ) : (
-              <div className="p-4 bg-white border border-red-100 shadow-lg rounded-xl max-w-sm flex flex-col gap-3 animate-fade-in z-10 relative">
-                <div className="flex items-center gap-2 text-[#DC2626] font-bold mb-1">
+              <div className="p-4 bg-white dark:bg-[#1A1A1A] border border-red-100 dark:border-red-500/25 shadow-lg rounded-xl max-w-sm flex flex-col gap-3 animate-fade-in z-10 relative">
+                <div className="flex items-center gap-2 text-[#DC2626] dark:text-[#EF4444] font-bold mb-1">
                    <AlertCircle size={16} />
                    <p className="text-sm">Are you sure you want to log out?</p>
                 </div>
@@ -284,7 +328,7 @@ function OwnerSettings() {
                   <button
                      type="button"
                      onClick={() => setShowLogoutConfirm(false)}
-                     className="flex-1 px-4 py-2 bg-[#FAFAFA] hover:bg-gray-200 text-[#171717] text-sm font-semibold rounded-lg transition-colors border border-[#E5E7EB]"
+                     className="flex-1 px-4 py-2 bg-[#FAFAFA] dark:bg-[#111111] hover:bg-gray-200 text-[#171717] dark:text-[#F5F5F5] text-sm font-semibold rounded-lg transition-colors border border-[#E5E7EB] dark:border-[#2A2A2A]"
                   >
                     Cancel
                   </button>

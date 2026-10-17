@@ -103,29 +103,29 @@ function BudgetMealBuilder({ combinations, onChange }) {
   return (
     <div className="space-y-4">
       {combinations.length === 0 && (
-        <div className="flex flex-col items-center py-8 text-center border-2 border-dashed border-orange-200 rounded-xl bg-orange-50/50">
+        <div className="flex flex-col items-center py-8 text-center border-2 border-dashed border-orange-200 dark:border-orange-500/30 rounded-xl bg-orange-50/50">
           <Layers className="text-orange-400 mb-2" size={28} />
-          <p className="font-semibold text-[#171717] text-sm">No combinations yet</p>
-          <p className="text-xs text-[#6B7280] mt-1">Add combo types like Meat + Veggie with their options</p>
+          <p className="font-semibold text-[#171717] dark:text-[#F5F5F5] text-sm">No combinations yet</p>
+          <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0] mt-1">Add combo types like Meat + Veggie with their options</p>
         </div>
       )}
 
       {combinations.map((combo, comboIdx) => (
-        <div key={combo._tempId} className="border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div key={combo._tempId} className="border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl overflow-hidden">
           {/* Combo Header */}
           <div
-            className="flex items-center justify-between px-4 py-3 bg-orange-50 cursor-pointer"
+            className="flex items-center justify-between px-4 py-3 bg-orange-50 dark:bg-orange-500/10 cursor-pointer"
             onClick={() => toggleCombo(combo._tempId)}
           >
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-[#EA580C] rounded-full flex items-center justify-center text-white text-xs font-black">
                 {comboIdx + 1}
               </div>
-              <span className="font-bold text-sm text-[#171717]">
+              <span className="font-bold text-sm text-[#171717] dark:text-[#F5F5F5]">
                 {combo.label || 'Untitled Combination'}
               </span>
               {combo.price && (
-                <span className="text-xs font-black text-[#EA580C] bg-orange-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-black text-[#EA580C] bg-orange-100 dark:bg-orange-500/15 px-2 py-0.5 rounded-full">
                   ₱{parseFloat(combo.price).toFixed(2)}
                 </span>
               )}
@@ -138,22 +138,22 @@ function BudgetMealBuilder({ combinations, onChange }) {
               >
                 <Trash2 size={14} />
               </button>
-              {combo.isOpen ? <ChevronUp size={16} className="text-[#6B7280]" /> : <ChevronDown size={16} className="text-[#6B7280]" />}
+              {combo.isOpen ? <ChevronUp size={16} className="text-[#6B7280] dark:text-[#A0A0A0]" /> : <ChevronDown size={16} className="text-[#6B7280] dark:text-[#A0A0A0]" />}
             </div>
           </div>
 
           {combo.isOpen && (
-            <div className="p-4 space-y-4 bg-white">
+            <div className="p-4 space-y-4 bg-white dark:bg-[#1A1A1A]">
               {/* Preset Pills */}
               <div>
-                <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Quick Presets</p>
+                <p className="text-xs font-semibold text-[#6B7280] dark:text-[#A0A0A0] uppercase tracking-wide mb-2">Quick Presets</p>
                 <div className="flex flex-wrap gap-1.5">
                   {COMBO_PRESETS.map(preset => (
                     <button
                       key={preset.label}
                       type="button"
                       onClick={() => applyPreset(combo._tempId, preset)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#E5E7EB] bg-white text-[#6B7280] hover:bg-[#EA580C] hover:text-white hover:border-[#EA580C] transition-all"
+                      className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#E5E7EB] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-[#6B7280] dark:text-[#A0A0A0] hover:bg-[#EA580C] hover:text-white hover:border-[#EA580C] transition-all"
                     >
                       {preset.label}
                     </button>
@@ -164,23 +164,23 @@ function BudgetMealBuilder({ combinations, onChange }) {
               {/* Combo Label + Price */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#171717] mb-1">Combo Name *</label>
+                  <label className="block text-xs font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Combo Name *</label>
                   <div className="relative">
-                    <Tag size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+                    <Tag size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] dark:text-[#A0A0A0]" />
                     <input
                       required
                       type="text"
                       placeholder="e.g. Meat + Veggie"
                       value={combo.label}
                       onChange={e => updateCombo(combo._tempId, 'label', e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 text-sm border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition"
+                      className="w-full pl-8 pr-3 py-2 text-sm border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#171717] mb-1">Price (₱) *</label>
+                  <label className="block text-xs font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Price (₱) *</label>
                   <div className="relative">
-                    <Banknote size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+                    <Banknote size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] dark:text-[#A0A0A0]" />
                     <input
                       required
                       type="number"
@@ -189,7 +189,7 @@ function BudgetMealBuilder({ combinations, onChange }) {
                       placeholder="0.00"
                       value={combo.price}
                       onChange={e => updateCombo(combo._tempId, 'price', e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 text-sm border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition"
+                      className="w-full pl-8 pr-3 py-2 text-sm border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition"
                     />
                   </div>
                 </div>
@@ -198,7 +198,7 @@ function BudgetMealBuilder({ combinations, onChange }) {
               {/* Slots */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Component Slots</p>
+                  <p className="text-xs font-semibold text-[#6B7280] dark:text-[#A0A0A0] uppercase tracking-wide">Component Slots</p>
                   <button
                     type="button"
                     onClick={() => addSlot(combo._tempId)}
@@ -209,17 +209,17 @@ function BudgetMealBuilder({ combinations, onChange }) {
                 </div>
 
                 {combo.slots.length === 0 && (
-                  <p className="text-xs text-[#6B7280] italic">No slots yet. Apply a preset or add a slot manually.</p>
+                  <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0] italic">No slots yet. Apply a preset or add a slot manually.</p>
                 )}
 
                 {combo.slots.map((slot, slotIdx) => (
-                  <div key={slotIdx} className="p-3 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] space-y-2">
+                  <div key={slotIdx} className="p-3 rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] bg-[#FAFAFA] dark:bg-[#111111] space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#6B7280]">Slot {slotIdx + 1}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#6B7280] dark:text-[#A0A0A0]">Slot {slotIdx + 1}</span>
                       <select
                         value={slot.component_type}
                         onChange={e => updateSlotType(combo._tempId, slotIdx, e.target.value)}
-                        className="flex-1 text-xs px-2 py-1.5 border border-[#E5E7EB] rounded-lg focus:ring-1 focus:ring-orange-300 outline-none"
+                        className="flex-1 text-xs px-2 py-1.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg focus:ring-1 focus:ring-orange-300 outline-none"
                       >
                         {COMPONENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -241,7 +241,7 @@ function BudgetMealBuilder({ combinations, onChange }) {
                             placeholder={`${slot.component_type} option ${optIdx + 1}`}
                             value={opt}
                             onChange={e => updateOption(combo._tempId, slotIdx, optIdx, e.target.value)}
-                            className="flex-1 text-xs px-3 py-1.5 border border-[#E5E7EB] rounded-lg focus:ring-1 focus:ring-orange-300 outline-none bg-white"
+                            className="flex-1 text-xs px-3 py-1.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg focus:ring-1 focus:ring-orange-300 outline-none bg-white dark:bg-[#1A1A1A]"
                           />
                           <button
                             type="button"
@@ -475,8 +475,8 @@ function OwnerMenu() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#171717]">Menu Management</h1>
-          <p className="text-[#6B7280] mt-1">Add, edit, or remove items from your menu.</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#171717] dark:text-[#F5F5F5]">Menu Management</h1>
+          <p className="text-[#6B7280] dark:text-[#A0A0A0] mt-1">Add, edit, or remove items from your menu.</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -487,24 +487,24 @@ function OwnerMenu() {
         </button>
       </div>
 
-      {error && <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl">{error}</div>}
+      {error && <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/25 text-red-600 dark:text-red-400 rounded-xl">{error}</div>}
       {successMsg && (
-        <div className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl">
+        <div className="flex items-center gap-2 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400 rounded-xl">
           <Check size={16} /> {successMsg}
         </div>
       )}
 
       {/* Responsive table/list */}
-      <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
-        <div className="hidden lg:grid grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 px-6 py-4 bg-[#FAFAFA] border-b border-[#E5E7EB]">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">Menu Item</span>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">Category</span>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">Price</span>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280]">Status</span>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] text-right">Actions</span>
+      <div className="bg-white dark:bg-[#1A1A1A] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl overflow-hidden">
+        <div className="hidden lg:grid grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 px-6 py-4 bg-[#FAFAFA] dark:bg-[#111111] border-b border-[#E5E7EB] dark:border-[#2A2A2A]">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#A0A0A0]">Menu Item</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#A0A0A0]">Category</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#A0A0A0]">Price</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#A0A0A0]">Status</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6B7280] dark:text-[#A0A0A0] text-right">Actions</span>
         </div>
 
-        <div className="divide-y divide-[#E5E7EB]">
+        <div className="divide-y divide-[#E5E7EB] dark:divide-[#2A2A2A]">
           {(() => {
             const grouped = items.reduce((acc, item) => {
               const cat = item.category || 'Uncategorized';
@@ -523,64 +523,64 @@ function OwnerMenu() {
                 {/* Category Header */}
                 <div
                   onClick={() => toggleCategory(category)}
-                  className="px-4 sm:px-5 lg:px-6 py-2.5 bg-[#FAFAFA] border-b border-[#E5E7EB] sticky top-0 z-10 flex justify-between items-center cursor-pointer group/header hover:bg-gray-100 transition-colors"
+                  className="px-4 sm:px-5 lg:px-6 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] border-b border-[#E5E7EB] dark:border-[#2A2A2A] sticky top-0 z-10 flex justify-between items-center cursor-pointer group/header hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="text-xs font-extrabold uppercase tracking-widest text-[#EA580C]">{category}</span>
-                    <span className="text-[10px] font-semibold text-[#6B7280] bg-gray-100 px-2 py-0.5 rounded-full">{grouped[category].length} item{grouped[category].length !== 1 ? 's' : ''}</span>
+                    <span className="text-[10px] font-semibold text-[#6B7280] dark:text-[#A0A0A0] bg-gray-100 dark:bg-[#222222] px-2 py-0.5 rounded-full">{grouped[category].length} item{grouped[category].length !== 1 ? 's' : ''}</span>
                   </div>
-                  <div className="text-[#6B7280] group-hover/header:text-[#EA580C] transition-colors">
+                  <div className="text-[#6B7280] dark:text-[#A0A0A0] group-hover/header:text-[#EA580C] transition-colors">
                     {collapsedCategories[category] ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
                   </div>
                 </div>
 
                 {/* Category Items */}
                 {!collapsedCategories[category] && (
-                  <div className="divide-y divide-[#E5E7EB]">
+                  <div className="divide-y divide-[#E5E7EB] dark:divide-[#2A2A2A]">
                     {grouped[category].map(item => (
-                      <div key={item.id} className="group px-4 sm:px-5 lg:px-6 py-4 transition-colors hover:bg-[#FAFAFA]">
+                      <div key={item.id} className="group px-4 sm:px-5 lg:px-6 py-4 transition-colors hover:bg-[#FAFAFA] dark:hover:bg-white/5">
                         <div className="grid grid-cols-1 lg:grid-cols-[2.2fr_1fr_1fr_1fr_1.2fr] gap-4 lg:gap-6 items-start lg:items-center">
                           <div className="min-w-0 flex items-center gap-3">
-                            <div className="w-14 h-14 rounded-xl overflow-hidden border border-[#E5E7EB] bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] bg-gray-100 dark:bg-[#222222] flex items-center justify-center flex-shrink-0">
                               {item.image_url ? (
                                 <img src={item.image_url} alt={item.item_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                               ) : (
-                                <ImageIcon size={20} className="text-gray-400" />
+                                <ImageIcon size={20} className="text-gray-400 dark:text-[#6B7280]" />
                               )}
                             </div>
                             <div className="min-w-0">
-                              <h3 className="font-semibold text-[#171717] truncate">{item.item_name}</h3>
-                              <p className="text-sm text-[#6B7280] line-clamp-1">{item.description || 'No description provided'}</p>
+                              <h3 className="font-semibold text-[#171717] dark:text-[#F5F5F5] truncate">{item.item_name}</h3>
+                              <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] line-clamp-1">{item.description || 'No description provided'}</p>
                             </div>
                           </div>
 
                           <div className="lg:block flex items-center justify-between">
-                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280] lg:hidden">Category</span>
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-[#A0A0A0] lg:hidden">Category</span>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-[#222222] text-gray-700 dark:text-[#E5E5E5]">
                               {item.category}
                             </span>
                           </div>
 
                           <div className="lg:block flex items-start justify-between">
-                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280] lg:hidden">Price</span>
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-[#A0A0A0] lg:hidden">Price</span>
                             <div className="text-left lg:text-left">
                               {item.category === 'Budget Meal' ? (
-                                <span className="font-semibold text-[#171717] text-sm">From ₱{parseFloat(item.price).toFixed(2)}</span>
+                                <span className="font-semibold text-[#171717] dark:text-[#F5F5F5] text-sm">From ₱{parseFloat(item.price).toFixed(2)}</span>
                               ) : item.category === 'Drinks' ? (
                                 <div className="space-y-0.5">
-                                  <p className="font-semibold text-[#171717] text-sm">₱{parseFloat(item.price).toFixed(2)} Med</p>
-                                  {item.half_price && <p className="text-xs text-[#6B7280]">S: ₱{parseFloat(item.half_price).toFixed(2)}</p>}
-                                  {item.large_price && <p className="text-xs text-[#6B7280]">L: ₱{parseFloat(item.large_price).toFixed(2)}</p>}
+                                  <p className="font-semibold text-[#171717] dark:text-[#F5F5F5] text-sm">₱{parseFloat(item.price).toFixed(2)} Med</p>
+                                  {item.half_price && <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0]">S: ₱{parseFloat(item.half_price).toFixed(2)}</p>}
+                                  {item.large_price && <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0]">L: ₱{parseFloat(item.large_price).toFixed(2)}</p>}
                                 </div>
                               ) : (
-                                <span className="font-semibold text-[#171717] text-sm">₱{parseFloat(item.price).toFixed(2)}</span>
+                                <span className="font-semibold text-[#171717] dark:text-[#F5F5F5] text-sm">₱{parseFloat(item.price).toFixed(2)}</span>
                               )}
                             </div>
                           </div>
 
                           <div className="lg:block flex items-center justify-between">
-                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280] lg:hidden">Status</span>
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${item.is_available ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280] dark:text-[#A0A0A0] lg:hidden">Status</span>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${item.is_available ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' : 'bg-rose-100 text-rose-700'}`}>
                               {item.is_available ? 'Available' : 'Unavailable'}
                             </span>
                           </div>
@@ -588,14 +588,14 @@ function OwnerMenu() {
                           <div className="flex items-center justify-end gap-2 pt-1 lg:pt-0">
                             <button
                               onClick={() => handleOpenModal(item)}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#E5E7EB] bg-white text-gray-700 hover:border-[#EA580C] hover:bg-orange-50 hover:text-[#EA580C] transition-all duration-200 text-sm font-medium"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#E5E7EB] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-gray-700 dark:text-[#E5E5E5] hover:border-[#EA580C] hover:bg-orange-50 hover:text-[#EA580C] transition-all duration-200 text-sm font-medium"
                             >
                               <Edit2 size={14} />
                               Edit
                             </button>
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#E5E7EB] bg-white text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-sm font-medium"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#E5E7EB] dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A0A0A0] hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-sm font-medium"
                             >
                               <Trash2 size={14} />
                               Delete
@@ -613,11 +613,11 @@ function OwnerMenu() {
 
         {items.length === 0 && !isLoading && (
           <div className="py-16 text-center">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-              <MenuIcon size={24} className="text-gray-400" />
+            <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-[#222222] rounded-xl flex items-center justify-center mb-4">
+              <MenuIcon size={24} className="text-gray-400 dark:text-[#6B7280]" />
             </div>
-            <h3 className="text-lg font-bold text-[#171717] mb-1">No menu items yet</h3>
-            <p className="text-[#6B7280] mb-4">Start building your restaurant's menu by adding your first item.</p>
+            <h3 className="text-lg font-bold text-[#171717] dark:text-[#F5F5F5] mb-1">No menu items yet</h3>
+            <p className="text-[#6B7280] dark:text-[#A0A0A0] mb-4">Start building your restaurant's menu by adding your first item.</p>
             <button onClick={() => handleOpenModal()} className="px-6 py-2.5 bg-[#EA580C] hover:bg-[#DC2626] text-white font-medium rounded-xl transition-all duration-200">
               Add Menu Item
             </button>
@@ -628,17 +628,17 @@ function OwnerMenu() {
       {/* Item Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 animate-fade-in">
-          <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-xl w-full max-w-2xl flex flex-col max-h-[86vh] animate-slide-up">
-            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-[#E5E7EB] bg-[#FAFAFA] shrink-0">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] shadow-xl w-full max-w-2xl flex flex-col max-h-[86vh] animate-slide-up">
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-[#E5E7EB] dark:border-[#2A2A2A] bg-[#FAFAFA] dark:bg-[#111111] shrink-0">
               <div>
-                <h2 className="text-xl font-bold text-[#171717]">{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
+                <h2 className="text-xl font-bold text-[#171717] dark:text-[#F5F5F5]">{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
                 {formData.category === 'Budget Meal' && (
                   <p className="text-xs text-[#EA580C] font-medium mt-0.5 flex items-center gap-1">
                     <Layers size={12} /> Budget Meal — Define combinations & options below
                   </p>
                 )}
               </div>
-              <button type="button" onClick={handleCloseModal} className="text-[#6B7280] hover:text-[#171717] transition p-1 rounded-lg hover:bg-gray-100">
+              <button type="button" onClick={handleCloseModal} className="text-[#6B7280] dark:text-[#A0A0A0] hover:text-[#171717] transition p-1 rounded-lg hover:bg-gray-100">
                 <X size={20} />
               </button>
             </div>
@@ -648,15 +648,15 @@ function OwnerMenu() {
                 {/* Basic Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-[#171717] mb-1">Item Name *</label>
+                    <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Item Name *</label>
                     <input required type="text" name="name" value={formData.name} onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-[#171717] mb-1">Category *</label>
+                    <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Category *</label>
                     <select required name="category" value={formData.category} onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition">
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition">
                       <option value="">Select Category</option>
                       <option value="Main">Main</option>
                       <option value="Drinks">Drinks</option>
@@ -670,19 +670,19 @@ function OwnerMenu() {
                   {formData.category === 'Drinks' && (
                     <>
                       <div>
-                        <label className="block text-sm font-semibold text-[#171717] mb-1">Small Price (₱) *</label>
+                        <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Small Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="half_price" value={formData.half_price} onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-[#171717] mb-1">Medium Price (₱) *</label>
+                        <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Medium Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="price" value={formData.price} onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-sm font-semibold text-[#171717] mb-1">Large Price (₱) *</label>
+                        <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Large Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="large_price" value={formData.large_price} onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                       </div>
                     </>
                   )}
@@ -690,21 +690,21 @@ function OwnerMenu() {
                   {formData.category !== 'Drinks' && formData.category !== 'Budget Meal' && (
                     <>
                       <div>
-                        <label className="block text-sm font-semibold text-[#171717] mb-1">Full Price (₱) *</label>
+                        <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Full Price (₱) *</label>
                         <input required min="0" step="0.01" type="number" name="price" value={formData.price} onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-[#171717] mb-1">Half Price (₱) [Optional]</label>
+                        <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Half Price (₱) [Optional]</label>
                         <input min="0" step="0.01" type="number" name="half_price" value={formData.half_price} onChange={handleChange}
-                          className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                          className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                       </div>
                     </>
                   )}
 
                   {formData.category === 'Budget Meal' && (
                     <div className="sm:col-span-2">
-                      <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-700 mb-1">
+                      <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-100 dark:border-blue-500/25 text-xs text-blue-700 dark:text-blue-400 mb-1">
                         <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
                         <span>Pricing is set per combination below. The first combination's price will be saved as the item's base price for display.</span>
                       </div>
@@ -712,26 +712,26 @@ function OwnerMenu() {
                   )}
 
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-[#171717] mb-1">Description</label>
+                    <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Description</label>
                     <textarea rows="2" name="description" value={formData.description} onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition resize-none"></textarea>
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition resize-none"></textarea>
                   </div>
 
                   {/* Photo Upload */}
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-[#171717] mb-1">Menu Photo</label>
+                    <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Menu Photo</label>
                     <div className="flex items-center gap-4">
                       {formData.image_url ? (
-                        <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-[#E5E7EB] shrink-0">
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-[#E5E7EB] dark:border-[#2A2A2A] shrink-0">
                           <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
                           <button type="button" onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                            className="absolute top-1 right-1 bg-white/90 p-1 rounded-md text-red-600 hover:bg-red-50 transition">
+                            className="absolute top-1 right-1 bg-white/90 p-1 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 transition">
                             <X size={14} />
                           </button>
                         </div>
                       ) : (
-                        <div className="w-24 h-24 rounded-xl border-2 border-dashed border-[#E5E7EB] flex items-center justify-center shrink-0 bg-[#FAFAFA]">
-                          <ImageIcon className="text-gray-400" size={24} />
+                        <div className="w-24 h-24 rounded-xl border-2 border-dashed border-[#E5E7EB] dark:border-[#2A2A2A] flex items-center justify-center shrink-0 bg-[#FAFAFA] dark:bg-[#111111]">
+                          <ImageIcon className="text-gray-400 dark:text-[#6B7280]" size={24} />
                         </div>
                       )}
                       <div className="flex-1">
@@ -746,35 +746,35 @@ function OwnerMenu() {
                               reader.readAsDataURL(file);
                             }
                           }}
-                          className="w-full block text-sm text-[#6B7280] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-[#EA580C] hover:file:bg-orange-100 cursor-pointer"
+                          className="w-full block text-sm text-[#6B7280] dark:text-[#A0A0A0] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-[#EA580C] hover:file:bg-orange-100 cursor-pointer"
                         />
-                        <p className="text-xs text-[#6B7280] mt-1">Max 5MB. JPEG/PNG recommended.</p>
+                        <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0] mt-1">Max 5MB. JPEG/PNG recommended.</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-[#171717] mb-1">Stock Limit (-1 = unlimited)</label>
+                    <label className="block text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] mb-1">Stock Limit (-1 = unlimited)</label>
                     <input type="number" name="inventory_count" value={formData.inventory_count} onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
+                      className="w-full px-4 py-2.5 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-[#EA580C] outline-none transition" />
                   </div>
 
                   <div className="flex items-center col-span-1 mt-2">
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input type="checkbox" name="isAvailable" checked={formData.isAvailable} onChange={handleChange}
                         className="w-5 h-5 rounded border-gray-300 text-[#EA580C] focus:ring-[#EA580C]" />
-                      <span className="font-semibold text-[#171717] text-sm">Currently available</span>
+                      <span className="font-semibold text-[#171717] dark:text-[#F5F5F5] text-sm">Currently available</span>
                     </label>
                   </div>
                 </div>
 
                 {/* Budget Meal Combinations Section */}
                 {formData.category === 'Budget Meal' && (
-                  <div className="border-t border-dashed border-orange-200 pt-5">
+                  <div className="border-t border-dashed border-orange-200 dark:border-orange-500/30 pt-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Layers size={18} className="text-[#EA580C]" />
-                      <h3 className="font-bold text-[#171717]">Combinations Builder</h3>
-                      <span className="text-xs text-[#6B7280] font-medium">({combinations.length} combo{combinations.length !== 1 ? 's' : ''})</span>
+                      <h3 className="font-bold text-[#171717] dark:text-[#F5F5F5]">Combinations Builder</h3>
+                      <span className="text-xs text-[#6B7280] dark:text-[#A0A0A0] font-medium">({combinations.length} combo{combinations.length !== 1 ? 's' : ''})</span>
                     </div>
                     <BudgetMealBuilder combinations={combinations} onChange={setCombinations} />
                   </div>
@@ -782,7 +782,7 @@ function OwnerMenu() {
 
                 <div className="pt-3 flex flex-col sm:flex-row gap-2.5">
                   <button type="button" onClick={handleCloseModal}
-                    className="flex-1 px-4 py-2.5 bg-[#FAFAFA] hover:bg-gray-200 text-[#171717] font-semibold rounded-xl transition-all duration-200 border border-[#E5E7EB]">
+                    className="flex-1 px-4 py-2.5 bg-[#FAFAFA] dark:bg-[#111111] hover:bg-gray-200 text-[#171717] dark:text-[#F5F5F5] font-semibold rounded-xl transition-all duration-200 border border-[#E5E7EB] dark:border-[#2A2A2A]">
                     Cancel
                   </button>
                   <button type="submit" disabled={isSaving}

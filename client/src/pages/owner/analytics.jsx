@@ -57,15 +57,15 @@ function DonutChart({ segments, size = 110 }) {
   });
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F3F4F6" strokeWidth="10" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" strokeWidth="10" className="stroke-[#F3F4F6] dark:stroke-[#2A2A2A]" />
       {arcs.map((arc, i) => (
         <circle key={i} cx={size/2} cy={size/2} r={r} fill="none" stroke={arc.color}
           strokeWidth="10" strokeDasharray={`${arc.dashLen} ${circumference - arc.dashLen}`}
           strokeDashoffset={arc.offset} strokeLinecap="round"
           className="transition-all duration-700" />
       ))}
-      <text x={size/2} y={size/2 - 4} textAnchor="middle" className="fill-[#171717] font-semibold" style={{ fontSize: '18px' }}>{total}</text>
-      <text x={size/2} y={size/2 + 12} textAnchor="middle" className="fill-[#6B7280]" style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>orders</text>
+      <text x={size/2} y={size/2 - 4} textAnchor="middle" className="fill-[#171717] dark:fill-[#F5F5F5] font-semibold" style={{ fontSize: '18px' }}>{total}</text>
+      <text x={size/2} y={size/2 + 12} textAnchor="middle" className="fill-[#6B7280] dark:fill-[#A0A0A0]" style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>orders</text>
     </svg>
   );
 }
@@ -74,21 +74,21 @@ function DonutChart({ segments, size = 110 }) {
 function KpiCard({ icon: Icon, label, value, subtitle, change, sparkData, sparkColor, accentColor }) {
   const isPositive = change >= 0;
   return (
-    <div className="min-w-0 bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5 transition-all duration-200">
+    <div className="min-w-0 bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5 transition-all duration-200">
       <div className="flex items-center justify-between mb-3">
         <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${accentColor}12` }}>
           <Icon size={17} style={{ color: accentColor }} />
         </div>
         {change !== undefined && change !== null && (
-          <div className={`flex items-center gap-0.5 text-[11px] font-semibold shrink-0 ${isPositive ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+          <div className={`flex items-center gap-0.5 text-[11px] font-semibold shrink-0 ${isPositive ? 'text-[#16A34A] dark:text-[#22C55E]' : 'text-[#DC2626] dark:text-[#EF4444]'}`}>
             {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {Math.abs(change).toFixed(1)}%
           </div>
         )}
       </div>
-      <p className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wide mb-0.5 truncate">{label}</p>
-      <h3 className="text-lg sm:text-xl font-bold text-[#171717] break-words leading-tight">{value}</h3>
-      {subtitle && <p className="text-xs text-[#6B7280] mt-1 break-words">{subtitle}</p>}
+      <p className="text-[11px] font-medium text-[#6B7280] dark:text-[#A0A0A0] uppercase tracking-wide mb-0.5 truncate">{label}</p>
+      <h3 className="text-lg sm:text-xl font-bold text-[#171717] dark:text-[#F5F5F5] break-words leading-tight">{value}</h3>
+      {subtitle && <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0] mt-1 break-words">{subtitle}</p>}
       {sparkData && sparkData.length > 1 && (
         <div className="mt-3"><Sparkline data={sparkData} color={sparkColor || '#EA580C'} /></div>
       )}
@@ -152,7 +152,7 @@ function OwnerAnalytics() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
         <div className="w-10 h-10 border-2 border-gray-200 border-t-[#EA580C] rounded-full animate-spin" />
-        <p className="text-sm text-[#6B7280]">Loading analytics…</p>
+        <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0]">Loading analytics…</p>
       </div>
     );
   }
@@ -162,33 +162,33 @@ function OwnerAnalytics() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#171717] flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2.5">
             <div className="w-8 h-8 bg-[#EA580C] rounded-xl flex items-center justify-center text-white">
               <BarChart3 size={15} />
             </div>
             Analytics
           </h1>
-          <p className="text-sm text-[#6B7280] mt-0.5">Performance overview</p>
+          <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0] mt-0.5">Performance overview</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex bg-[#FAFAFA] border border-[#E5E7EB] rounded-lg p-0.5">
+          <div className="flex bg-[#FAFAFA] dark:bg-[#111111] border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-lg p-0.5">
             {[{ key: '7d', label: '7D' }, { key: '14d', label: '14D' }, { key: '30d', label: '30D' }].map(r => (
               <button key={r.key} onClick={() => setActiveRange(r.key)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  activeRange === r.key ? 'bg-white text-[#171717] shadow-sm' : 'text-[#6B7280] hover:text-[#171717]'
+                  activeRange === r.key ? 'bg-white dark:bg-[#1A1A1A] text-[#171717] dark:text-[#F5F5F5] shadow-sm' : 'text-[#6B7280] dark:text-[#A0A0A0] hover:text-[#171717]'
                 }`}>
                 {r.label}
               </button>
             ))}
           </div>
-          <button onClick={fetchAnalytics} className="p-2 rounded-lg text-[#6B7280] hover:bg-[#FAFAFA] hover:text-[#171717] transition-colors">
+          <button onClick={fetchAnalytics} className="p-2 rounded-lg text-[#6B7280] dark:text-[#A0A0A0] hover:bg-[#FAFAFA] dark:hover:bg-white/5 hover:text-[#171717] transition-colors">
             <RefreshCw size={16} />
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-100 text-[#DC2626] rounded-xl text-sm flex items-center gap-2">
+        <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/25 text-[#DC2626] dark:text-[#EF4444] rounded-xl text-sm flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" />{error}
         </div>
       )}
@@ -209,23 +209,23 @@ function OwnerAnalytics() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 min-w-0 bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
+        <div className="lg:col-span-2 min-w-0 bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-base font-semibold text-[#171717] flex items-center gap-2">
+              <h2 className="text-base font-semibold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2">
                 <Activity size={15} className="text-[#EA580C]" /> Revenue Trend
               </h2>
-              <p className="text-xs text-[#6B7280] mt-0.5">Daily completed order revenue</p>
+              <p className="text-xs text-[#6B7280] dark:text-[#A0A0A0] mt-0.5">Daily completed order revenue</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-[#171717]">₱{fmt(totalRevenue)}</p>
-              <p className="text-[10px] text-[#6B7280] uppercase tracking-wider">Period total</p>
+              <p className="text-lg font-bold text-[#171717] dark:text-[#F5F5F5]">₱{fmt(totalRevenue)}</p>
+              <p className="text-[10px] text-[#6B7280] dark:text-[#A0A0A0] uppercase tracking-wider">Period total</p>
             </div>
           </div>
 
           {filteredAnalytics.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-[#6B7280]">
-              <Activity size={24} className="text-gray-300 mb-2" />
+            <div className="flex flex-col items-center justify-center py-16 text-[#6B7280] dark:text-[#A0A0A0]">
+              <Activity size={24} className="text-gray-300 dark:text-[#555555] mb-2" />
               <p className="text-sm font-medium">No data yet</p>
               <p className="text-xs mt-0.5">Revenue data appears after completed orders</p>
             </div>
@@ -238,13 +238,13 @@ function OwnerAnalytics() {
                 const isToday = new Date().toDateString() === dateObj.toDateString();
                 return (
                   <div key={index} className="flex items-center gap-2 sm:gap-3 group">
-                    <div className={`w-14 sm:w-16 text-right flex-shrink-0 ${isToday ? 'text-[#EA580C] font-semibold' : 'text-[#6B7280]'}`}>
+                    <div className={`w-14 sm:w-16 text-right flex-shrink-0 ${isToday ? 'text-[#EA580C] font-semibold' : 'text-[#6B7280] dark:text-[#A0A0A0]'}`}>
                       <p className="text-[11px] leading-tight">
                         {dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </p>
                       {isToday && <p className="text-[8px] font-bold text-[#EA580C] uppercase">Today</p>}
                     </div>
-                    <div className="flex-1 min-w-0 h-6 bg-[#FAFAFA] rounded-md overflow-hidden relative border border-[#E5E7EB]">
+                    <div className="flex-1 min-w-0 h-6 bg-[#FAFAFA] dark:bg-[#111111] rounded-md overflow-hidden relative border border-[#E5E7EB] dark:border-[#2A2A2A]">
                       <div className="h-full rounded-md transition-all duration-700 ease-out"
                         style={{
                           width: `${percentage}%`,
@@ -254,11 +254,11 @@ function OwnerAnalytics() {
                           animation: `barGrow 0.6s ease-out ${index * 30}ms both`,
                         }} />
                       <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-semibold z-10 ${
-                        percentage > 40 ? 'text-white' : 'text-gray-500'
+                        percentage > 40 ? 'text-white' : 'text-gray-500 dark:text-[#9A9A9A]'
                       }`}>₱{fmt(revenue)}</span>
                     </div>
                     <div className="w-10 sm:w-12 flex-shrink-0 text-right">
-                      <p className="text-[11px] font-semibold text-[#6B7280]">{day.daily_orders}</p>
+                      <p className="text-[11px] font-semibold text-[#6B7280] dark:text-[#A0A0A0]">{day.daily_orders}</p>
                     </div>
                   </div>
                 );
@@ -270,16 +270,16 @@ function OwnerAnalytics() {
         {/* Sidebar: Status + Top Items */}
         <div className="min-w-0 space-y-4">
           {/* Order Status */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
-            <h2 className="text-sm font-semibold text-[#171717] flex items-center gap-2 mb-4">
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5">
+            <h2 className="text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2 mb-4">
               <PieChart size={14} className="text-[#3B82F6]" /> Order Status
             </h2>
             <div className="flex justify-center mb-4">
               {donutSegments.length > 0 ? (
                 <DonutChart segments={donutSegments} />
               ) : (
-                <div className="w-28 h-28 rounded-full bg-[#FAFAFA] border border-dashed border-[#E5E7EB] flex items-center justify-center">
-                  <p className="text-[10px] text-gray-300 text-center font-medium">No orders<br/>yet</p>
+                <div className="w-28 h-28 rounded-full bg-[#FAFAFA] dark:bg-[#111111] border border-dashed border-[#E5E7EB] dark:border-[#2A2A2A] flex items-center justify-center">
+                  <p className="text-[10px] text-gray-300 dark:text-[#555555] text-center font-medium">No orders<br/>yet</p>
                 </div>
               )}
             </div>
@@ -288,11 +288,11 @@ function OwnerAnalytics() {
                 const pct = totalStatusOrders > 0 ? ((parseInt(s.count) / totalStatusOrders) * 100).toFixed(0) : 0;
                 const color = STATUS_COLORS[s.status] || '#94a3b8';
                 return (
-                  <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[#FAFAFA] transition-colors text-xs">
+                  <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[#FAFAFA] dark:hover:bg-white/5 transition-colors text-xs">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <span className="capitalize text-gray-600 flex-1">{s.status}</span>
-                    <span className="font-semibold text-[#171717]">{s.count}</span>
-                    <span className="text-[#6B7280] w-8 text-right">{pct}%</span>
+                    <span className="capitalize text-gray-600 dark:text-[#A0A0A0] flex-1">{s.status}</span>
+                    <span className="font-semibold text-[#171717] dark:text-[#F5F5F5]">{s.count}</span>
+                    <span className="text-[#6B7280] dark:text-[#A0A0A0] w-8 text-right">{pct}%</span>
                   </div>
                 );
               })}
@@ -300,14 +300,14 @@ function OwnerAnalytics() {
           </div>
 
           {/* Top Sellers */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
-            <h2 className="text-sm font-semibold text-[#171717] flex items-center gap-2 mb-4">
-              <Award size={14} className="text-[#D97706]" /> Top Sellers
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] p-4 sm:p-5">
+            <h2 className="text-sm font-semibold text-[#171717] dark:text-[#F5F5F5] flex items-center gap-2 mb-4">
+              <Award size={14} className="text-[#D97706] dark:text-[#F59E0B]" /> Top Sellers
             </h2>
             {topItems.length === 0 ? (
               <div className="py-6 text-center">
                 <Package size={22} className="text-gray-200 mx-auto mb-1.5" />
-                <p className="text-xs text-gray-300">Sales data will appear here</p>
+                <p className="text-xs text-gray-300 dark:text-[#555555]">Sales data will appear here</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -318,15 +318,15 @@ function OwnerAnalytics() {
                     <div key={i}>
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-xs font-semibold text-gray-300 w-4">{i + 1}</span>
-                          <p className="text-xs font-medium text-gray-700 truncate">{item.name}</p>
+                          <span className="text-xs font-semibold text-gray-300 dark:text-[#555555] w-4">{i + 1}</span>
+                          <p className="text-xs font-medium text-gray-700 dark:text-[#E5E5E5] truncate">{item.name}</p>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                          <span className="text-xs font-semibold text-[#171717]">₱{fmt(item.revenue)}</span>
-                          <span className="text-[10px] text-[#6B7280]">· {item.orders}</span>
+                          <span className="text-xs font-semibold text-[#171717] dark:text-[#F5F5F5]">₱{fmt(item.revenue)}</span>
+                          <span className="text-[10px] text-[#6B7280] dark:text-[#A0A0A0]">· {item.orders}</span>
                         </div>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-100 dark:bg-[#222222] rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-700"
                           style={{
                             width: `${barPct}%`,

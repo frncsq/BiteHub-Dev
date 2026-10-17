@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
+import { OwnerThemeProvider } from "./context/OwnerThemeContext";
 import Landing from "./pages/Landing.jsx";
 import StartUp from "./pages/startup.jsx";
 import Login from "./login.jsx";
@@ -25,6 +26,7 @@ import AdminRestaurants from "./pages/admin/restaurants.jsx";
 import AdminUsers from "./pages/admin/users.jsx";
 import AdminOrders from "./pages/admin/orders.jsx";
 import AdminPayments from "./pages/admin/payments.jsx";
+import Legal from "./pages/Legal.jsx";
 
 import RestaurantMenu from "./pages/restaurant-menu.jsx";
 
@@ -44,6 +46,10 @@ function App() {
         <Route path="/restaurant-login" element={<RestaurantLogin />} />
         <Route path="/restaurant-register" element={<RestaurantRegister />} />
         
+        {/* Legal documents */}
+        <Route path="/legal" element={<Legal />} />
+        <Route path="/legal/:slug" element={<Legal />} />
+
         {/* Customer Pages */}
         <Route path="/home" element={<Home />} />
         <Route path="/restaurant/:id" element={<RestaurantMenu />} />
@@ -53,7 +59,7 @@ function App() {
         <Route path="/settings" element={<CustomerSettings />} />
         
         {/* Owner Dashboard */}
-        <Route path="/owner" element={<OwnerLayout />}>
+        <Route path="/owner" element={<OwnerThemeProvider><OwnerLayout /></OwnerThemeProvider>}>
           <Route path="dashboard" element={<OwnerDashboard />} />
           <Route path="menu" element={<OwnerMenu />} />
           <Route path="orders" element={<OwnerOrders />} />

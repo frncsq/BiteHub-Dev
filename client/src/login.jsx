@@ -222,26 +222,6 @@ function Login() {
 							<span className="px-3 bg-white text-[#9CA3AF] font-medium uppercase tracking-wider">or continue with</span>
 						</div>
 					</div>
-
-					{/* Social */}
-					<div className="grid grid-cols-2 gap-3">
-						<button
-							type="button"
-							onClick={() => handleSocialLogin('Google')}
-							className="py-2.5 px-4 border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all duration-200 flex items-center justify-center gap-2"
-						>
-							<span className="text-base">G</span>
-							Google
-						</button>
-						<button
-							type="button"
-							onClick={() => handleSocialLogin('GitHub')}
-							className="py-2.5 px-4 border border-[#E5E7EB] rounded-xl text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all duration-200 flex items-center justify-center gap-2"
-						>
-							<span className="text-base">Gh</span>
-							GitHub
-						</button>
-					</div>
 				</div>
 
 				{/* Register link */}

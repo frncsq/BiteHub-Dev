@@ -15,12 +15,12 @@ function StatusBanner({ status }) {
 
   if (status === 'rejected') {
     return (
-      <div className="mb-6 flex items-start gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
-        <XCircle size={20} className="mt-0.5 shrink-0 text-red-600" />
+      <div className="mb-6 flex items-start gap-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-5 py-4">
+        <XCircle size={20} className="mt-0.5 shrink-0 text-red-600 dark:text-red-400" />
         <div>
           <div className="mb-1 flex items-center gap-3">
             <h3 className="text-sm font-bold text-[#171717] dark:text-[#F5F5F5]">Registration Rejected</h3>
-            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-red-700">REJECTED</span>
+            <span className="rounded-full bg-red-100 dark:bg-red-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-red-700 dark:text-red-400">REJECTED</span>
           </div>
           <p className="text-sm text-[#6B7280] dark:text-[#A0A0A0]">Your registration was rejected by an administrator. Please contact KainGo support for more information or to appeal this decision.</p>
         </div>
@@ -30,16 +30,16 @@ function StatusBanner({ status }) {
 
   // pending
   return (
-    <div className="mb-6 flex items-start gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
-      <Clock size={20} className="mt-0.5 shrink-0 animate-pulse text-amber-600" />
+    <div className="mb-6 flex items-start gap-4 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-5 py-4">
+      <Clock size={20} className="mt-0.5 shrink-0 animate-pulse text-amber-600 dark:text-amber-400" />
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center gap-3 flex-wrap">
           <h3 className="text-sm font-bold text-[#171717] dark:text-[#F5F5F5]">Account Pending Approval</h3>
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-amber-700">PENDING REVIEW</span>
+          <span className="rounded-full bg-amber-100 dark:bg-amber-500/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">PENDING REVIEW</span>
         </div>
         <p className="text-sm leading-relaxed text-[#6B7280] dark:text-[#A0A0A0]">
           Your registration is under review by the KainGo admin team. You can explore your dashboard, but posting menus and managing inventory will be unlocked once approved.
-          <span className="ml-1 font-medium text-amber-700">This page checks automatically — you'll be notified the moment you're approved!</span>
+          <span className="ml-1 font-medium text-amber-700 dark:text-amber-400">This page checks automatically — you'll be notified the moment you're approved!</span>
         </p>
       </div>
     </div>

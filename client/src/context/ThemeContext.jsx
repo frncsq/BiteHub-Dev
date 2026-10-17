@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { applyTheme } from './themeStore'
 
 const ThemeContext = createContext()
 
@@ -18,7 +19,7 @@ export const ThemeProvider = ({ children }) => {
 
     useEffect(() => {
         localStorage.setItem('theme', JSON.stringify(isDarkMode))
-        document.documentElement.classList.toggle('dark', isDarkMode)
+        applyTheme()
     }, [isDarkMode])
 
     const toggleTheme = () => {

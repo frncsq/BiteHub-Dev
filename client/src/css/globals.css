@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ── Dark mode (class-based, toggle on <html class="dark">) ───────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── KainGo Design System ─────────────────────────────────────────────── */
 
 /* ── Color Tokens ─────────────────────────────────────────────────────── */
@@ -186,6 +189,22 @@ img, video {
 }
 .animate-scale-in {
   animation: bh-scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .bh-float,
+  .bh-float-slow,
+  .bh-float-alt { animation: none !important; }
+  .bh-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in { animation: none !important; }
 }
 
 /* ── Skeleton loading ─────────────────────────────────────────────────── */
