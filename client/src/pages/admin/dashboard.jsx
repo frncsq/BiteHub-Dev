@@ -88,18 +88,18 @@ function AdminDashboard() {
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
             return (
-              <div key={index} className={`bg-white rounded-xl p-5 border ${kpi.border} transition-colors hover:border-[#E5E7EB]`}>
+              <div key={index} className={`bg-white rounded-xl p-4 sm:p-5 border ${kpi.border} transition-colors hover:border-[#E5E7EB]`}>
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-xl ${kpi.bg} ${kpi.color}`}>
+                  <div className={`p-3 rounded-xl ${kpi.bg} ${kpi.color} shrink-0`}>
                     <Icon size={20} />
                   </div>
-                  <div>
-                    <p className="text-[#6B7280] text-xs font-medium uppercase tracking-wide">{kpi.title}</p>
-                    <p className="text-xl font-bold text-[#171717] mt-0.5">{kpi.value}</p>
+                  <div className="min-w-0">
+                    <p className="text-[#6B7280] text-xs font-medium uppercase tracking-wide truncate">{kpi.title}</p>
+                    <p className="text-xl font-bold text-[#171717] mt-0.5 break-words leading-tight">{kpi.value}</p>
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-1.5 text-[#16A34A] text-xs font-medium">
-                  <TrendingUp size={12} />
+                  <TrendingUp size={12} className="shrink-0" />
                   {kpi.trend}
                 </div>
               </div>
@@ -107,21 +107,28 @@ function AdminDashboard() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-          <div className="lg:col-span-2 bg-white rounded-xl p-5 border border-[#E5E7EB] flex flex-col h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
+          <div className="lg:col-span-2 min-w-0 bg-white rounded-xl p-4 sm:p-5 border border-[#E5E7EB] flex flex-col h-[340px] sm:h-[400px]">
             <h2 className="text-base font-semibold text-[#171717] mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-[#3B82F6]" /> Revenue Growth (30 Days)
+              <TrendingUp size={18} className="text-[#3B82F6] shrink-0" /> Revenue Growth (30 Days)
             </h2>
-            <div className="flex-1 min-h-0 relative -ml-4">
+            <div className="relative min-h-0 min-w-0 flex-1">
+              {(!data.revenueTrend || data.revenueTrend.length === 0) ? (
+                <div className="flex h-full flex-col items-center justify-center gap-1.5 text-center">
+                  <TrendingUp size={22} className="text-[#D1D5DB]" />
+                  <p className="text-xs font-medium text-[#9CA3AF]">No revenue data yet</p>
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data.revenueTrend}>
+                <LineChart data={data.revenueTrend} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                   <XAxis dataKey="date"
                     tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}
-                    axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} dy={10}
+                    axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 11}} dy={10}
+                    minTickGap={28} interval="preserveStartEnd"
                   />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}}
-                         tickFormatter={(val) => `$${val}`} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 11}}
+                         width={48} tickFormatter={(val) => `$${val}`} />
                   <RechartsTooltip
                      contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: 'none', fontSize: '13px' }}
                      formatter={(value) => [`$${value}`, 'Revenue']}
@@ -130,10 +137,11 @@ function AdminDashboard() {
                   <Line type="monotone" dataKey="revenue" stroke="#EA580C" strokeWidth={3} dot={{ r: 3, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6, strokeWidth: 0 }} />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
 
-          <div className="bg-[#111111] rounded-xl p-5 text-white flex flex-col justify-between h-[400px]">
+          <div className="bg-[#111111] min-w-0 rounded-xl p-4 sm:p-5 text-white flex flex-col justify-between h-auto lg:h-[400px]">
               <div>
                  <h2 className="text-lg font-bold mb-1">Quick Actions</h2>
                  <p className="text-[#A0A0A0] text-sm">Manage system resources instantly</p>

@@ -61,9 +61,9 @@ function AdminPayments() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-1">
          <div className="bg-white rounded-xl p-5 border border-[#E5E7EB]">
              <div className="flex justify-between items-start">
-                 <div>
+                 <div className="min-w-0">
                     <p className="text-[#6B7280] text-xs font-medium uppercase tracking-wide mb-1">Total Trading Volume</p>
-                    <h3 className="text-2xl font-bold text-[#171717]">${metrics.totalVolume.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#171717] tabular-nums break-words">${metrics.totalVolume.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
                  </div>
                  <div className="p-2.5 bg-blue-50 text-[#3B82F6] rounded-xl">
                     <Wallet size={20} />
@@ -72,9 +72,9 @@ function AdminPayments() {
          </div>
          <div className="bg-white rounded-xl p-5 border border-[#E5E7EB]">
              <div className="flex justify-between items-start">
-                 <div>
+                 <div className="min-w-0">
                     <p className="text-[#6B7280] text-xs font-medium uppercase tracking-wide mb-1">Platform Revenue (10% Fee)</p>
-                    <h3 className="text-2xl font-bold text-[#16A34A]">${metrics.platformRevenue.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#16A34A] tabular-nums break-words">${metrics.platformRevenue.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
                  </div>
                  <div className="p-2.5 bg-[#DCFCE7] text-[#16A34A] rounded-xl">
                     <ArrowUpRight size={20} />
@@ -83,9 +83,9 @@ function AdminPayments() {
          </div>
          <div className="bg-white rounded-xl p-5 border border-[#E5E7EB]">
              <div className="flex justify-between items-start">
-                 <div>
+                 <div className="min-w-0">
                     <p className="text-[#6B7280] text-xs font-medium uppercase tracking-wide mb-1">Vendor Payouts Accrued</p>
-                    <h3 className="text-2xl font-bold text-[#D97706]">${metrics.pendingPayouts.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#D97706] tabular-nums break-words">${metrics.pendingPayouts.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
                  </div>
                  <div className="p-2.5 bg-[#FEF3C7] text-[#D97706] rounded-xl">
                     <ArrowDownRight size={20} />

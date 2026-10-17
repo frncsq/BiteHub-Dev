@@ -17,6 +17,14 @@ import {
 
 export const ACTIVITY_CHART_COLORS = ["#f97316", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"]
 
+/** Compact currency label for chart axes (keeps ticks from overlapping on mobile) */
+function formatAxisCurrency(value) {
+	const n = Number(value) || 0
+	if (n >= 1000000) return `₱${(n / 1000000).toFixed(1)}M`
+	if (n >= 1000) return `₱${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`
+	return `₱${n}`
+}
+
 /** Order line items may be an array, JSON string, or (legacy) a single object */
 function normalizeOrderItems(order) {
 	const raw = order?.items
@@ -108,6 +116,15 @@ export function buildProfileActivityMetrics(orders) {
 	}
 }
 
+function ChartEmpty({ isDarkMode, label }) {
+	return (
+		<div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center">
+			<ShoppingBag size={22} className={isDarkMode ? "text-zinc-700" : "text-slate-300"} />
+			<p className={`text-xs font-medium ${isDarkMode ? "text-zinc-500" : "text-slate-400"}`}>{label}</p>
+		</div>
+	)
+}
+
 export default function UserActivityAnalytics({ orders, isDarkMode }) {
 	const metrics = useMemo(() => buildProfileActivityMetrics(orders), [orders])
 
@@ -115,10 +132,18 @@ export default function UserActivityAnalytics({ orders, isDarkMode }) {
 		isDarkMode ? "border-zinc-800/80 bg-zinc-900/60" : "border-slate-200/80 bg-white"
 	}`
 
+	const tooltipStyle = {
+		backgroundColor: isDarkMode ? "#1a1a1a" : "#fff",
+		border: "none",
+		borderRadius: "12px",
+		boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+		fontSize: "12px",
+	}
+
 	const a = metrics
 
 	return (
-		<section id="user-activity" className={`${cardBase} overflow-hidden scroll-mt-24`}>
+		<section id="user-activity" className={`${cardBase} scroll-mt-24 overflow-hidden`}>
 			<div
 				className={`flex flex-col gap-3 border-b px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 ${
 					isDarkMode ? "border-zinc-800/80 bg-zinc-900/40" : "border-slate-100 bg-slate-50/50"
@@ -193,76 +218,86 @@ export default function UserActivityAnalytics({ orders, isDarkMode }) {
 					</div>
 				</div>
 
-				<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-					<div className="h-[240px] min-h-[220px]">
+				<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+					<div className="flex h-[280px] min-w-0 flex-col sm:h-[300px]">
 						<div className="mb-4 flex items-center justify-between">
 							<h4 className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? "text-zinc-400" : "text-slate-500"}`}>
 								Spending trend
 							</h4>
 							<span className={`text-[10px] ${isDarkMode ? "text-zinc-500" : "text-slate-400"}`}>By day</span>
 						</div>
-						<ResponsiveContainer width="100%" height="90%">
-							<AreaChart data={a.chartData}>
-								<defs>
-									<linearGradient id="userActivityColorAmount" x1="0" y1="0" x2="0" y2="1">
-										<stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-										<stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-									</linearGradient>
-								</defs>
-								<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#333" : "#eee"} />
-								<XAxis
-									dataKey="date"
-									axisLine={false}
-									tickLine={false}
-									tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
-									dy={10}
-								/>
-								<YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }} />
-								<Tooltip
-									contentStyle={{
-										backgroundColor: isDarkMode ? "#1a1a1a" : "#fff",
-										border: "none",
-										borderRadius: "12px",
-										boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-										fontSize: "12px",
-									}}
-								/>
-								<Area
-									type="monotone"
-									dataKey="amount"
-									stroke="#f97316"
-									strokeWidth={3}
-									fillOpacity={1}
-									fill="url(#userActivityColorAmount)"
-								/>
-							</AreaChart>
-						</ResponsiveContainer>
+						<div className="min-h-0 min-w-0 flex-1">
+							{a.chartData.length === 0 ? (
+								<ChartEmpty isDarkMode={isDarkMode} label="No spending data yet" />
+							) : (
+								<ResponsiveContainer width="100%" height="100%">
+									<AreaChart data={a.chartData} margin={{ top: 8, right: 8, left: -4, bottom: 0 }}>
+										<defs>
+											<linearGradient id="userActivityColorAmount" x1="0" y1="0" x2="0" y2="1">
+												<stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+												<stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+											</linearGradient>
+										</defs>
+										<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#333" : "#eee"} />
+										<XAxis
+											dataKey="date"
+											axisLine={false}
+											tickLine={false}
+											tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
+											dy={10}
+											minTickGap={16}
+											interval="preserveStartEnd"
+										/>
+										<YAxis
+											axisLine={false}
+											tickLine={false}
+											width={44}
+											tickFormatter={formatAxisCurrency}
+											tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
+										/>
+										<Tooltip contentStyle={tooltipStyle} />
+										<Area
+											type="monotone"
+											dataKey="amount"
+											stroke="#f97316"
+											strokeWidth={3}
+											fillOpacity={1}
+											fill="url(#userActivityColorAmount)"
+										/>
+									</AreaChart>
+								</ResponsiveContainer>
+							)}
+						</div>
 					</div>
 
-					<div className="h-[240px] min-h-[220px]">
+					<div className="flex h-[280px] min-w-0 flex-col sm:h-[300px]">
 						<h4 className={`mb-4 text-xs font-bold uppercase tracking-widest ${isDarkMode ? "text-zinc-400" : "text-slate-500"}`}>
 							Food preferences
 						</h4>
-						<div className="flex flex-col items-stretch gap-4 min-[400px]:flex-row min-[400px]:items-center h-full">
-							<div className="min-h-[180px] flex-1">
-								<ResponsiveContainer width="100%" height="100%">
-									<PieChart>
-										<Pie
-											data={a.pieData}
-											innerRadius={50}
-											outerRadius={70}
-											paddingAngle={5}
-											dataKey="value"
-										>
-											{a.pieData.map((entry, index) => (
-												<Cell key={`cell-${index}`} fill={ACTIVITY_CHART_COLORS[index % ACTIVITY_CHART_COLORS.length]} />
-											))}
-										</Pie>
-										<Tooltip />
-									</PieChart>
-								</ResponsiveContainer>
+						<div className="flex min-h-0 flex-1 flex-col items-stretch gap-4 min-[400px]:flex-row min-[400px]:items-center">
+							<div className="h-[170px] min-h-[150px] w-full min-w-0 flex-1 min-[400px]:h-full">
+								{a.pieData.length === 0 ? (
+									<ChartEmpty isDarkMode={isDarkMode} label="No preference data yet" />
+								) : (
+									<ResponsiveContainer width="100%" height="100%">
+										<PieChart>
+											<Pie
+												data={a.pieData}
+												innerRadius={50}
+												outerRadius={70}
+												paddingAngle={5}
+												dataKey="value"
+											>
+												{a.pieData.map((entry, index) => (
+													<Cell key={`cell-${index}`} fill={ACTIVITY_CHART_COLORS[index % ACTIVITY_CHART_COLORS.length]} />
+												))}
+											</Pie>
+											<Tooltip contentStyle={tooltipStyle} />
+										</PieChart>
+									</ResponsiveContainer>
+								)}
 							</div>
-							<div className="flex-1 space-y-2 min-w-[140px]">
+							<div className="w-full flex-1 space-y-2 min-w-[120px] min-[400px]:w-auto">
 								{a.pieData.slice(0, 4).map((entry, index) => (
 									<div key={index} className="flex items-center justify-between gap-2 text-[10px]">
 										<div className="flex min-w-0 items-center gap-2">
@@ -282,43 +317,50 @@ export default function UserActivityAnalytics({ orders, isDarkMode }) {
 					</div>
 				</div>
 
-				<div className="h-[260px] min-h-[220px]">
+				<div className="flex h-[300px] min-w-0 flex-col sm:h-[320px]">
 					<div className="mb-4 flex items-center justify-between">
 						<h4 className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? "text-zinc-400" : "text-slate-500"}`}>
-							Orders & spend by day
+							Orders &amp; spend by day
 						</h4>
 						<span className={`text-[10px] ${isDarkMode ? "text-zinc-500" : "text-slate-400"}`}>Recent days</span>
 					</div>
-					<ResponsiveContainer width="100%" height="88%">
-						<BarChart data={a.barChartData} margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
-							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#333" : "#eee"} />
-							<XAxis
-								dataKey="date"
-								axisLine={false}
-								tickLine={false}
-								tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
-							/>
-							<YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }} />
-							<YAxis
-								yAxisId="right"
-								orientation="right"
-								axisLine={false}
-								tickLine={false}
-								tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
-							/>
-							<Tooltip
-								contentStyle={{
-									backgroundColor: isDarkMode ? "#1a1a1a" : "#fff",
-									border: "none",
-									borderRadius: "12px",
-									boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-									fontSize: "12px",
-								}}
-							/>
-							<Bar yAxisId="left" dataKey="orderCount" name="Orders" fill="#f97316" radius={[6, 6, 0, 0]} maxBarSize={36} />
-							<Bar yAxisId="right" dataKey="amount" name="Spend (₱)" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={36} />
-						</BarChart>
-					</ResponsiveContainer>
+					<div className="min-h-0 min-w-0 flex-1">
+						{a.barChartData.length === 0 ? (
+							<ChartEmpty isDarkMode={isDarkMode} label="No order activity yet" />
+						) : (
+							<ResponsiveContainer width="100%" height="100%">
+								<BarChart data={a.barChartData} margin={{ top: 4, right: 4, left: -4, bottom: 4 }}>
+									<CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#333" : "#eee"} />
+									<XAxis
+										dataKey="date"
+										axisLine={false}
+										tickLine={false}
+										tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
+										minTickGap={12}
+										interval="preserveStartEnd"
+									/>
+									<YAxis
+										yAxisId="left"
+										width={34}
+										axisLine={false}
+										tickLine={false}
+										tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
+									/>
+									<YAxis
+										yAxisId="right"
+										orientation="right"
+										width={34}
+										axisLine={false}
+										tickLine={false}
+										tick={{ fontSize: 10, fill: isDarkMode ? "#666" : "#999" }}
+									/>
+									<Tooltip contentStyle={tooltipStyle} />
+									<Bar yAxisId="left" dataKey="orderCount" name="Orders" fill="#f97316" radius={[6, 6, 0, 0]} maxBarSize={36} />
+									<Bar yAxisId="right" dataKey="amount" name="Spend (₱)" fill="#3b82f6" radius={[6, 6, 0, 0]} maxBarSize={36} />
+								</BarChart>
+							</ResponsiveContainer>
+						)}
+					</div>
 				</div>
 			</div>
 		</section>

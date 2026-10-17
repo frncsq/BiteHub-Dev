@@ -251,17 +251,17 @@ function OwnerDashboard() {
         <h2 className="text-2xl font-extrabold text-[#171717] tracking-tight mb-1">Key Performance Indicators (KPIs)</h2>
         <div className="h-px bg-[#E5E7EB] my-5" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
           {/* ── Weekly Revenue Trend ── */}
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-black text-[#171717]">Weekly Revenue Trend</h3>
               <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Past week</span>
             </div>
 
             <div className="relative h-48">
-              <div className="absolute left-0 top-0 bottom-6 w-16 flex flex-col justify-between text-[9px] font-bold text-[#6B7280] text-right pr-2">
+              <div className="absolute left-0 top-0 bottom-6 w-14 sm:w-16 flex flex-col justify-between text-[9px] font-bold text-[#6B7280] text-right pr-2">
                 <span>₱{fmt(weeklyMax)}</span>
                 <span>₱{fmt(weeklyMax * 0.75)}</span>
                 <span>₱{fmt(weeklyMax * 0.5)}</span>
@@ -269,7 +269,7 @@ function OwnerDashboard() {
                 <span>0</span>
               </div>
 
-              <div className="ml-16 h-full relative">
+              <div className="ml-14 sm:ml-16 h-full relative">
                 {[0, 25, 50, 75, 100].map(pct => (
                   <div key={pct} className="absolute w-full border-t border-dashed border-[#E5E7EB]" style={{ bottom: `${pct}%` }} />
                 ))}
@@ -316,7 +316,7 @@ function OwnerDashboard() {
           </div>
 
           {/* ── Popular Order Times (Heatmap) ── */}
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-black text-[#171717]">Popular Order Times</h3>
               <div className="flex items-center gap-1.5 text-[8px] font-bold text-[#6B7280] uppercase tracking-wider">
@@ -369,7 +369,7 @@ function OwnerDashboard() {
           </div>
 
           {/* ── Top-Selling Menu Items ── */}
-          <div>
+          <div className="min-w-0">
             <h3 className="text-sm font-black text-[#171717] mb-4">Top-Selling Menu Items</h3>
 
             {topItems.length === 0 ? (

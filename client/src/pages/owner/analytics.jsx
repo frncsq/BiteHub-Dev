@@ -47,22 +47,23 @@ function DonutChart({ segments, size = 110 }) {
   const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
   const r = (size - 12) / 2;
   const circumference = 2 * Math.PI * r;
-  let accum = 0;
+  const arcs = segments.map((seg, i) => {
+    const before = segments.slice(0, i).reduce((sum, s) => sum + s.value, 0);
+    return {
+      color: seg.color,
+      dashLen: (seg.value / total) * circumference,
+      offset: -(before / total) * circumference + circumference * 0.25,
+    };
+  });
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F3F4F6" strokeWidth="10" />
-      {segments.map((seg, i) => {
-        const pct = seg.value / total;
-        const dashLen = pct * circumference;
-        const offset = -accum * circumference + circumference * 0.25;
-        accum += pct;
-        return (
-          <circle key={i} cx={size/2} cy={size/2} r={r} fill="none" stroke={seg.color}
-            strokeWidth="10" strokeDasharray={`${dashLen} ${circumference - dashLen}`}
-            strokeDashoffset={offset} strokeLinecap="round"
-            className="transition-all duration-700" />
-        );
-      })}
+      {arcs.map((arc, i) => (
+        <circle key={i} cx={size/2} cy={size/2} r={r} fill="none" stroke={arc.color}
+          strokeWidth="10" strokeDasharray={`${arc.dashLen} ${circumference - arc.dashLen}`}
+          strokeDashoffset={arc.offset} strokeLinecap="round"
+          className="transition-all duration-700" />
+      ))}
       <text x={size/2} y={size/2 - 4} textAnchor="middle" className="fill-[#171717] font-semibold" style={{ fontSize: '18px' }}>{total}</text>
       <text x={size/2} y={size/2 + 12} textAnchor="middle" className="fill-[#6B7280]" style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>orders</text>
     </svg>
@@ -73,21 +74,21 @@ function DonutChart({ segments, size = 110 }) {
 function KpiCard({ icon: Icon, label, value, subtitle, change, sparkData, sparkColor, accentColor }) {
   const isPositive = change >= 0;
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 transition-all duration-200">
+    <div className="min-w-0 bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5 transition-all duration-200">
       <div className="flex items-center justify-between mb-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${accentColor}12` }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${accentColor}12` }}>
           <Icon size={17} style={{ color: accentColor }} />
         </div>
         {change !== undefined && change !== null && (
-          <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${isPositive ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+          <div className={`flex items-center gap-0.5 text-[11px] font-semibold shrink-0 ${isPositive ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
             {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {Math.abs(change).toFixed(1)}%
           </div>
         )}
       </div>
-      <p className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wide mb-0.5">{label}</p>
-      <h3 className="text-xl font-bold text-[#171717]">{value}</h3>
-      {subtitle && <p className="text-xs text-[#6B7280] mt-1">{subtitle}</p>}
+      <p className="text-[11px] font-medium text-[#6B7280] uppercase tracking-wide mb-0.5 truncate">{label}</p>
+      <h3 className="text-lg sm:text-xl font-bold text-[#171717] break-words leading-tight">{value}</h3>
+      {subtitle && <p className="text-xs text-[#6B7280] mt-1 break-words">{subtitle}</p>}
       {sparkData && sparkData.length > 1 && (
         <div className="mt-3"><Sparkline data={sparkData} color={sparkColor || '#EA580C'} /></div>
       )}
@@ -193,7 +194,7 @@ function OwnerAnalytics() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard icon={Banknote} accentColor="#16A34A" label="Revenue" value={`₱${fmt(totalRevenue)}`}
           subtitle={`This week: ₱${fmt(periods.thisWeek)}`} change={weeklyChange}
           sparkData={revenueSparkData} sparkColor="#16A34A" />
@@ -206,9 +207,9 @@ function OwnerAnalytics() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue Chart */}
-        <div className="xl:col-span-2 bg-white rounded-xl border border-[#E5E7EB] p-5">
+        <div className="lg:col-span-2 min-w-0 bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-base font-semibold text-[#171717] flex items-center gap-2">
@@ -236,14 +237,14 @@ function OwnerAnalytics() {
                 const dateObj = new Date(day.date);
                 const isToday = new Date().toDateString() === dateObj.toDateString();
                 return (
-                  <div key={index} className="flex items-center gap-3 group">
-                    <div className={`w-16 text-right flex-shrink-0 ${isToday ? 'text-[#EA580C] font-semibold' : 'text-[#6B7280]'}`}>
+                  <div key={index} className="flex items-center gap-2 sm:gap-3 group">
+                    <div className={`w-14 sm:w-16 text-right flex-shrink-0 ${isToday ? 'text-[#EA580C] font-semibold' : 'text-[#6B7280]'}`}>
                       <p className="text-[11px] leading-tight">
                         {dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </p>
                       {isToday && <p className="text-[8px] font-bold text-[#EA580C] uppercase">Today</p>}
                     </div>
-                    <div className="flex-1 h-6 bg-[#FAFAFA] rounded-md overflow-hidden relative border border-[#E5E7EB]">
+                    <div className="flex-1 min-w-0 h-6 bg-[#FAFAFA] rounded-md overflow-hidden relative border border-[#E5E7EB]">
                       <div className="h-full rounded-md transition-all duration-700 ease-out"
                         style={{
                           width: `${percentage}%`,
@@ -256,7 +257,7 @@ function OwnerAnalytics() {
                         percentage > 40 ? 'text-white' : 'text-gray-500'
                       }`}>₱{fmt(revenue)}</span>
                     </div>
-                    <div className="w-12 flex-shrink-0 text-right">
+                    <div className="w-10 sm:w-12 flex-shrink-0 text-right">
                       <p className="text-[11px] font-semibold text-[#6B7280]">{day.daily_orders}</p>
                     </div>
                   </div>
@@ -267,9 +268,9 @@ function OwnerAnalytics() {
         </div>
 
         {/* Sidebar: Status + Top Items */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {/* Order Status */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
             <h2 className="text-sm font-semibold text-[#171717] flex items-center gap-2 mb-4">
               <PieChart size={14} className="text-[#3B82F6]" /> Order Status
             </h2>
@@ -299,7 +300,7 @@ function OwnerAnalytics() {
           </div>
 
           {/* Top Sellers */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
             <h2 className="text-sm font-semibold text-[#171717] flex items-center gap-2 mb-4">
               <Award size={14} className="text-[#D97706]" /> Top Sellers
             </h2>
