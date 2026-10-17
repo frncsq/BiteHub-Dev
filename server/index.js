@@ -366,27 +366,35 @@ app.use((req, res, next) => {
   next();
 });
 
-// 2. CORS: reflect request Origin so credentialed requests work from any dev URL
-//    (localhost / 127.0.0.1 / LAN IP). The cors package handles preflight reliably.
-// 2. CORS: Strict configuration for credentialed requests
-const allowedDevOrigins = new Set([
+// 2. CORS: allow credentialed requests from known frontend origins.
+//    Dev origins are always allowed; production origins come from the
+//    CLIENT_ORIGIN / CLIENT_ORIGINS env vars (comma-separated) plus defaults.
+const defaultOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
   'http://127.0.0.1:4173',
-]);
+  'https://kaingo.vercel.app',
+  'https://www.kaingo.vercel.app',
+];
+
+const envOrigins = [process.env.CLIENT_ORIGIN, process.env.CLIENT_ORIGINS]
+  .filter(Boolean)
+  .flatMap((value) => value.split(','))
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([...defaultOrigins, ...envOrigins]);
 
 app.use(
   cors({
     origin(origin, callback) {
       // Same-origin / server-to-server requests may omit Origin
-      if (!origin || allowedDevOrigins.has(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         return callback(null, true);
       }
-      if (process.env.CLIENT_ORIGIN && origin === process.env.CLIENT_ORIGIN) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      console.warn(`⚠️  CORS blocked for origin: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
