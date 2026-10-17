@@ -402,7 +402,6 @@ const seedDatabase = async () => {
     await ensureReviewsTable();
     await ensureAdminsTable();
     await seedDatabase();
-    await pool.query("UPDATE restaurants SET approval_status = 'approved', is_active = TRUE WHERE approval_status = 'pending' OR approval_status IS NULL");
     await ensureFlashSaleTable();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();

@@ -87,8 +87,11 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-    req.session.destroy();
-    res.json({ success: true, message: 'Logged out successfully' });
+    req.session.destroy((err) => {
+        if (err) console.error('[ADMIN LOGOUT] Session destroy error:', err.message);
+        res.clearCookie('bitehub.sid');
+        res.json({ success: true, message: 'Logged out successfully' });
+    });
 });
 
 router.get('/me', isAdmin, async (req, res) => {
@@ -247,10 +250,16 @@ router.patch('/restaurants/:id/approval', isAdmin, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid action. Use approved, rejected, or pending.' });
     }
     try {
-        // When approved, also set is_verified=true. When rejected/pending, set is_verified=false.
+        // When approved, also set is_verified=true and activate it so it appears
+        // in the catalog. When rejected/pending, set is_verified=false (leave is_active as-is).
         const isVerified = action === 'approved';
         await pool.query(
-            `UPDATE restaurants SET approval_status=$1, is_verified=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$3`,
+            `UPDATE restaurants 
+             SET approval_status=$1, 
+                 is_verified=$2, 
+                 is_active = CASE WHEN $1 = 'approved' THEN TRUE ELSE is_active END, 
+                 updated_at=CURRENT_TIMESTAMP 
+             WHERE id=$3`,
             [action, isVerified, req.params.id]
         );
         res.json({ success: true, message: `Restaurant ${action} successfully.` });

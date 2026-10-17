@@ -201,17 +201,42 @@ router.get('/session', async (req, res) => {
   }
 });
 
-// Middleware: blocks write actions if account is not yet approved
-const requireApproved = (req, res, next) => {
-  const status = req.session.approvalStatus || 'pending';
-  if (status !== 'approved') {
-    return res.status(403).json({
+// Middleware: blocks write actions if account is not yet approved.
+// Looks up the CURRENT approval_status in the DB (not the session), so
+// approving a restaurant takes effect immediately without requiring the
+// owner to log out and back in.
+const requireApproved = async (req, res, next) => {
+  const restaurantId = req.userId || req.session?.restaurantId;
+
+  if (!restaurantId) {
+    return res.status(401).json({
       success: false,
-      approvalStatus: status,
-      message: `Your account is ${status}. You cannot perform this action until your registration is approved by an administrator.`
+      message: 'Unauthorized. Please log in again.',
     });
   }
-  next();
+
+  try {
+    const result = await pool.query(
+      'SELECT approval_status FROM restaurants WHERE id = $1',
+      [restaurantId]
+    );
+    const status = result.rows[0]?.approval_status || 'pending';
+
+    // Keep the session in sync so banners/other handlers reflect reality
+    if (req.session) req.session.approvalStatus = status;
+
+    if (status !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        approvalStatus: status,
+        message: `Your account is ${status}. You cannot perform this action until your registration is approved by an administrator.`
+      });
+    }
+    next();
+  } catch (err) {
+    console.error('[REQUIRE APPROVED] Error:', err.message);
+    res.status(500).json({ success: false, message: 'Unable to verify approval status. Please try again.' });
+  }
 };
 
 router.get('/dashboard', async (req, res) => {

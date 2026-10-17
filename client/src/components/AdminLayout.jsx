@@ -1,6 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { createApiClient } from '../services/apiClient.js';
 import AdminSidebar from './AdminSidebar';
 
@@ -9,6 +9,7 @@ function AdminLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [adminUser, setAdminUser] = useState(null);
 
   useEffect(() => {
     const onResize = () => {
@@ -22,7 +23,8 @@ function AdminLayout() {
     const checkAuth = async () => {
       try {
         const apiClient = createApiClient();
-        await apiClient.get('/admin/me');
+        const res = await apiClient.get('/admin/me');
+        setAdminUser(res.data?.user || null);
         setIsAuthenticated(true);
       } catch {
         console.warn("🔐 Admin session invalid or expired.");
@@ -33,6 +35,18 @@ function AdminLayout() {
     };
     checkAuth();
   }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      const apiClient = createApiClient();
+      await apiClient.post('/admin/logout');
+    } catch {
+      // Ignore — clear client state regardless of server response
+    } finally {
+      localStorage.removeItem('authToken');
+      navigate('/admin-login', { replace: true });
+    }
+  };
 
   if (isChecking) {
     return (
@@ -46,7 +60,12 @@ function AdminLayout() {
 
   return (
     <div className="relative flex min-h-[100dvh] overflow-x-hidden bg-[#FAFAFA] font-sans dark:bg-[#111111]">
-      <AdminSidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
+      <AdminSidebar
+        mobileOpen={mobileNavOpen}
+        onNavigate={() => setMobileNavOpen(false)}
+        adminUser={adminUser}
+        onLogout={handleLogout}
+      />
 
       <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col lg:ml-64">
         <header className="sticky top-0 z-[35] flex h-14 shrink-0 items-center gap-3 border-b border-[#E5E7EB] bg-white px-4 lg:hidden dark:border-[#2A2A2A] dark:bg-[#111111]">
@@ -60,6 +79,14 @@ function AdminLayout() {
             <Menu size={22} strokeWidth={2} />
           </button>
           <span className="truncate text-base font-bold text-[#171717] dark:text-[#F5F5F5]">KainGo Admin</span>
+          <button
+            type="button"
+            className="bh-touch ml-auto inline-flex items-center justify-center rounded-lg border border-[#E5E7EB] bg-white p-2.5 text-[#6B7280] transition-colors hover:border-red-200 hover:text-red-500 dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:text-[#A0A0A0] dark:hover:text-red-400"
+            onClick={handleLogout}
+            aria-label="Logout"
+          >
+            <LogOut size={20} strokeWidth={2} />
+          </button>
         </header>
 
         <div className="relative flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
