@@ -460,7 +460,7 @@ function Landing() {
           <div>
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-[#EA580C] shadow-sm">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Sarap na, order na!
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Hali na, order na!
               </span>
             </Reveal>
             <Reveal delay={80}>

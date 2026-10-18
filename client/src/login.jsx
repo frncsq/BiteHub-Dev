@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react'
 import { createApiClient, getStoredAuthToken } from './services/apiClient'
 import kaingoLogo from './assets/kaingo-logo.svg'
@@ -14,6 +14,17 @@ function Login() {
 	const [message, setMessage] = useState('');
 	const [messageType, setMessageType] = useState('');
 	const [errors, setErrors] = useState({});
+	const [searchParams] = useSearchParams();
+
+	useEffect(() => {
+		if (searchParams.get('suspended') === 'true') {
+			setMessage('Your account has been suspended. Please contact the administrator.');
+			setMessageType('error');
+		} else if (searchParams.get('expired') === 'true') {
+			setMessage('Your session has expired. Please sign in again.');
+			setMessageType('error');
+		}
+	}, [searchParams]);
 
 	const validateForm = () => {
 		const newErrors = {};

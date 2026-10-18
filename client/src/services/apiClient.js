@@ -133,6 +133,18 @@ export const createApiClient = () => {
 				}
 			}
 			
+			if (status === 403 && error.response?.data?.code === 'ACCOUNT_SUSPENDED') {
+				const requestUrl = error.config?.url || ''
+				const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((p) => requestUrl.includes(p))
+				if (!isPublicAuthRequest) {
+					console.warn("🚫 Account suspended - clearing token and redirecting to login.");
+					localStorage.removeItem('authToken');
+					if (window.location.pathname !== '/login') {
+						window.location.href = '/login?suspended=true';
+					}
+				}
+			}
+
 			if (status === 431) {
 				console.error("⛔ HTTP 431 Header Too Large - Clearing storage.");
 				localStorage.clear();

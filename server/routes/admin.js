@@ -166,8 +166,17 @@ router.get('/users', isAdmin, async (req, res) => {
 
 router.patch('/users/:id/status', isAdmin, async (req, res) => {
     const { is_active } = req.body;
+    if (typeof is_active !== 'boolean') {
+        return res.status(400).json({ success: false, message: 'is_active must be a boolean' });
+    }
     try {
-        await pool.query('UPDATE users SET is_active = $1 WHERE id = $2', [is_active, req.params.id]);
+        const result = await pool.query(
+            'UPDATE users SET is_active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id',
+            [is_active, req.params.id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
         res.json({ success: true, message: `User status updated to ${is_active ? 'active' : 'suspended'}` });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

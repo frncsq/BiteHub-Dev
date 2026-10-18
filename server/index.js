@@ -263,6 +263,22 @@ const ensureAdminsTable = async () => {
   }
 };
 
+const ensureUserIsActiveColumn = async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+    `);
+    // Backfill: any pre-existing user without a flag stays active
+    await pool.query(`
+      UPDATE users SET is_active = TRUE WHERE is_active IS NULL;
+    `);
+    console.log('✅ Ensured users.is_active column exists');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure users.is_active column:', err.message);
+  }
+};
+
 const ensureOrdersLocationColumns = async () => {
   try {
     await pool.query(`
@@ -398,6 +414,7 @@ const seedDatabase = async () => {
     await ensureRestaurantIsActiveColumn();
     await ensureApprovalStatusColumn();
     await ensureRestaurantLocationColumns();
+    await ensureUserIsActiveColumn();
     await ensureOrdersLocationColumns();
     await ensureReviewsTable();
     await ensureAdminsTable();
@@ -510,6 +527,26 @@ const verifyToken = (req, res, next) => {
     console.error("❌ JWT Verify Error:", err.message);
     return res.status(401).json({ success: false, message: 'Invalid or expired token', error: err.message });
   }
+};
+
+// Blocks suspended users (users.is_active = false) from protected actions like ordering.
+// Must run AFTER verifyToken (relies on req.userId).
+const verifyActiveUser = async (req, res, next) => {
+  if (!dbConnected || !req.userId) return next();
+  try {
+    const result = await pool.query('SELECT is_active FROM users WHERE id = $1', [req.userId]);
+    if (result.rows.length > 0 && result.rows[0].is_active === false) {
+      console.warn(`[SUSPENDED] Blocked action from suspended user ID ${req.userId}`);
+      return res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'Your account has been suspended. Please contact the administrator.'
+      });
+    }
+  } catch (err) {
+    console.warn('⚠️ verifyActiveUser check failed:', err.message);
+  }
+  next();
 };
 
 app.use(express.json({ limit: '20mb' }));
@@ -1127,7 +1164,7 @@ app.get('/api/orders/recent-items', verifyToken, async (req, res) => {
   res.status(200).json({ success: true, items: [] });
 });
 
-app.post('/api/orders/create', verifyToken, async (req, res) => {
+app.post('/api/orders/create', verifyToken, verifyActiveUser, async (req, res) => {
   const { items, subtotal, discount, tax, total, department, course, deliveryAddress, deliveryCity } = req.body || {};
   const userId = req.userId;
   
@@ -1280,7 +1317,7 @@ app.get('/api/stock/:menuItemId', async (req, res) => {
   }
 });
 
-app.post('/api/cart/add', verifyToken, async (req, res) => {
+app.post('/api/cart/add', verifyToken, verifyActiveUser, async (req, res) => {
   const { foodId, quantity, size, budgetMeal } = req.body || {};
   const userId = req.userId;
   if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
@@ -1358,7 +1395,7 @@ app.post('/api/cart/remove', verifyToken, async (req, res) => {
   res.status(200).json({ success: true, cart: req.session.cart });
 });
 
-app.post('/api/cart/update', verifyToken, async (req, res) => {
+app.post('/api/cart/update', verifyToken, verifyActiveUser, async (req, res) => {
   const { foodId, quantity, size, budgetMealComboId } = req.body || {};
   const userId = req.userId;
   if (!foodId) return res.status(400).json({ success: false, message: 'foodId is required' });
@@ -1690,6 +1727,15 @@ app.post('/api/customer/login', async (req, res) => {
     const valid = await comparePassword(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ success: false, message: 'Invalid password' });
+    }
+
+    if (user.is_active === false) {
+      console.warn(`[LOGIN] Blocked suspended user ${user.email}`);
+      return res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'Your account has been suspended. Please contact the administrator.'
+      });
     }
 
     req.session.userId = user.id;

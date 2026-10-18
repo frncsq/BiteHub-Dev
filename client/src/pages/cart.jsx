@@ -136,7 +136,9 @@ function Cart() {
                 if (remainingItems.length === 0) navigate("/orders");
                 else { setCartItems(remainingItems); setActiveCheckoutStore(null); }
             }
-        } catch { setError("Checkout failed. Try again.") } finally { setIsProcessing(null) }
+        } catch (err) {
+            setError(err.response?.data?.message || "Checkout failed. Try again.")
+        } finally { setIsProcessing(null) }
     }
 
     const bg = isDarkMode ? 'bg-[#111111]' : 'bg-[#FAFAFA]'
