@@ -2,6 +2,7 @@
 // Provides API functionality with fallback to mock data
 
 import axios from 'axios'
+import { cachedAdapter, invalidateApiCache, flushApiCache, hasFreshApiResponse, getApiCacheStats } from './apiCache'
 import {
 	mockFoodService,
 	mockOrderService,
@@ -82,6 +83,11 @@ export const createApiClient = () => {
 			'Content-Type': 'application/json',
 		}
 	})
+
+	// PUBLIC catalog GETs are served from a local SWR cache (dedup + stale
+	// revalidation). Auth/cart/checkout/owner/admin requests pass through
+	// untouched, and successful mutations auto-invalidate catalog entries.
+	client.defaults.adapter = cachedAdapter
 
 	// INTERCEPTOR: Attach Authorization header (JWT) automatically
 	client.interceptors.request.use(
@@ -213,6 +219,10 @@ export const getMockData = {
 	getOrders: () => mockOrderService.getOrders(),
 	getCart: () => ({ data: { success: true, cart: mockCartService.getCart() } })
 }
+
+// Re-export the cache helpers so pages can invalidate after mutations
+// and skip spinners when fresh data is already available.
+export { invalidateApiCache, flushApiCache, hasFreshApiResponse, getApiCacheStats }
 
 export default {
 	createApiClient,

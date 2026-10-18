@@ -69,6 +69,7 @@ function Orders() {
                     deliveryCity: o.delivery_city,
                     department: o.department,
                     course: o.course,
+                    deliveryNote: o.special_instructions,
                     deliveryTime: o.estimated_delivery_time || "30-45 min"
                 }));
                 setOrders(mappedOrders);
@@ -439,6 +440,12 @@ function Orders() {
                                                                         {order.department}{order.course ? ` • ${order.course}` : ''}
                                                                     </p>
                                                                 )}
+                                                                {order.deliveryNote && (
+                                                                    <p className="text-xs mt-1 flex items-start gap-1" style={{ color: '#B45309' }}>
+                                                                        <span className="shrink-0">📝</span>
+                                                                        <span className="whitespace-pre-wrap">{order.deliveryNote}</span>
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
@@ -687,6 +694,12 @@ function Orders() {
                                             <MapPin size={15} className="flex-shrink-0 mt-0.5" style={{ color: '#EA580C' }} />
                                             {selectedOrder.deliveryAddress}, {selectedOrder.deliveryCity}
                                         </p>
+                                        {selectedOrder.deliveryNote && (
+                                            <p className="text-xs mt-1 flex items-start gap-1.5" style={{ color: '#B45309' }}>
+                                                <span className="shrink-0">📝</span>
+                                                <span className="whitespace-pre-wrap">{selectedOrder.deliveryNote}</span>
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#6B7280' }}>Est. Delivery Time</p>

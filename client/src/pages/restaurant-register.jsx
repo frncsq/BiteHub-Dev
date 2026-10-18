@@ -552,9 +552,9 @@ function RestaurantRegister() {
 							/>
 							<span className="text-xs text-[#6B7280] group-hover:text-[#171717] transition-colors leading-relaxed">
 								I certify that the information provided is accurate and complies with all regulations. I agree to the
-								<button type="button" className="mx-1 font-semibold text-[#EA580C] hover:text-[#EA580C]/80 underline underline-offset-2 decoration-[#EA580C]/30">Terms</button>
+								<button type="button" onClick={() => navigate('/legal/terms')} className="mx-1 font-semibold text-[#EA580C] hover:text-[#EA580C]/80 underline underline-offset-2 decoration-[#EA580C]/30">Terms</button>
 								and
-								<button type="button" className="mx-1 font-semibold text-[#EA580C] hover:text-[#EA580C]/80 underline underline-offset-2 decoration-[#EA580C]/30">Privacy Policy</button>.
+								<button type="button" onClick={() => navigate('/legal/privacy')} className="mx-1 font-semibold text-[#EA580C] hover:text-[#EA580C]/80 underline underline-offset-2 decoration-[#EA580C]/30">Privacy Policy</button>.
 							</span>
 						</label>
 

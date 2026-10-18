@@ -2,8 +2,19 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 import { hashPassword, comparePassword } from '../components/hash.js';
+import { invalidateTags, invalidatePrefix, sendCached, HttpError } from '../cache.js';
 
 const router = express.Router();
+
+// Helper: the restaurant id for the current owner (JWT set by verifyToken/requireOwner).
+const rid = (req) => req.userId || req.session?.restaurantId;
+
+// Drop all cached views for this restaurant (and any catalog entry that
+// reflects its menu/stock/settings). Called after successful mutations.
+const invalidateRestaurant = (restaurantId) => {
+  if (!restaurantId) return;
+  invalidatePrefix(`own:${restaurantId}:`);
+};
 
 // Middleware to check if owner is authenticated via JWT
 // Note: index.js already calls verifyToken, so req.userId and req.user are populated.
@@ -240,28 +251,33 @@ const requireApproved = async (req, res, next) => {
 };
 
 router.get('/dashboard', async (req, res) => {
-  const rId = (req.userId || req.session.restaurantId);
-  try {
-    // Basic metrics
-    const ordersRes = await pool.query("SELECT COUNT(*) FROM orders WHERE restaurant_id = $1", [rId]);
-    const revenueRes = await pool.query("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE restaurant_id = $1 AND order_status IN ('delivered', 'ready')", [rId]);
-    const activeRes = await pool.query("SELECT COUNT(*) FROM orders WHERE restaurant_id = $1 AND order_status NOT IN ('delivered', 'ready', 'cancelled')", [rId]);
-    const menuRes = await pool.query("SELECT COUNT(*) FROM menu_items WHERE restaurant_id = $1", [rId]);
-    const recentRes = await pool.query(`
-      SELECT o.id, u.full_name as customer_name, o.total_amount, o.order_status as status, o.created_at as time,
-             (SELECT json_agg(json_build_object('name', mi.item_name))
-              FROM order_items oi
-              JOIN menu_items mi ON oi.menu_item_id = mi.id
-              WHERE oi.order_id = o.id) as items
-      FROM orders o
-      JOIN users u ON o.user_id = u.id
-      WHERE o.restaurant_id = $1 
-      ORDER BY o.created_at DESC LIMIT 8`, [rId]);
-
-    // Weekly revenue (last 7 days, grouped by day-of-week)
-    let weeklyRevenue = [];
-    try {
-      const wkRes = await pool.query(`
+  const rId = rid(req);
+  // 15s TTL: dashboard is polled ~30s; invalidated on order/menu changes.
+  await sendCached(req, res, `own:${rId}:dashboard`, {
+    ttlMs: 15_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
+    // All metric queries run in parallel instead of 9 sequential round-trips.
+    const [
+      ordersRes, revenueRes, activeRes, menuRes, recentRes,
+      weeklyRevenue, orderHeatmap, topItems, todayCounts
+    ] = await Promise.all([
+      pool.query("SELECT COUNT(*) FROM orders WHERE restaurant_id = $1", [rId]),
+      pool.query("SELECT COALESCE(SUM(total_amount), 0) as total FROM orders WHERE restaurant_id = $1 AND order_status IN ('delivered', 'ready')", [rId]),
+      pool.query("SELECT COUNT(*) FROM orders WHERE restaurant_id = $1 AND order_status NOT IN ('delivered', 'ready', 'cancelled')", [rId]),
+      pool.query("SELECT COUNT(*) FROM menu_items WHERE restaurant_id = $1", [rId]),
+      pool.query(`
+        SELECT o.id, u.full_name as customer_name, o.total_amount, o.order_status as status, o.created_at as time,
+               (SELECT json_agg(json_build_object('name', mi.item_name))
+                FROM order_items oi
+                JOIN menu_items mi ON oi.menu_item_id = mi.id
+                WHERE oi.order_id = o.id) as items
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        WHERE o.restaurant_id = $1 
+        ORDER BY o.created_at DESC LIMIT 8`, [rId]),
+      // Weekly revenue (last 7 days, grouped by day-of-week)
+      pool.query(`
         SELECT DATE(created_at) as date,
                EXTRACT(DOW FROM created_at) as dow,
                COALESCE(SUM(total_amount), 0) as revenue
@@ -271,14 +287,9 @@ router.get('/dashboard', async (req, res) => {
           AND created_at >= NOW() - INTERVAL '7 days'
         GROUP BY DATE(created_at), EXTRACT(DOW FROM created_at)
         ORDER BY date ASC
-      `, [rId]);
-      weeklyRevenue = wkRes.rows;
-    } catch(_) {}
-
-    // Hourly order heatmap (last 7 days) – by DOW + hour
-    let orderHeatmap = [];
-    try {
-      const heatRes = await pool.query(`
+      `, [rId]).then(r => r.rows).catch(() => []),
+      // Hourly order heatmap (last 7 days) – by DOW + hour
+      pool.query(`
         SELECT EXTRACT(DOW FROM created_at) as dow,
                EXTRACT(HOUR FROM created_at) as hour,
                COUNT(*) as count
@@ -287,16 +298,11 @@ router.get('/dashboard', async (req, res) => {
           AND created_at >= NOW() - INTERVAL '7 days'
         GROUP BY EXTRACT(DOW FROM created_at), EXTRACT(HOUR FROM created_at)
         ORDER BY dow, hour
-      `, [rId]);
-      orderHeatmap = heatRes.rows;
-    } catch(_) {}
-
-    // Top-selling menu items
-    let topItems = [];
-    try {
-      const topRes = await pool.query(`
+      `, [rId]).then(r => r.rows).catch(() => []),
+      // Top-selling menu items (price_at_order is the historical price column)
+      pool.query(`
         SELECT mi.item_name as name, mi.image_url as image, mi.price,
-               COUNT(oi.id) as order_count, COALESCE(SUM(oi.price * oi.quantity), 0) as revenue
+               COUNT(oi.id) as order_count, COALESCE(SUM(oi.price_at_order * oi.quantity), 0) as revenue
         FROM order_items oi
         JOIN menu_items mi ON oi.menu_item_id = mi.id
         JOIN orders o ON oi.order_id = o.id
@@ -305,48 +311,47 @@ router.get('/dashboard', async (req, res) => {
         GROUP BY mi.item_name, mi.image_url, mi.price
         ORDER BY order_count DESC
         LIMIT 5
-      `, [rId]);
-      topItems = topRes.rows;
-    } catch(_) {}
+      `, [rId]).then(r => r.rows).catch(() => []),
+      // Today / yesterday order counts in one round-trip
+      pool.query(`
+        SELECT
+          COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) as today,
+          COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE - 1) as yesterday
+        FROM orders WHERE restaurant_id = $1
+      `, [rId]).then(r => ({
+        todayOrders: parseInt(r.rows[0].today) || 0,
+        yesterdayOrders: parseInt(r.rows[0].yesterday) || 0,
+      })).catch(() => ({ todayOrders: 0, yesterdayOrders: 0 })),
+    ]);
 
-    // Today orders count
-    let todayOrders = 0, yesterdayOrders = 0;
-    try {
-      const tRes = await pool.query(`SELECT COUNT(*) FROM orders WHERE restaurant_id = $1 AND DATE(created_at) = CURRENT_DATE`, [rId]);
-      todayOrders = parseInt(tRes.rows[0].count);
-      const yRes = await pool.query(`SELECT COUNT(*) FROM orders WHERE restaurant_id = $1 AND DATE(created_at) = CURRENT_DATE - 1`, [rId]);
-      yesterdayOrders = parseInt(yRes.rows[0].count);
-    } catch(_) {}
-
-    res.status(200).json({
+    return {
       success: true,
       metrics: {
         totalOrders: parseInt(ordersRes.rows[0].count),
         revenue: parseFloat(revenueRes.rows[0].total),
         activeOrders: parseInt(activeRes.rows[0].count),
         menuItems: parseInt(menuRes.rows[0].count),
-        todayOrders,
-        yesterdayOrders
+        todayOrders: todayCounts.todayOrders,
+        yesterdayOrders: todayCounts.yesterdayOrders
       },
       recentOrders: recentRes.rows,
       weeklyRevenue,
       orderHeatmap,
       topItems
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Dashboard error" });
-  }
+    };
+  });
 });
 
 // Menu Management
 router.get('/menu', async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM menu_items WHERE restaurant_id = $1 ORDER BY id DESC", [(req.userId || req.session.restaurantId)]);
-    res.status(200).json({ success: true, items: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  const rId = rid(req);
+  await sendCached(req, res, `own:${rId}:menu`, {
+    ttlMs: 30_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
+    const result = await pool.query("SELECT * FROM menu_items WHERE restaurant_id = $1 ORDER BY id DESC", [rId]);
+    return { success: true, items: result.rows };
+  });
 });
 
 router.post('/menu', requireApproved, async (req, res) => {
@@ -360,6 +365,8 @@ router.post('/menu', requireApproved, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
       [(req.userId || req.session.restaurantId), name, description, price, half_price || null, large_price || null, category, isAvailable ?? true, image_url, inventory_count ?? -1, ds, ds]
     );
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('food', 'categories');
     res.status(201).json({ success: true, message: 'Item added', id: result.rows[0].id });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -379,6 +386,8 @@ router.put('/menu/:id', requireApproved, async (req, res) => {
        WHERE id=$11 AND restaurant_id=$12`,
       [name, description, price, half_price || null, large_price || null, category, isAvailable, image_url, inventory_count, ds, req.params.id, (req.userId || req.session.restaurantId)]
     );
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('food', 'categories');
     res.status(200).json({ success: true, message: 'Item updated' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -388,6 +397,8 @@ router.put('/menu/:id', requireApproved, async (req, res) => {
 router.delete('/menu/:id', requireApproved, async (req, res) => {
   try {
     await pool.query("DELETE FROM menu_items WHERE id=$1 AND restaurant_id=$2", [req.params.id, (req.userId || req.session.restaurantId)]);
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('food', 'categories');
     res.status(200).json({ success: true, message: 'Item deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -400,43 +411,51 @@ router.delete('/menu/:id', requireApproved, async (req, res) => {
 
 // GET all combinations (with their option slots) for a given menu item
 router.get('/menu/:menuItemId/combinations', async (req, res) => {
-  try {
-    const { menuItemId } = req.params;
+  const { menuItemId } = req.params;
+  const rId = rid(req);
+  await sendCached(req, res, `own:${rId}:combos:${menuItemId}`, {
+    ttlMs: 30_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
     // Verify ownership
     const ownerCheck = await pool.query(
       'SELECT id FROM menu_items WHERE id=$1 AND restaurant_id=$2',
-      [menuItemId, (req.userId || req.session.restaurantId)]
+      [menuItemId, rId]
     );
-    if (!ownerCheck.rows.length) return res.status(404).json({ success: false, message: 'Menu item not found' });
+    if (!ownerCheck.rows.length) throw new HttpError(404, 'Menu item not found');
 
     const combRes = await pool.query(
       'SELECT id, label, price FROM budget_meal_combinations WHERE menu_item_id=$1 ORDER BY id',
       [menuItemId]
     );
-    const combinations = [];
-    for (const combo of combRes.rows) {
+    const combinationIds = combRes.rows.map(c => c.id);
+    const optsByCombo = {};
+    if (combinationIds.length > 0) {
       const optsRes = await pool.query(
-        'SELECT id, component_type, slot_index, option_name FROM budget_meal_options WHERE combination_id=$1 ORDER BY slot_index, id',
-        [combo.id]
+        'SELECT id, combination_id, component_type, slot_index, option_name FROM budget_meal_options WHERE combination_id = ANY($1::int[]) ORDER BY slot_index, id',
+        [combinationIds]
       );
+      for (const opt of optsRes.rows) {
+        (optsByCombo[opt.combination_id] ||= []).push(opt);
+      }
+    }
+    const combinations = combRes.rows.map(combo => {
       // Group options by slot
       const slots = {};
-      for (const opt of optsRes.rows) {
+      for (const opt of optsByCombo[combo.id] || []) {
         const key = `${opt.slot_index}_${opt.component_type}`;
         if (!slots[key]) slots[key] = { slot_index: opt.slot_index, component_type: opt.component_type, options: [] };
         slots[key].options.push({ id: opt.id, name: opt.option_name });
       }
-      combinations.push({
+      return {
         id: combo.id,
         label: combo.label,
         price: Number(combo.price),
         slots: Object.values(slots).sort((a, b) => a.slot_index - b.slot_index)
-      });
-    }
-    res.status(200).json({ success: true, combinations });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+      };
+    });
+    return { success: true, combinations };
+  });
 });
 
 // POST: Create a new combination with its slots and options
@@ -472,6 +491,8 @@ router.post('/menu/:menuItemId/combinations', requireApproved, async (req, res) 
         }
       }
     }
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('food');
     res.status(201).json({ success: true, combinationId });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -491,6 +512,8 @@ router.delete('/menu/:menuItemId/combinations/:combinationId', async (req, res) 
     );
     if (!ownerCheck.rows.length) return res.status(404).json({ success: false, message: 'Combination not found' });
     await pool.query('DELETE FROM budget_meal_combinations WHERE id=$1', [combinationId]);
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('food');
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -534,6 +557,8 @@ router.put('/menu/:menuItemId/combinations', async (req, res) => {
       }
     }
     res.status(200).json({ success: true });
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('food');
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -541,7 +566,13 @@ router.put('/menu/:menuItemId/combinations', async (req, res) => {
 
 // Order Management
 router.get('/orders', async (req, res) => {
-  try {
+  const rId = rid(req);
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 200, 1), 500);
+  // 4s TTL: order list is polled every ~5s; status changes invalidate it.
+  await sendCached(req, res, `own:${rId}:orders:${limit}`, {
+    ttlMs: 4_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
     const result = await pool.query(`
       SELECT o.*, 
              u.full_name as customer_name,
@@ -554,18 +585,20 @@ router.get('/orders', async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE o.restaurant_id = $1
       ORDER BY o.created_at DESC
-    `, [(req.userId || req.session.restaurantId)]);
+      LIMIT ${limit}
+    `, [rId]);
     
-    res.status(200).json({ success: true, orders: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    return { success: true, orders: result.rows };
+  });
 });
 
 router.put('/orders/:id/status', async (req, res) => {
   const { status } = req.body;
   try {
     await pool.query("UPDATE orders SET order_status = $1 WHERE id = $2 AND restaurant_id = $3", [status, req.params.id, (req.userId || req.session.restaurantId)]);
+    // Status change: this restaurant's order list + customer order lists + admin views are stale.
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('orders', 'adm:orders', 'adm:payments');
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -574,47 +607,47 @@ router.put('/orders/:id/status', async (req, res) => {
 
 // Analytics – enriched
 router.get('/analytics', async (req, res) => {
-  const rid = (req.userId || req.session.restaurantId);
-  try {
-    // 1. Daily revenue + orders for last 30 days
-    const dailyRes = await pool.query(`
-      SELECT DATE(created_at) as date,
-             SUM(total_amount) as daily_revenue,
-             COUNT(*) as daily_orders
-      FROM orders
-      WHERE restaurant_id = $1
-        AND order_status IN ('delivered', 'ready')
-        AND created_at >= NOW() - INTERVAL '30 days'
-      GROUP BY DATE(created_at)
-      ORDER BY date ASC
-    `, [rid]);
-
-    // 2. This week vs last week revenue
-    const weekRes = await pool.query(`
-      SELECT
-        SUM(CASE WHEN created_at >= date_trunc('week', NOW()) THEN total_amount ELSE 0 END) as this_week,
-        SUM(CASE WHEN created_at >= date_trunc('week', NOW()) - INTERVAL '7 days'
-                  AND created_at <  date_trunc('week', NOW()) THEN total_amount ELSE 0 END) as last_week,
-        SUM(CASE WHEN created_at >= date_trunc('month', NOW()) THEN total_amount ELSE 0 END) as this_month,
-        SUM(CASE WHEN created_at >= date_trunc('month', NOW()) - INTERVAL '1 month'
-                  AND created_at <  date_trunc('month', NOW()) THEN total_amount ELSE 0 END) as last_month
-      FROM orders
-      WHERE restaurant_id = $1 AND order_status IN ('delivered', 'ready')
-    `, [rid]);
-
-    // 3. Order status breakdown (all time)
-    const statusRes = await pool.query(`
-      SELECT order_status as status, COUNT(*) as count
-      FROM orders
-      WHERE restaurant_id = $1
-      GROUP BY order_status
-    `, [rid]);
-
-    // 4. Top selling menu items (by order_items)
-    let topItems = [];
-    try {
-      const topRes = await pool.query(`
-        SELECT mi.item_name as name, COUNT(oi.id) as orders, SUM(oi.price * oi.quantity) as revenue
+  const ridv = rid(req);
+  // 60s TTL: analytics are inherently historical; safe to serve slightly stale.
+  await sendCached(req, res, `own:${ridv}:analytics`, {
+    ttlMs: 60_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
+    const [dailyRes, weekRes, statusRes, topItems, custRes] = await Promise.all([
+      // 1. Daily revenue + orders for last 30 days
+      pool.query(`
+        SELECT DATE(created_at) as date,
+               SUM(total_amount) as daily_revenue,
+               COUNT(*) as daily_orders
+        FROM orders
+        WHERE restaurant_id = $1
+          AND order_status IN ('delivered', 'ready')
+          AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+      `, [ridv]),
+      // 2. This week vs last week revenue
+      pool.query(`
+        SELECT
+          SUM(CASE WHEN created_at >= date_trunc('week', NOW()) THEN total_amount ELSE 0 END) as this_week,
+          SUM(CASE WHEN created_at >= date_trunc('week', NOW()) - INTERVAL '7 days'
+                    AND created_at <  date_trunc('week', NOW()) THEN total_amount ELSE 0 END) as last_week,
+          SUM(CASE WHEN created_at >= date_trunc('month', NOW()) THEN total_amount ELSE 0 END) as this_month,
+          SUM(CASE WHEN created_at >= date_trunc('month', NOW()) - INTERVAL '1 month'
+                    AND created_at <  date_trunc('month', NOW()) THEN total_amount ELSE 0 END) as last_month
+        FROM orders
+        WHERE restaurant_id = $1 AND order_status IN ('delivered', 'ready')
+      `, [ridv]),
+      // 3. Order status breakdown (all time)
+      pool.query(`
+        SELECT order_status as status, COUNT(*) as count
+        FROM orders
+        WHERE restaurant_id = $1
+        GROUP BY order_status
+      `, [ridv]),
+      // 4. Top selling menu items (price_at_order is the historical price column)
+      pool.query(`
+        SELECT mi.item_name as name, COUNT(oi.id) as orders, SUM(oi.price_at_order * oi.quantity) as revenue
         FROM order_items oi
         JOIN menu_items mi ON oi.menu_item_id = mi.id
         JOIN orders o ON oi.order_id = o.id
@@ -623,20 +656,18 @@ router.get('/analytics', async (req, res) => {
         GROUP BY mi.item_name
         ORDER BY orders DESC
         LIMIT 5
-      `, [rid]);
-      topItems = topRes.rows;
-    } catch (_) { /* order_items may have different schema */ }
-
-    // 5. Unique customers this month
-    const custRes = await pool.query(`
-      SELECT COUNT(DISTINCT user_id) as customers
-      FROM orders
-      WHERE restaurant_id = $1
-        AND created_at >= date_trunc('month', NOW())
-    `, [rid]);
+      `, [ridv]).then(r => r.rows).catch(() => []),
+      // 5. Unique customers this month
+      pool.query(`
+        SELECT COUNT(DISTINCT user_id) as customers
+        FROM orders
+        WHERE restaurant_id = $1
+          AND created_at >= date_trunc('month', NOW())
+      `, [ridv]),
+    ]);
 
     const periods = weekRes.rows[0] || {};
-    res.status(200).json({
+    return {
       success: true,
       analytics: dailyRes.rows,
       periods: {
@@ -648,20 +679,20 @@ router.get('/analytics', async (req, res) => {
       statusBreakdown: statusRes.rows,
       topItems,
       customersThisMonth: parseInt(custRes.rows[0]?.customers || 0),
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    };
+  });
 });
 
 // Settings
 router.get('/settings', async (req, res) => {
-  try {
-    const result = await pool.query("SELECT business_name, business_address, city, owner_name, owner_phone, business_email, description, restaurant_logo_url FROM restaurants WHERE id = $1", [(req.userId || req.session.restaurantId)]);
-    res.status(200).json({ success: true, settings: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  const rId = rid(req);
+  await sendCached(req, res, `own:${rId}:settings`, {
+    ttlMs: 60_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
+    const result = await pool.query("SELECT business_name, business_address, city, owner_name, owner_phone, business_email, description, restaurant_logo_url FROM restaurants WHERE id = $1", [rId]);
+    return { success: true, settings: result.rows[0] };
+  });
 });
 
 router.put('/settings', async (req, res) => {
@@ -671,6 +702,9 @@ router.put('/settings', async (req, res) => {
       UPDATE restaurants SET business_name=$1, business_address=$2, city=$3, owner_name=$4, owner_phone=$5, description=$6, restaurant_logo_url=$7
       WHERE id=$8
     `, [business_name, business_address, city, owner_name, owner_phone, description, restaurant_logo_url, (req.userId || req.session.restaurantId)]);
+    // Name/logo appear in the public restaurant + food lists.
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidateTags('restaurants', 'food');
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -686,7 +720,12 @@ router.put('/settings', async (req, res) => {
  * Returns all menu items for the restaurant with stock tracking info
  */
 router.get('/inventory', async (req, res) => {
-  try {
+  const rId = rid(req);
+  // 30s TTL matches the page's 30s poll; owner edits invalidate immediately.
+  await sendCached(req, res, `own:${rId}:inv`, {
+    ttlMs: 30_000,
+    cacheControl: 'private, no-store',
+  }, async () => {
     const result = await pool.query(
       `SELECT id, item_name, category, price, is_available,
               daily_stock, current_stock, inventory_count,
@@ -694,12 +733,10 @@ router.get('/inventory', async (req, res) => {
        FROM menu_items
        WHERE restaurant_id = $1
        ORDER BY category, item_name`,
-      [(req.userId || req.session.restaurantId)]
+      [rId]
     );
-    res.status(200).json({ success: true, items: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    return { success: true, items: result.rows };
+  });
 });
 
 /**
@@ -764,6 +801,10 @@ router.put('/inventory/:id', async (req, res) => {
       `SELECT id, item_name, daily_stock, current_stock, is_available FROM menu_items WHERE id = $1`,
       [itemId]
     );
+    // Stock/availability changed: catalog + stock + owner views are stale.
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidatePrefix('stock:');
+    invalidateTags('food');
     res.status(200).json({ success: true, item: updated.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -812,6 +853,9 @@ router.patch('/inventory/:id/current', async (req, res) => {
       `SELECT id, item_name, daily_stock, current_stock, is_available FROM menu_items WHERE id = $1`,
       [itemId]
     );
+    invalidateRestaurant(req.userId || req.session.restaurantId);
+    invalidatePrefix('stock:');
+    invalidateTags('food');
     res.status(200).json({ success: true, item: updated.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -854,6 +898,9 @@ router.post('/inventory/reset', async (req, res) => {
       );
     }
 
+    invalidateRestaurant(restaurantId);
+    invalidatePrefix('stock:');
+    invalidateTags('food');
     res.status(200).json({
       success: true,
       message: `Stock reset complete. ${result.rowCount} item(s) refreshed.`,

@@ -450,6 +450,20 @@ function RestaurantLogin() {
 									Register your restaurant
 								</button>
 							</p>
+
+							<p className="text-center text-[#9CA3AF] text-xs mt-3">
+								By signing in, you agree to our{" "}
+								<button type="button" onClick={() => navigate('/legal/terms')} className="font-medium text-[#6B7280] hover:text-[#EA580C] underline underline-offset-2 transition-colors">Terms &amp; Conditions</button>{" "}
+								and{" "}
+								<button type="button" onClick={() => navigate('/legal/privacy')} className="font-medium text-[#6B7280] hover:text-[#EA580C] underline underline-offset-2 transition-colors">Privacy Policy</button>.
+							</p>
+
+							<p className="text-center text-[#9CA3AF] text-xs mt-3">
+								By signing in, you agree to our{" "}
+								<button type="button" onClick={() => navigate('/legal/terms')} className="font-medium text-[#6B7280] hover:text-[#EA580C] underline underline-offset-2 transition-colors">Terms &amp; Conditions</button>{" "}
+								and{" "}
+								<button type="button" onClick={() => navigate('/legal/privacy')} className="font-medium text-[#6B7280] hover:text-[#EA580C] underline underline-offset-2 transition-colors">Privacy Policy</button>.
+							</p>
 						</div>
 					</div>
 				</div>

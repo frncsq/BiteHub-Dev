@@ -18,7 +18,7 @@ import {
     CreditCard
 } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
-import { createApiClient } from "../services/apiClient"
+import { createApiClient, hasFreshApiResponse } from "../services/apiClient"
 import CustomerSidebar from "../components/CustomerSidebar"
 import { calculateDistance, formatDistance } from "../utils/distance"
 
@@ -34,7 +34,8 @@ const RestaurantMenuPage = () => {
     const [categories, setCategories] = useState([])
     const [activeCategory, setActiveCategory] = useState("All")
     const [searchQuery, setSearchQuery] = useState("")
-    const [loading, setLoading] = useState(true)
+    // Skip the full-page spinner when this restaurant's menu is fresh locally.
+    const [loading, setLoading] = useState(() => !hasFreshApiResponse(`/food/${id}`))
     const [cart, setCart] = useState([])
     const [favorites, setFavorites] = useState(new Set())
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -94,7 +95,7 @@ const RestaurantMenuPage = () => {
 
     const fetchData = async () => {
         try {
-            setLoading(true)
+            if (!hasFreshApiResponse(`/food/${id}`)) setLoading(true)
             const [restRes, menuRes] = await Promise.all([
                 apiClient.get('/restaurants'),
                 apiClient.get(`/food/${id}`)
@@ -202,10 +203,10 @@ const RestaurantMenuPage = () => {
                     name: directCheckoutItem.name,
                     restaurantId: id
                 }],
-                total: Number(directCheckoutItem.price) + 25,
+                total: Number(directCheckoutItem.price) + 10,
                 department: directDepartment,
                 course: directCourse,
-                deliveryFee: 25
+                deliveryFee: 10
             })
             if (res.data.success) {
                 showMessage("Order placed!", "success")
@@ -596,7 +597,7 @@ const RestaurantMenuPage = () => {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between pt-1" style={{ borderTop: `1px solid ${borderColor}` }}>
                                 <span className="text-xs font-medium" style={{ color: textSecondary }}>Total</span>
-                                <span className="text-lg font-bold text-[#EA580C]">₱{(Number(directCheckoutItem.price) + 25).toFixed(2)}</span>
+                                <span className="text-lg font-bold text-[#EA580C]">₱{(Number(directCheckoutItem.price) + 10).toFixed(2)}</span>
                             </div>
                             <button
                                 onClick={handleDirectCheckoutSubmit}

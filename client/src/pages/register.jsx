@@ -306,7 +306,7 @@ const Register = () => {
 										className="w-4 h-4 rounded border-[#D1D5DB] text-[#EA580C] focus:ring-[#EA580C]"
 									/>
 									<span className="text-sm text-[#6B7280]">
-										I agree to <button type="button" className="font-semibold text-[#EA580C] hover:underline">Terms</button> & <button type="button" className="font-semibold text-[#EA580C] hover:underline">Privacy</button>
+										I agree to <button type="button" onClick={() => navigate('/legal/terms')} className="font-semibold text-[#EA580C] hover:underline">Terms</button> & <button type="button" onClick={() => navigate('/legal/privacy')} className="font-semibold text-[#EA580C] hover:underline">Privacy</button>
 									</span>
 								</label>
 								<div className="flex-1" />

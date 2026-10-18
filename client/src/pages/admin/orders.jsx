@@ -114,6 +114,12 @@ function AdminOrders() {
                 <MapPin size={13} className="text-[#9CA3AF] shrink-0 mt-0.5" />
                 <span className="break-words">{order.delivery_address || 'N/A'}</span>
               </p>
+              {order.special_instructions && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 mt-2 flex items-start gap-1.5">
+                  <span className="shrink-0">📝</span>
+                  <span className="break-words whitespace-pre-wrap">{order.special_instructions}</span>
+                </p>
+              )}
               <div className="mt-3 pt-3 border-t border-[#F3F4F6] flex justify-between items-center">
                 <span className="text-xs text-[#9CA3AF] uppercase">{order.payment_method || 'CASH'}</span>
                 <span className="text-lg font-bold text-[#171717]">
@@ -179,6 +185,11 @@ function AdminOrders() {
                              {(order.department || order.course) && (
                                 <span className="flex items-center gap-1.5 text-xs text-[#6B7280] mt-1 whitespace-normal">
                                    <Map size={13} className="text-[#D1D5DB] shrink-0" /> {order.department} {order.course}
+                                </span>
+                             )}
+                             {order.special_instructions && (
+                                <span className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-1 whitespace-pre-wrap max-w-[260px]">
+                                   <span className="shrink-0">📝</span> {order.special_instructions}
                                 </span>
                              )}
                           </div>

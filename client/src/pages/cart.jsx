@@ -106,7 +106,7 @@ function Cart() {
         return acc;
     }, {});
 
-    const deliveryFeeBase = 25;
+    const deliveryFeeBase = 10;
 
     const handleCheckout = async (storeId) => {
         const storeGroup = groupedCart[storeId];

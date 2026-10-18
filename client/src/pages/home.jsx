@@ -47,7 +47,7 @@ import {
 } from "lucide-react"
 import { useTheme } from "../context/ThemeContext"
 import { mockRestaurantsData, mockFoodItems, mockCategories, mockOrderService, mockCartService, mockAuthService } from "../services/mockData"
-import { createApiClient } from "../services/apiClient"
+import { createApiClient, hasFreshApiResponse } from "../services/apiClient"
 import CustomerSidebar from "../components/CustomerSidebar"
 import FoodMenuCard from "../components/FoodMenuCard"
 import UserActivityAnalytics, { buildProfileActivityMetrics } from "../components/UserActivityAnalytics"
@@ -136,7 +136,9 @@ const HomePage = () => {
     const [popularFoods, setPopularFoods] = useState([])
     const [recentlyOrdered, setRecentlyOrdered] = useState([])
     const [recentlyOrderedScrollIndex, setRecentlyOrderedScrollIndex] = useState(0)
-    const [loading, setLoading] = useState(true)
+    // Skip the full-page spinner when catalog data is already fresh locally
+    // (returns instantly from the SWR cache while fetchData revalidates).
+    const [loading, setLoading] = useState(() => !hasFreshApiResponse('/food'))
     const [error, setError] = useState("")
     const [message, setMessage] = useState("")
     const [messageType, setMessageType] = useState("")
@@ -155,7 +157,8 @@ const HomePage = () => {
     const [checkoutInfo, setCheckoutInfo] = useState({
         deliveryAddress: "",
         deliveryCity: "",
-        phone: ""
+        phone: "",
+        deliveryNote: ""
     })
     // Direct checkout state (Buy Now / Order Now without cart)
     const [showDirectCheckout, setShowDirectCheckout] = useState(false)
@@ -163,6 +166,7 @@ const HomePage = () => {
     const [directCheckoutQty, setDirectCheckoutQty] = useState(1)
     const [directDepartment, setDirectDepartment] = useState("")
     const [directCourse, setDirectCourse] = useState("")
+    const [directNote, setDirectNote] = useState("")
     const [directCheckoutProcessing, setDirectCheckoutProcessing] = useState(false)
     const [directCheckoutError, setDirectCheckoutError] = useState("")
     const [userProfile, setUserProfile] = useState(null)
@@ -321,7 +325,7 @@ const HomePage = () => {
 
     const fetchData = async (attempt = 0) => {
         try {
-            setLoading(true)
+            if (!hasFreshApiResponse('/food')) setLoading(true)
             setError("")
             setMessage("")
 
@@ -769,7 +773,7 @@ const HomePage = () => {
         return sum + (finalPrice * item.quantity);
     }, 0)
     const tax = subtotal * 0.1
-    const deliveryFee = cart.length > 0 ? 2.99 : 0
+    const deliveryFee = cart.length > 0 ? 10 : 0
     const total = subtotal + tax + deliveryFee
 
     // Filter foods (search + price + rating + category + cuisine)
@@ -813,7 +817,8 @@ const HomePage = () => {
                 deliveryFee,
                 total,
                 deliveryAddress: checkoutInfo.deliveryAddress,
-                deliveryCity: checkoutInfo.deliveryCity
+                deliveryCity: checkoutInfo.deliveryCity,
+                deliveryNote: checkoutInfo.deliveryNote
             })
 
             if (response.data?.success) {
@@ -846,6 +851,7 @@ const HomePage = () => {
         setDirectCheckoutQty(1)
         setDirectDepartment("")
         setDirectCourse("")
+        setDirectNote("")
         setDirectCheckoutError("")
         setDirectCheckoutProcessing(false)
         setShowDirectCheckout(true)
@@ -873,7 +879,7 @@ const HomePage = () => {
 
         const itemPrice = Number(directCheckoutItem.price || 0)
         const itemSubtotal = itemPrice * directCheckoutQty
-        const deliveryFeeVal = 25
+        const deliveryFeeVal = 10
         const promoDiscount = itemSubtotal > 1000 ? 100 : 0
         const orderTotal = itemSubtotal + deliveryFeeVal - promoDiscount
 
@@ -889,6 +895,7 @@ const HomePage = () => {
             total: orderTotal,
             department: directDepartment,
             course: directCourse,
+            deliveryNote: directNote,
             tax: 0,
             deliveryFee: deliveryFeeVal
         }
@@ -2388,6 +2395,17 @@ const HomePage = () => {
                                     />
                                 </div>
                             </div>
+                            <div>
+                                <label className={`block text-sm font-semibold mb-1 ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>Delivery Note <span className={`font-normal ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#9CA3AF]'}`}>(optional – helps the rider find you)</span></label>
+                                <textarea
+                                    rows={2}
+                                    value={checkoutInfo.deliveryNote}
+                                    placeholder="e.g. Look for the guy in a red shirt, near the blue gate / beside the sari-sari store"
+                                    onChange={(e) => setCheckoutInfo(prev => ({ ...prev, deliveryNote: e.target.value }))}
+                                    maxLength={500}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#EA580C] outline-none transition resize-none ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A] text-[#F5F5F5] placeholder-[#6B7280]' : 'bg-white border-[#E5E7EB] text-[#171717] placeholder-[#9CA3AF]'}`}
+                                />
+                            </div>
                             <p className={`text-xs italic mt-2 ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>
                                 * Your provided information will be explicitly sent to the restaurant for this order. It falls back to your saved profile details if left blank!
                             </p>
@@ -2965,6 +2983,18 @@ const HomePage = () => {
                                 </div>
                             </div>
 
+                            <div className="space-y-1.5 mt-4">
+                                <label className={`text-[10px] font-semibold uppercase tracking-widest ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Delivery Note <span className="normal-case tracking-normal">(optional – helps the rider find you)</span></label>
+                                <textarea
+                                    rows={2}
+                                    value={directNote}
+                                    onChange={(e) => { setDirectNote(e.target.value); setDirectCheckoutError(""); }}
+                                    placeholder="e.g. Look for the guy in a red shirt, near the blue gate / beside the sari-sari store"
+                                    maxLength={500}
+                                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium outline-none border transition-all resize-none ${isDarkMode ? 'bg-[#111111] border-[#2A2A2A] focus:border-[#EA580C] text-[#F5F5F5] placeholder-[#6B7280]' : 'bg-white border-[#E5E7EB] focus:border-[#EA580C] text-[#171717] placeholder-[#9CA3AF]'}`}
+                                />
+                            </div>
+
                             {directCheckoutError && (
                                 <p className={`mt-4 text-xs font-bold flex items-center gap-1.5 p-3 rounded-xl ${isDarkMode ? 'text-red-400 bg-red-500/10' : 'text-red-600 bg-red-50'}`}>⚠️ {directCheckoutError}</p>
                             )}
@@ -2972,8 +3002,8 @@ const HomePage = () => {
                             {/* Total & Action */}
                             <div className="mt-6 flex items-center gap-4">
                                 <div className="flex-1">
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Total including ₱25 DeliveryFee</p>
-                                    <p className="text-xl font-black text-[#EA580C]">₱{(Number(directCheckoutItem.price) + 25).toFixed(2)}</p>
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-[#A0A0A0]' : 'text-[#6B7280]'}`}>Total including ₱10 DeliveryFee</p>
+                                    <p className="text-xl font-black text-[#EA580C]">₱{(Number(directCheckoutItem.price) + 10).toFixed(2)}</p>
                                 </div>
                                 <button
                                     onClick={handleDirectCheckoutSubmit}

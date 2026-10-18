@@ -279,3 +279,14 @@ CREATE TRIGGER menu_items_updated_at BEFORE UPDATE ON menu_items FOR EACH ROW EX
 CREATE TRIGGER orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER cart_updated_at BEFORE UPDATE ON cart FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER deliveries_updated_at BEFORE UPDATE ON deliveries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- PERFORMANCE INDEXES (hot paths behind cached endpoints)
+-- Also created at runtime via ensurePerformanceIndexes() — idempotent.
+-- (idx_flash_sales_menu_item is created at runtime only: flash_sales is
+--  created by ensureFlashSaleTable(), which runs before these indexes.)
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_restaurants_catalog ON restaurants(approval_status, is_active);
+CREATE INDEX IF NOT EXISTS idx_orders_user_created ON orders(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_rest_created ON orders(restaurant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_menu_items_rest_avail ON menu_items(restaurant_id, is_available);

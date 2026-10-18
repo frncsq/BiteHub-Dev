@@ -259,6 +259,12 @@ function OwnerOrders() {
                                 <p className="text-[9px] font-semibold text-[#6B7280] dark:text-[#A0A0A0] uppercase tracking-widest">Address</p>
                                 <p className="text-xs font-medium text-[#171717] dark:text-[#F5F5F5]">{order.delivery_address || 'Mocked Address 123'}</p>
                               </div>
+                              {order.special_instructions && (
+                                <div className="rounded-md bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-2 py-1.5">
+                                  <p className="text-[9px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-widest">Delivery Note</p>
+                                  <p className="text-xs font-medium text-[#171717] dark:text-[#F5F5F5] whitespace-pre-wrap">{order.special_instructions}</p>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between">
                                 <div>
                                   <p className="text-[9px] font-semibold text-[#6B7280] dark:text-[#A0A0A0] uppercase tracking-widest">City</p>

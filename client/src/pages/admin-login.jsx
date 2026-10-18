@@ -122,10 +122,16 @@ function AdminLogin() {
           </button>
         </form>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-3">
           <button onClick={() => navigate('/')} className="text-sm text-[#6B7280] hover:text-[#F5F5F5] transition-colors">
             Return to Public Portal
           </button>
+          <p className="text-xs text-[#6B7280]">
+            By signing in, you agree to our{" "}
+            <button type="button" onClick={() => navigate('/legal/terms')} className="font-medium text-[#A0A0A0] hover:text-[#EA580C] underline underline-offset-2 transition-colors">Terms &amp; Conditions</button>{" "}
+            and{" "}
+            <button type="button" onClick={() => navigate('/legal/privacy')} className="font-medium text-[#A0A0A0] hover:text-[#EA580C] underline underline-offset-2 transition-colors">Privacy Policy</button>.
+          </p>
         </div>
       </div>
     </div>

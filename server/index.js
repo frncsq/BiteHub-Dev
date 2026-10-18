@@ -11,6 +11,7 @@ import { mockRestaurantsData, mockFoodItems, mockCategories } from './mockData.j
 import ownerRoutes from './routes/owner.js';
 import adminRoutes from './routes/admin.js';
 import { rotateFlashSale } from './components/flashSale.js';
+import { invalidateTags, invalidatePrefix, flush, getStats, HttpError, sendCached } from './cache.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,8 @@ const scheduleDailyStockReset = () => {
              updated_at = CURRENT_TIMESTAMP
          WHERE daily_stock IS NOT NULL AND daily_stock >= 0`
       );
+      // Every item's stock just changed — drop all cached catalog/stock data.
+      flush();
       console.log(`✅ Daily stock reset complete — ${result.rowCount} items reset at ${new Date().toLocaleString()}`);
     } catch (err) {
       console.error('⚠️  Daily stock reset failed:', err.message);
@@ -65,6 +68,7 @@ const scheduleFlashSaleRotation = () => {
         
         setTimeout(async () => {
             await rotateFlashSale();
+            invalidateTags('flash');
             scheduleNextRotation();
         }, msUntilMidnight);
     };
@@ -338,8 +342,27 @@ const ensureFlashSaleTable = async () => {
     }
 };
 
-const ensureRestaurantLogoUrlColumnIsText = async () => {
+// Composite/covering indexes for the hot queries introduced by caching.
+// Idempotent so it is safe on every boot (local + Render/Neon).
+const ensurePerformanceIndexes = async () => {
   try {
+    // Catalog listing filter (approved + active restaurants)
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_restaurants_catalog ON restaurants(approval_status, is_active);`);
+    // Customer order list: WHERE user_id = $1 ORDER BY created_at DESC
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_user_created ON orders(user_id, created_at DESC);`);
+    // Owner order list: WHERE restaurant_id = ... ORDER BY created_at DESC
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_rest_created ON orders(restaurant_id, created_at DESC);`);
+    // Flash-sale join
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_flash_sales_menu_item ON flash_sales(menu_item_id);`);
+    // Restaurant menu listing: WHERE restaurant_id = $1 AND is_available
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_menu_items_rest_avail ON menu_items(restaurant_id, is_available);`);
+    console.log('✅ Ensured performance indexes exist');
+  } catch (err) {
+    console.warn('⚠️  Could not ensure performance indexes:', err.message);
+  }
+};
+
+const ensureRestaurantLogoUrlColumnIsText = async () => {  try {
     await pool.query(`
       DO $$
       BEGIN
@@ -420,6 +443,8 @@ const seedDatabase = async () => {
     await ensureAdminsTable();
     await seedDatabase();
     await ensureFlashSaleTable();
+    // After ensureFlashSaleTable: creates indexes on orders/restaurants/flash_sales
+    await ensurePerformanceIndexes();
     // Start daily stock reset scheduler after DB is confirmed available
     scheduleDailyStockReset();
     scheduleFlashSaleRotation();
@@ -487,6 +512,23 @@ app.use(
     exposedHeaders: ['Set-Cookie'],
   })
 );
+
+// ==========================================================
+// Response-time instrumentation: log any API route > 500ms.
+// ==========================================================
+app.use('/api', (req, res, next) => {
+  const start = process.hrtime.bigint();
+  res.on('finish', () => {
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    if (ms > 500) console.log(`[SLOW] ${req.method} ${req.originalUrl} ${Math.round(ms)}ms`);
+  });
+  next();
+});
+
+// Cache telemetry (dev/diagnostics only: counters, no data or keys).
+app.get('/api/cache/stats', (req, res) => {
+  res.json({ success: true, stats: getStats() });
+});
 
 // 2b. JWT Middleware
 const verifyToken = (req, res, next) => {
@@ -589,20 +631,28 @@ const PORT = process.env.PORT || 5000;
 const publicCatalogRouter = express.Router();
 
 publicCatalogRouter.get('/categories', async (req, res) => {
-  try {
+  await sendCached(req, res, 'catalog:categories', {
+    ttlMs: 15 * 60_000,
+    tags: ['categories', 'food'],
+    cacheControl: 'public, max-age=60',
+  }, async () => {
     const result = await pool.query('SELECT DISTINCT category as name FROM menu_items WHERE category IS NOT NULL');
     const categories = result.rows.map((row, index) => ({ id: index + 1, name: row.name, icon: '🏷️' }));
-    res.status(200).json({ success: true, categories: categories.length > 0 ? categories : mockCategories });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, categories: categories.length > 0 ? categories : mockCategories };
+  });
 });
 
 publicCatalogRouter.get('/restaurants', async (req, res) => {
-  try {
+  await sendCached(req, res, 'catalog:restaurants', {
+    ttlMs: 3 * 60_000,
+    tags: ['restaurants'],
+    cacheControl: 'no-cache',
+  }, async () => {
     // Only return restaurants that are approved AND admin-enabled (is_active = true)
     const result = await pool.query(
-      `SELECT * FROM restaurants
+      `SELECT id, business_name, cuisine_type, description, rating,
+              restaurant_logo_url, latitude, longitude, business_address, owner_phone
+       FROM restaurants
        WHERE approval_status = 'approved'
          AND is_active = TRUE
        ORDER BY business_name ASC`
@@ -623,16 +673,18 @@ publicCatalogRouter.get('/restaurants', async (req, res) => {
       address: r.business_address,
       phone: r.owner_phone
     }));
-    res.status(200).json({ success: true, restaurants });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, restaurants };
+  });
 });
 
 // Deleted Rooms endpoint (redirected to restaurants previously)
 
 publicCatalogRouter.get('/food', async (req, res) => {
-  try {
+  await sendCached(req, res, 'catalog:food', {
+    ttlMs: 3 * 60_000,
+    tags: ['food'],
+    cacheControl: 'no-cache',
+  }, async () => {
     const result = await pool.query(`
       SELECT m.*, r.business_name as restaurant,
         COALESCE(rv.avg_rating, 0) as avg_rating,
@@ -664,14 +716,16 @@ publicCatalogRouter.get('/food', async (req, res) => {
       daily_stock: f.daily_stock != null ? Number(f.daily_stock) : null,
       current_stock: f.current_stock != null ? Number(f.current_stock) : null,
     }));
-    res.status(200).json({ success: true, items: foods, foods });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, foods };
+  });
 });
 
 publicCatalogRouter.get('/food/popular', async (req, res) => {
-  try {
+  await sendCached(req, res, 'catalog:popular', {
+    ttlMs: 2 * 60_000,
+    tags: ['food'],
+    cacheControl: 'no-cache',
+  }, async () => {
     const result = await pool.query(`
       SELECT m.*, r.business_name as restaurant,
         COALESCE(rv.avg_rating, 0) as avg_rating,
@@ -709,14 +763,16 @@ publicCatalogRouter.get('/food/popular', async (req, res) => {
       is_available: f.is_available,
       current_stock: f.current_stock != null ? Number(f.current_stock) : null,
     }));
-    res.status(200).json({ success: true, foods });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, foods };
+  });
 });
 
 publicCatalogRouter.get('/food/flash-sale', async (req, res) => {
-    try {
+    await sendCached(req, res, 'catalog:flash', {
+      ttlMs: 2 * 60_000,
+      tags: ['flash', 'food'],
+      cacheControl: 'no-cache',
+    }, async () => {
         const result = await pool.query(`
             SELECT m.*, r.business_name as restaurant, fs.discount_percentage,
                    COALESCE(rv.avg_rating, 0) as avg_rating,
@@ -747,10 +803,8 @@ publicCatalogRouter.get('/food/flash-sale', async (req, res) => {
             current_stock: f.current_stock != null ? Number(f.current_stock) : null,
         }));
         
-        res.status(200).json({ success: true, foods });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+        return { success: true, foods };
+    });
 });
 
 
@@ -759,9 +813,12 @@ publicCatalogRouter.get('/food/flash-sale', async (req, res) => {
 // joined with their restaurant name. Ordered by average rating then
 // newest first (no explicit "featured" flag exists in the schema).
 publicCatalogRouter.get('/foods/featured', async (req, res) => {
-  try {
-    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 8, 1), 24);
-
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 8, 1), 24);
+  await sendCached(req, res, `catalog:featured:${limit}`, {
+    ttlMs: 3 * 60_000,
+    tags: ['food'],
+    cacheControl: 'no-cache',
+  }, async () => {
     const result = await pool.query(`
       SELECT m.id, m.item_name, m.description, m.price, m.category,
              m.image_url, m.is_available, m.current_stock,
@@ -798,23 +855,25 @@ publicCatalogRouter.get('/foods/featured', async (req, res) => {
       reviews: Number(f.review_count) || 0,
     }));
 
-    res.status(200).json({ success: true, foods });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, foods };
+  });
 });
 
 
 publicCatalogRouter.get('/food/:restaurantId', async (req, res) => {
-  try {
-    const restaurantId = Number.parseInt(req.params.restaurantId, 10);
+  const restaurantId = Number.parseInt(req.params.restaurantId, 10);
+  await sendCached(req, res, `catalog:food:rest:${restaurantId}`, {
+    ttlMs: 3 * 60_000,
+    tags: ['food', `rest:${restaurantId}`],
+    cacheControl: 'no-cache',
+  }, async () => {
     // Block access if the restaurant is inactive or not approved
     const restCheck = await pool.query(
       `SELECT id FROM restaurants WHERE id = $1 AND approval_status = 'approved' AND is_active = TRUE`,
       [restaurantId]
     );
     if (restCheck.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Restaurant not found or currently unavailable.' });
+      throw new HttpError(404, 'Restaurant not found or currently unavailable.');
     }
     const result = await pool.query(`
       SELECT m.*, r.business_name as restaurant 
@@ -854,61 +913,73 @@ publicCatalogRouter.get('/food/:restaurantId', async (req, res) => {
       daily_stock: f.daily_stock != null ? Number(f.daily_stock) : null,
       current_stock: f.current_stock != null ? Number(f.current_stock) : null,
     }));
-    res.status(200).json({ success: true, items: foods, foods });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, foods };
+  });
 });
 
 // Budget Meal detail endpoint – returns combinations + options for a specific menu item
 publicCatalogRouter.get('/food/budget-meal/:menuItemId', async (req, res) => {
-  try {
-    const menuItemId = parseInt(req.params.menuItemId, 10);
+  const menuItemId = parseInt(req.params.menuItemId, 10);
+  await sendCached(req, res, `catalog:budget:${menuItemId}`, {
+    ttlMs: 2 * 60_000,
+    tags: ['food'],
+    cacheControl: 'no-cache',
+  }, async () => {
     // Verify it's a Budget Meal
     const itemRes = await pool.query(
       `SELECT id, item_name, category, image_url, description FROM menu_items WHERE id = $1`,
       [menuItemId]
     );
-    if (!itemRes.rows.length) return res.status(404).json({ success: false, message: 'Item not found' });
+    if (!itemRes.rows.length) throw new HttpError(404, 'Item not found');
     const item = itemRes.rows[0];
     if (item.category !== 'Budget Meal') {
-      return res.status(400).json({ success: false, message: 'Not a budget meal' });
+      throw new HttpError(400, 'Not a budget meal');
     }
-    // Fetch combinations
+    // Fetch combinations, then ALL their options in one query (no N+1)
     const combRes = await pool.query(
       `SELECT id, label, price FROM budget_meal_combinations WHERE menu_item_id = $1 ORDER BY id`,
       [menuItemId]
     );
-    const combinations = [];
-    for (const combo of combRes.rows) {
+    const combinationIds = combRes.rows.map(c => c.id);
+    const optsByCombo = {};
+    if (combinationIds.length > 0) {
       const optsRes = await pool.query(
-        `SELECT id, component_type, slot_index, option_name FROM budget_meal_options WHERE combination_id = $1 ORDER BY slot_index, id`,
-        [combo.id]
+        `SELECT id, combination_id, component_type, slot_index, option_name
+         FROM budget_meal_options
+         WHERE combination_id = ANY($1::int[])
+         ORDER BY slot_index, id`,
+        [combinationIds]
       );
+      for (const opt of optsRes.rows) {
+        (optsByCombo[opt.combination_id] ||= []).push(opt);
+      }
+    }
+    const combinations = combRes.rows.map(combo => {
       // Group options by slot_index
       const slots = {};
-      for (const opt of optsRes.rows) {
+      for (const opt of optsByCombo[combo.id] || []) {
         const key = `${opt.slot_index}_${opt.component_type}`;
         if (!slots[key]) slots[key] = { slot_index: opt.slot_index, component_type: opt.component_type, options: [] };
         slots[key].options.push({ id: opt.id, name: opt.option_name });
       }
-      combinations.push({
+      return {
         id: combo.id,
         label: combo.label,
         price: Number(combo.price),
         slots: Object.values(slots).sort((a, b) => a.slot_index - b.slot_index)
-      });
-    }
-    res.status(200).json({ success: true, menuItem: item, combinations });
-  } catch (err) {
-    console.error('Budget meal fetch error:', err);
-    res.status(500).json({ success: false, message: err.message });
-  }
+      };
+    });
+    return { success: true, menuItem: item, combinations };
+  });
 });
 
 // ── Review summary endpoint (public, no auth needed) ──
 publicCatalogRouter.get('/reviews/summary', async (req, res) => {
-  try {
+  await sendCached(req, res, 'reviews:summary', {
+    ttlMs: 10 * 60_000,
+    tags: ['reviews'],
+    cacheControl: 'no-cache',
+  }, async () => {
     const result = await pool.query(`
       SELECT menu_item_id,
         ROUND(AVG(rating)::numeric, 1) as avg_rating,
@@ -924,16 +995,18 @@ publicCatalogRouter.get('/reviews/summary', async (req, res) => {
         reviewCount: Number(r.review_count)
       };
     });
-    res.status(200).json({ success: true, summary });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, summary };
+  });
 });
 
 // ── Fetch reviews for a specific menu item (public) ──
 publicCatalogRouter.get('/reviews/menu-item/:menuItemId', async (req, res) => {
-  try {
-    const menuItemId = parseInt(req.params.menuItemId, 10);
+  const menuItemId = parseInt(req.params.menuItemId, 10);
+  await sendCached(req, res, `reviews:item:${menuItemId}`, {
+    ttlMs: 5 * 60_000,
+    tags: ['reviews'],
+    cacheControl: 'no-cache',
+  }, async () => {
     const result = await pool.query(`
       SELECT r.id, r.rating, r.comment, r.created_at, u.full_name as user_name
       FROM reviews r
@@ -942,10 +1015,8 @@ publicCatalogRouter.get('/reviews/menu-item/:menuItemId', async (req, res) => {
       ORDER BY r.created_at DESC
       LIMIT 50
     `, [menuItemId]);
-    res.status(200).json({ success: true, reviews: result.rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    return { success: true, reviews: result.rows };
+  });
 });
 
 // ── Submit a review (authenticated) ──
@@ -984,6 +1055,9 @@ publicCatalogRouter.post('/reviews', verifyToken, async (req, res) => {
         SELECT ROUND(AVG(rating)::numeric, 2) FROM reviews WHERE menu_item_id = $1
       ) WHERE id = $1
     `, [menu_item_id]);
+
+    // New review changes aggregates shown in catalog + review lists
+    invalidateTags('reviews', 'food');
 
     res.status(201).json({ success: true, review: result.rows[0] });
   } catch (error) {
@@ -1048,49 +1122,60 @@ app.get('/api/orders', verifyToken, async (req, res) => {
   const userId = req.userId;
   
   if (dbConnected && userId) {
-    try {
-      // Get orders from DB
-      const ordersResult = await pool.query(`
-        SELECT o.*, r.business_name as restaurant_name 
-        FROM orders o 
-        LEFT JOIN restaurants r ON o.restaurant_id = r.id 
-        WHERE o.user_id = $1 
-        ORDER BY o.created_at DESC
-      `, [userId]);
-      
-      const orders = ordersResult.rows;
-      
-      // Load items for all orders in a single query instead of one query per
-      // order (avoids an N+1 round-trip that saturates the connection pool).
-      const orderIds = orders.map((order) => order.id);
-      if (orderIds.length > 0) {
-        const itemsResult = await pool.query(`
-          SELECT oi.*, COALESCE(mi.item_name, 'Unknown Item') as name, mi.image_url 
-          FROM order_items oi 
-          LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id 
-          WHERE oi.order_id = ANY($1::int[])
-          ORDER BY oi.id
-        `, [orderIds]);
+    // Per-user key; invalidated (tag 'orders') when the user orders or an
+    // owner updates status. 8s TTL so polls still see changes quickly.
+    await sendCached(req, res, `orders:u:${userId}`, {
+      ttlMs: 8_000,
+      tags: ['orders', `orders:u:${userId}`],
+      cacheControl: 'private, no-store',
+    }, async () => {
+      try {
+        // Get orders from DB
+        const ordersResult = await pool.query(`
+          SELECT o.*, r.business_name as restaurant_name 
+          FROM orders o 
+          LEFT JOIN restaurants r ON o.restaurant_id = r.id 
+          WHERE o.user_id = $1 
+          ORDER BY o.created_at DESC
+          LIMIT 100
+        `, [userId]);
         
-        const itemsByOrder = new Map(orderIds.map((id) => [id, []]));
-        for (const item of itemsResult.rows) {
-          const bucket = itemsByOrder.get(item.order_id);
-          if (bucket) bucket.push(item);
+        const orders = ordersResult.rows;
+        
+        // Load items for all orders in a single query instead of one query per
+        // order (avoids an N+1 round-trip that saturates the connection pool).
+        const orderIds = orders.map((order) => order.id);
+        if (orderIds.length > 0) {
+          const itemsResult = await pool.query(`
+            SELECT oi.*, COALESCE(mi.item_name, 'Unknown Item') as name, mi.image_url 
+            FROM order_items oi 
+            LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id 
+            WHERE oi.order_id = ANY($1::int[])
+            ORDER BY oi.id
+          `, [orderIds]);
+          
+          const itemsByOrder = new Map(orderIds.map((id) => [id, []]));
+          for (const item of itemsResult.rows) {
+            const bucket = itemsByOrder.get(item.order_id);
+            if (bucket) bucket.push(item);
+          }
+          for (const order of orders) {
+            order.items = itemsByOrder.get(order.id) || [];
+          }
+        } else {
+          for (const order of orders) {
+            order.items = [];
+          }
         }
-        for (const order of orders) {
-          order.items = itemsByOrder.get(order.id) || [];
-        }
-      } else {
-        for (const order of orders) {
-          order.items = [];
-        }
+        
+        return { success: true, orders };
+      } catch (err) {
+        console.error("Error fetching orders from DB:", err);
+        // Fallback to session if the DB query fails
+        return { success: true, orders: getSessionOrders(req) };
       }
-      
-      return res.status(200).json({ success: true, orders });
-    } catch (err) {
-      console.error("Error fetching orders from DB:", err);
-      // Fallback below
-    }
+    });
+    return;
   }
   
   // Fallback to session if DB not available/connected
@@ -1102,7 +1187,11 @@ app.get('/api/orders/recent-items', verifyToken, async (req, res) => {
   const userId = req.userId;
 
   if (dbConnected && userId) {
-    try {
+    await sendCached(req, res, `recent:u:${userId}`, {
+      ttlMs: 60_000,
+      tags: ['orders', `orders:u:${userId}`],
+      cacheControl: 'private, no-store',
+    }, async () => {
       // Get distinct menu items the user has ordered, most recent first.
       // Uses DISTINCT ON to deduplicate by menu_item_id while keeping the latest order date.
       const result = await pool.query(`
@@ -1153,11 +1242,8 @@ app.get('/api/orders/recent-items', verifyToken, async (req, res) => {
           daily_stock: row.daily_stock != null ? Number(row.daily_stock) : null,
         }));
 
-      return res.status(200).json({ success: true, items });
-    } catch (err) {
-      console.error("Error fetching recent order items:", err);
-      return res.status(500).json({ success: false, message: err.message });
-    }
+      return { success: true, items };
+    });
   }
 
   // No session fallback for recent items – just return empty
@@ -1165,7 +1251,7 @@ app.get('/api/orders/recent-items', verifyToken, async (req, res) => {
 });
 
 app.post('/api/orders/create', verifyToken, verifyActiveUser, async (req, res) => {
-  const { items, subtotal, discount, tax, total, department, course, deliveryAddress, deliveryCity } = req.body || {};
+  const { items, subtotal, discount, tax, total, department, course, deliveryAddress, deliveryCity, deliveryNote } = req.body || {};
   const userId = req.userId;
   
   if (!items || items.length === 0) {
@@ -1226,9 +1312,9 @@ app.post('/api/orders/create', verifyToken, verifyActiveUser, async (req, res) =
 
       // ── Step 2: Create the order ──
       const orderRes = await client.query(
-        `INSERT INTO orders (user_id, restaurant_id, order_status, total_amount, delivery_address, delivery_city, department, course) 
-         VALUES ($1, $2, 'pending', $3, $4, $5, $6, $7) RETURNING id, created_at, order_status as status`,
-        [userId, restaurantId, total, deliveryAddress || 'University Main Campus', deliveryCity || 'City', department || '', course || '']
+        `INSERT INTO orders (user_id, restaurant_id, order_status, total_amount, delivery_address, delivery_city, department, course, special_instructions) 
+         VALUES ($1, $2, 'pending', $3, $4, $5, $6, $7, $8) RETURNING id, created_at, order_status as status`,
+        [userId, restaurantId, total, deliveryAddress || 'University Main Campus', deliveryCity || 'City', department || '', course || '', (deliveryNote || '').toString().slice(0, 500)]
       );
       const newOrder = orderRes.rows[0];
 
@@ -1256,6 +1342,15 @@ app.post('/api/orders/create', verifyToken, verifyActiveUser, async (req, res) =
       } else {
         req.session.cart = [];
       }
+
+      // Order placed: stock changed + this user's order lists are stale.
+      // NOTE: the big catalog caches ('food') are intentionally NOT flushed
+      // here — checkout re-validates stock against the DB in a transaction,
+      // so display staleness for <=3min is safe and keeps rush-hour hit rates.
+      invalidatePrefix('stock:');
+      invalidatePrefix(`own:${restaurantId}:`);
+      invalidateTags('orders', `orders:u:${userId}`, 'adm:orders', 'adm:payments', 'adm:analytics');
+
       res.status(201).json({ success: true, order: newOrder });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -1276,6 +1371,7 @@ app.post('/api/orders/create', verifyToken, verifyActiveUser, async (req, res) =
       total: Number(total ?? 0),
       department: department || '',
       course: course || '',
+      deliveryNote: deliveryNote || '',
     };
 
     const orders = getSessionOrders(req);
@@ -1294,16 +1390,21 @@ app.post('/api/orders/create', verifyToken, verifyActiveUser, async (req, res) =
 });
 
 // ── Public endpoint to check stock for a specific item ──
+// 30s TTL: display-only. Checkout always re-validates stock in a transaction.
 app.get('/api/stock/:menuItemId', async (req, res) => {
-  try {
-    const { menuItemId } = req.params;
+  const { menuItemId } = req.params;
+  await sendCached(req, res, `stock:${menuItemId}`, {
+    ttlMs: 30_000,
+    tags: ['food', `stock:${menuItemId}`],
+    cacheControl: 'no-store',
+  }, async () => {
     const result = await pool.query(
       `SELECT id, item_name, daily_stock, current_stock, is_available FROM menu_items WHERE id = $1`,
       [menuItemId]
     );
-    if (!result.rows.length) return res.status(404).json({ success: false, message: 'Item not found' });
+    if (!result.rows.length) throw new HttpError(404, 'Item not found');
     const item = result.rows[0];
-    res.status(200).json({
+    return {
       success: true,
       id: item.id,
       item_name: item.item_name,
@@ -1311,10 +1412,8 @@ app.get('/api/stock/:menuItemId', async (req, res) => {
       current_stock: item.current_stock,
       is_available: item.is_available,
       in_stock: item.current_stock === null || item.current_stock < 0 || item.current_stock > 0
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    };
+  });
 });
 
 app.post('/api/cart/add', verifyToken, verifyActiveUser, async (req, res) => {
